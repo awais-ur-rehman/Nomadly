@@ -1,0 +1,92 @@
+name: nomadly
+description: "Nomadly - A location-based social platform for digital nomads"
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.10.7
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # UI & Icons
+  cupertino_icons: ^1.0.8
+  flutter_svg: ^2.0.10+1
+  
+  # State Management
+  flutter_riverpod: ^2.5.1
+  riverpod_annotation: ^2.3.5
+  
+  # Navigation
+  go_router: ^14.2.7
+  
+  # Networking
+  dio: ^5.7.0
+  pretty_dio_logger: ^1.4.0
+  
+  # Real-time Communication
+  socket_io_client: ^2.0.3+1
+  
+  # Local Storage
+  flutter_secure_storage: ^9.2.2
+  shared_preferences: ^2.3.2
+  
+  # Image Handling
+  image_picker: ^1.1.2
+  cached_network_image: ^3.4.1
+  image_cropper: ^8.0.2
+  
+  # Maps
+  mapbox_maps_flutter: ^2.3.0
+  geolocator: ^13.0.1
+  permission_handler: ^11.3.1
+  
+  # Code Generation
+  freezed_annotation: ^2.4.4
+  json_annotation: ^4.9.0
+  
+  # UI Components
+  flutter_animate: ^4.5.0
+  shimmer: ^3.0.0
+  pull_to_refresh: ^2.0.0
+  
+  # Utilities
+  intl: ^0.19.0
+  flutter_dotenv: ^5.1.0
+  logger: ^2.4.0
+  url_launcher: ^6.3.1
+  
+  # Toast/Snackbar
+  fluttertoast: ^8.2.8
+  
+  # Swipeable Cards
+  flutter_card_swiper: ^7.0.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  # Linting
+  flutter_lints: ^6.0.0
+  
+  # Code Generation
+  build_runner: ^2.4.12
+  riverpod_generator: ^2.4.3
+  freezed: ^2.5.7
+  json_serializable: ^6.8.0
+
+# For information on the generic Dart part of this file, see the
+# following page: https://dart.dev/tools/pub/pubspec
+
+# The following section is specific to Flutter packages.
+flutter:
+  uses-material-design: true
+
+  assets:
+    - .env
+    - assets/images/
+    - assets/icons/
+    - assets/icons/nav/
+
