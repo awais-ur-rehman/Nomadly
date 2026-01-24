@@ -1,0 +1,183 @@
+import 'package:dio/dio.dart';
+import 'package:logger/logger.dart';
+import '../../../core/config/app_config.dart';
+import '../../../shared/services/api_client.dart';
+import '../../../shared/services/secure_storage_service.dart';
+import '../models/auth_response.dart';
+
+class AuthRepository {
+  final _apiClient = ApiClient();
+  final _storage = SecureStorageService();
+  final _logger = Logger();
+
+  // Register new user
+  Future<RegisterResponse> register({
+    required String email,
+    required String password,
+    required String name,
+    String? phone,
+    int? age,
+    String? gender,
+  }) async {
+    try {
+      final response = await _apiClient.post(
+        '${AppConfig.authEndpoint}/register',
+        data: {
+          'email': email,
+          'password': password,
+          'name': name,
+          if (phone != null) 'phone': phone,
+          if (age != null) 'age': age,
+          if (gender != null) 'gender': gender,
+        },
+      );
+
+      if (response.statusCode == 201) {
+        final data = response.data['data'];
+        return RegisterResponse.fromJson(data);
+      }
+
+      throw Exception('Registration failed');
+    } on DioException catch (e) {
+      _logger.e('Registration error: ${e.message}');
+      throw _handleError(e);
+    }
+  }
+
+  // Verify OTP
+  Future<AuthResponse> verifyOTP({
+    required String email,
+    required String code,
+  }) async {
+    try {
+      final response = await _apiClient.post(
+        '${AppConfig.authEndpoint}/verify-otp',
+        data: {
+          'email': email,
+          'code': code,
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data['data'];
+        final authResponse = AuthResponse.fromJson(data);
+
+        // Save tokens
+        await _storage.saveTokens(
+          accessToken: authResponse.token,
+          refreshToken: authResponse.refreshToken,
+        );
+
+        // Save user info
+        await _storage.saveUserId(authResponse.user.id);
+        await _storage.saveUserEmail(authResponse.user.email);
+
+        return authResponse;
+      }
+
+      throw Exception('OTP verification failed');
+    } on DioException catch (e) {
+      _logger.e('OTP verification error: ${e.message}');
+      throw _handleError(e);
+    }
+  }
+
+  // Resend OTP
+  Future<void> resendOTP(String email) async {
+    try {
+      final response = await _apiClient.post(
+        '${AppConfig.authEndpoint}/resend-otp',
+        data: {'email': email},
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception('Failed to resend OTP');
+      }
+    } on DioException catch (e) {
+      _logger.e('Resend OTP error: ${e.message}');
+      throw _handleError(e);
+    }
+  }
+
+  // Login
+  Future<AuthResponse> login({
+    required String email,
+    required String password,
+  }) async {
+    try {
+      final response = await _apiClient.post(
+        '${AppConfig.authEndpoint}/login',
+        data: {
+          'email': email,
+          'password': password,
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data['data'];
+        final authResponse = AuthResponse.fromJson(data);
+
+        // Save tokens
+        await _storage.saveTokens(
+          accessToken: authResponse.token,
+          refreshToken: authResponse.refreshToken,
+        );
+
+        // Save user info
+        await _storage.saveUserId(authResponse.user.id);
+        await _storage.saveUserEmail(authResponse.user.email);
+
+        return authResponse;
+      }
+
+      throw Exception('Login failed');
+    } on DioException catch (e) {
+      _logger.e('Login error: ${e.message}');
+      throw _handleError(e);
+    }
+  }
+
+  // Logout
+  Future<void> logout() async {
+    try {
+      await _storage.clearAll();
+      _logger.d('User logged out');
+    } catch (e) {
+      _logger.e('Logout error: $e');
+      rethrow;
+    }
+  }
+
+  // Check if user is logged in
+  Future<bool> isLoggedIn() async {
+    return await _storage.isLoggedIn();
+  }
+
+  // Get current user ID
+  Future<String?> getCurrentUserId() async {
+    return await _storage.getUserId();
+  }
+
+  // Error handling
+  String _handleError(DioException error) {
+    if (error.response != null) {
+      final data = error.response!.data;
+      if (data is Map && data.containsKey('message')) {
+        return data['message'] as String;
+      }
+    }
+
+    switch (error.type) {
+      case DioExceptionType.connectionTimeout:
+      case DioExceptionType.sendTimeout:
+      case DioExceptionType.receiveTimeout:
+        return 'Connection timeout. Please check your internet connection.';
+      case DioExceptionType.badResponse:
+        return 'Server error. Please try again later.';
+      case DioExceptionType.cancel:
+        return 'Request cancelled.';
+      default:
+        return 'An unexpected error occurred. Please try again.';
+    }
+  }
+}
