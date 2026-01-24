@@ -137,6 +137,36 @@ class AuthRepository {
     }
   }
 
+  // Complete Profile
+  Future<User> completeProfile({
+    required Map<String, dynamic> profileData,
+    required Map<String, dynamic> rigData,
+  }) async {
+    try {
+      final response = await _apiClient.post(
+        '${AppConfig.usersEndpoint}/complete-profile',
+        data: {
+          'profile': profileData,
+          'rig': rigData,
+        },
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final data = response.data['data'];
+        // The API might return the full user object or just the profile
+        // Assuming it returns the updated User object structure based on standard REST patterns
+        // If the structure is different, we might need a different DTO or parsing logic
+        // For now, let's assume it returns { data: { ...User... } }
+        return User.fromJson(data);
+      }
+
+      throw Exception('Failed to complete profile');
+    } on DioException catch (e) {
+      _logger.e('Complete profile error: ${e.message}');
+      throw _handleError(e);
+    }
+  }
+
   // Logout
   Future<void> logout() async {
     try {

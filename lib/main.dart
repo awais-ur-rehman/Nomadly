@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'core/theme/app_theme.dart';
+import 'core/config/router.dart';
 import 'shared/services/api_client.dart';
 
 void main() async {
@@ -29,20 +30,18 @@ void main() async {
   );
 }
 
-class NomadlyApp extends StatelessWidget {
+class NomadlyApp extends ConsumerWidget {
   const NomadlyApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
+  Widget build(BuildContext context, WidgetRef ref) {
+    final router = ref.watch(routerProvider);
+
+    return MaterialApp.router(
       title: 'Nomadly',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
-      home: const Scaffold(
-        body: Center(
-          child: Text('Nomadly App - Coming Soon'),
-        ),
-      ),
+      routerConfig: router,
     );
   }
 }
