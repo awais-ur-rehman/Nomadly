@@ -127,7 +127,7 @@ class UserCard extends StatelessWidget {
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        '${rig.type.toUpperCase()} • ${rig.crewType.toUpperCase()}',
+                        '${rig.type?.toUpperCase() ?? 'NONE'} • ${rig.crewType?.toUpperCase() ?? 'NONE'}',
                         style: const TextStyle(
                           color: AppColors.white,
                           fontSize: 14,

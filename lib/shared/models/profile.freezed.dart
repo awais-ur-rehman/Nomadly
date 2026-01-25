@@ -22,8 +22,8 @@ Profile _$ProfileFromJson(Map<String, dynamic> json) {
 /// @nodoc
 mixin _$Profile {
   String get name => throw _privateConstructorUsedError;
-  int get age => throw _privateConstructorUsedError;
-  String get gender => throw _privateConstructorUsedError;
+  int? get age => throw _privateConstructorUsedError;
+  String? get gender => throw _privateConstructorUsedError;
   String? get photoUrl => throw _privateConstructorUsedError;
   List<String> get hobbies => throw _privateConstructorUsedError;
   String get intent =>
@@ -46,8 +46,8 @@ abstract class $ProfileCopyWith<$Res> {
   @useResult
   $Res call({
     String name,
-    int age,
-    String gender,
+    int? age,
+    String? gender,
     String? photoUrl,
     List<String> hobbies,
     String intent,
@@ -71,8 +71,8 @@ class _$ProfileCopyWithImpl<$Res, $Val extends Profile>
   @override
   $Res call({
     Object? name = null,
-    Object? age = null,
-    Object? gender = null,
+    Object? age = freezed,
+    Object? gender = freezed,
     Object? photoUrl = freezed,
     Object? hobbies = null,
     Object? intent = null,
@@ -84,14 +84,14 @@ class _$ProfileCopyWithImpl<$Res, $Val extends Profile>
                 ? _value.name
                 : name // ignore: cast_nullable_to_non_nullable
                       as String,
-            age: null == age
+            age: freezed == age
                 ? _value.age
                 : age // ignore: cast_nullable_to_non_nullable
-                      as int,
-            gender: null == gender
+                      as int?,
+            gender: freezed == gender
                 ? _value.gender
                 : gender // ignore: cast_nullable_to_non_nullable
-                      as String,
+                      as String?,
             photoUrl: freezed == photoUrl
                 ? _value.photoUrl
                 : photoUrl // ignore: cast_nullable_to_non_nullable
@@ -124,8 +124,8 @@ abstract class _$$ProfileImplCopyWith<$Res> implements $ProfileCopyWith<$Res> {
   @useResult
   $Res call({
     String name,
-    int age,
-    String gender,
+    int? age,
+    String? gender,
     String? photoUrl,
     List<String> hobbies,
     String intent,
@@ -148,8 +148,8 @@ class __$$ProfileImplCopyWithImpl<$Res>
   @override
   $Res call({
     Object? name = null,
-    Object? age = null,
-    Object? gender = null,
+    Object? age = freezed,
+    Object? gender = freezed,
     Object? photoUrl = freezed,
     Object? hobbies = null,
     Object? intent = null,
@@ -161,14 +161,14 @@ class __$$ProfileImplCopyWithImpl<$Res>
             ? _value.name
             : name // ignore: cast_nullable_to_non_nullable
                   as String,
-        age: null == age
+        age: freezed == age
             ? _value.age
             : age // ignore: cast_nullable_to_non_nullable
-                  as int,
-        gender: null == gender
+                  as int?,
+        gender: freezed == gender
             ? _value.gender
             : gender // ignore: cast_nullable_to_non_nullable
-                  as String,
+                  as String?,
         photoUrl: freezed == photoUrl
             ? _value.photoUrl
             : photoUrl // ignore: cast_nullable_to_non_nullable
@@ -195,8 +195,8 @@ class __$$ProfileImplCopyWithImpl<$Res>
 class _$ProfileImpl implements _Profile {
   const _$ProfileImpl({
     required this.name,
-    required this.age,
-    required this.gender,
+    this.age,
+    this.gender,
     this.photoUrl,
     final List<String> hobbies = const [],
     this.intent = 'friends',
@@ -209,9 +209,9 @@ class _$ProfileImpl implements _Profile {
   @override
   final String name;
   @override
-  final int age;
+  final int? age;
   @override
-  final String gender;
+  final String? gender;
   @override
   final String? photoUrl;
   final List<String> _hobbies;
@@ -280,8 +280,8 @@ class _$ProfileImpl implements _Profile {
 abstract class _Profile implements Profile {
   const factory _Profile({
     required final String name,
-    required final int age,
-    required final String gender,
+    final int? age,
+    final String? gender,
     final String? photoUrl,
     final List<String> hobbies,
     final String intent,
@@ -293,9 +293,9 @@ abstract class _Profile implements Profile {
   @override
   String get name;
   @override
-  int get age;
+  int? get age;
   @override
-  String get gender;
+  String? get gender;
   @override
   String? get photoUrl;
   @override

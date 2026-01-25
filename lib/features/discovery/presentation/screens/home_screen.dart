@@ -47,7 +47,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     // Process swipe
     final match = await ref.read(discoveryProvider.notifier).swipeUser(
-      user.user.id,
+      user.user.uid,
       action,
     );
 

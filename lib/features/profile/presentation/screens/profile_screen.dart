@@ -145,7 +145,7 @@ class ProfileScreen extends ConsumerWidget {
               leading: const Icon(Icons.directions_car), // Use custom rig icon
               title: const Text('My Rig'),
               subtitle: Text(rig != null 
-                  ? '${rig.type.toUpperCase()} • ${rig.crewType.toUpperCase()}'
+                  ? '${rig.type?.toUpperCase() ?? 'NONE'} • ${rig.crewType?.toUpperCase() ?? 'NONE'}'
                   : 'Add rig info'),
               trailing: const Icon(Icons.chevron_right),
               onTap: () {

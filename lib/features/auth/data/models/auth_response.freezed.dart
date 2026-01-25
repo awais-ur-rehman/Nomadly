@@ -150,12 +150,12 @@ class __$$AuthResponseImplCopyWithImpl<$Res>
 
 /// @nodoc
 @JsonSerializable()
-class _$AuthResponseImpl implements _AuthResponse {
+class _$AuthResponseImpl extends _AuthResponse {
   const _$AuthResponseImpl({
     required this.token,
     required this.refreshToken,
     required this.user,
-  });
+  }) : super._();
 
   factory _$AuthResponseImpl.fromJson(Map<String, dynamic> json) =>
       _$$AuthResponseImplFromJson(json);
@@ -201,12 +201,13 @@ class _$AuthResponseImpl implements _AuthResponse {
   }
 }
 
-abstract class _AuthResponse implements AuthResponse {
+abstract class _AuthResponse extends AuthResponse {
   const factory _AuthResponse({
     required final String token,
     required final String refreshToken,
     required final User user,
   }) = _$AuthResponseImpl;
+  const _AuthResponse._() : super._();
 
   factory _AuthResponse.fromJson(Map<String, dynamic> json) =
       _$AuthResponseImpl.fromJson;
@@ -232,7 +233,10 @@ RegisterResponse _$RegisterResponseFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$RegisterResponse {
-  String get userId => throw _privateConstructorUsedError;
+  @JsonKey(name: 'userId', includeIfNull: false)
+  String? get userIdSecondary => throw _privateConstructorUsedError;
+  @JsonKey(name: 'id', includeIfNull: false)
+  String? get id => throw _privateConstructorUsedError;
   String get email => throw _privateConstructorUsedError;
   bool get isActive => throw _privateConstructorUsedError;
 
@@ -253,7 +257,12 @@ abstract class $RegisterResponseCopyWith<$Res> {
     $Res Function(RegisterResponse) then,
   ) = _$RegisterResponseCopyWithImpl<$Res, RegisterResponse>;
   @useResult
-  $Res call({String userId, String email, bool isActive});
+  $Res call({
+    @JsonKey(name: 'userId', includeIfNull: false) String? userIdSecondary,
+    @JsonKey(name: 'id', includeIfNull: false) String? id,
+    String email,
+    bool isActive,
+  });
 }
 
 /// @nodoc
@@ -271,16 +280,21 @@ class _$RegisterResponseCopyWithImpl<$Res, $Val extends RegisterResponse>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? userId = null,
+    Object? userIdSecondary = freezed,
+    Object? id = freezed,
     Object? email = null,
     Object? isActive = null,
   }) {
     return _then(
       _value.copyWith(
-            userId: null == userId
-                ? _value.userId
-                : userId // ignore: cast_nullable_to_non_nullable
-                      as String,
+            userIdSecondary: freezed == userIdSecondary
+                ? _value.userIdSecondary
+                : userIdSecondary // ignore: cast_nullable_to_non_nullable
+                      as String?,
+            id: freezed == id
+                ? _value.id
+                : id // ignore: cast_nullable_to_non_nullable
+                      as String?,
             email: null == email
                 ? _value.email
                 : email // ignore: cast_nullable_to_non_nullable
@@ -304,7 +318,12 @@ abstract class _$$RegisterResponseImplCopyWith<$Res>
   ) = __$$RegisterResponseImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({String userId, String email, bool isActive});
+  $Res call({
+    @JsonKey(name: 'userId', includeIfNull: false) String? userIdSecondary,
+    @JsonKey(name: 'id', includeIfNull: false) String? id,
+    String email,
+    bool isActive,
+  });
 }
 
 /// @nodoc
@@ -321,16 +340,21 @@ class __$$RegisterResponseImplCopyWithImpl<$Res>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? userId = null,
+    Object? userIdSecondary = freezed,
+    Object? id = freezed,
     Object? email = null,
     Object? isActive = null,
   }) {
     return _then(
       _$RegisterResponseImpl(
-        userId: null == userId
-            ? _value.userId
-            : userId // ignore: cast_nullable_to_non_nullable
-                  as String,
+        userIdSecondary: freezed == userIdSecondary
+            ? _value.userIdSecondary
+            : userIdSecondary // ignore: cast_nullable_to_non_nullable
+                  as String?,
+        id: freezed == id
+            ? _value.id
+            : id // ignore: cast_nullable_to_non_nullable
+                  as String?,
         email: null == email
             ? _value.email
             : email // ignore: cast_nullable_to_non_nullable
@@ -346,18 +370,23 @@ class __$$RegisterResponseImplCopyWithImpl<$Res>
 
 /// @nodoc
 @JsonSerializable()
-class _$RegisterResponseImpl implements _RegisterResponse {
+class _$RegisterResponseImpl extends _RegisterResponse {
   const _$RegisterResponseImpl({
-    required this.userId,
+    @JsonKey(name: 'userId', includeIfNull: false) this.userIdSecondary,
+    @JsonKey(name: 'id', includeIfNull: false) this.id,
     required this.email,
     required this.isActive,
-  });
+  }) : super._();
 
   factory _$RegisterResponseImpl.fromJson(Map<String, dynamic> json) =>
       _$$RegisterResponseImplFromJson(json);
 
   @override
-  final String userId;
+  @JsonKey(name: 'userId', includeIfNull: false)
+  final String? userIdSecondary;
+  @override
+  @JsonKey(name: 'id', includeIfNull: false)
+  final String? id;
   @override
   final String email;
   @override
@@ -365,7 +394,7 @@ class _$RegisterResponseImpl implements _RegisterResponse {
 
   @override
   String toString() {
-    return 'RegisterResponse(userId: $userId, email: $email, isActive: $isActive)';
+    return 'RegisterResponse(userIdSecondary: $userIdSecondary, id: $id, email: $email, isActive: $isActive)';
   }
 
   @override
@@ -373,7 +402,9 @@ class _$RegisterResponseImpl implements _RegisterResponse {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$RegisterResponseImpl &&
-            (identical(other.userId, userId) || other.userId == userId) &&
+            (identical(other.userIdSecondary, userIdSecondary) ||
+                other.userIdSecondary == userIdSecondary) &&
+            (identical(other.id, id) || other.id == id) &&
             (identical(other.email, email) || other.email == email) &&
             (identical(other.isActive, isActive) ||
                 other.isActive == isActive));
@@ -381,7 +412,8 @@ class _$RegisterResponseImpl implements _RegisterResponse {
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, userId, email, isActive);
+  int get hashCode =>
+      Object.hash(runtimeType, userIdSecondary, id, email, isActive);
 
   /// Create a copy of RegisterResponse
   /// with the given fields replaced by the non-null parameter values.
@@ -400,18 +432,25 @@ class _$RegisterResponseImpl implements _RegisterResponse {
   }
 }
 
-abstract class _RegisterResponse implements RegisterResponse {
+abstract class _RegisterResponse extends RegisterResponse {
   const factory _RegisterResponse({
-    required final String userId,
+    @JsonKey(name: 'userId', includeIfNull: false)
+    final String? userIdSecondary,
+    @JsonKey(name: 'id', includeIfNull: false) final String? id,
     required final String email,
     required final bool isActive,
   }) = _$RegisterResponseImpl;
+  const _RegisterResponse._() : super._();
 
   factory _RegisterResponse.fromJson(Map<String, dynamic> json) =
       _$RegisterResponseImpl.fromJson;
 
   @override
-  String get userId;
+  @JsonKey(name: 'userId', includeIfNull: false)
+  String? get userIdSecondary;
+  @override
+  @JsonKey(name: 'id', includeIfNull: false)
+  String? get id;
   @override
   String get email;
   @override

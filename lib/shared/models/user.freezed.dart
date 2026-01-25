@@ -21,8 +21,10 @@ User _$UserFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$User {
-  @JsonKey(name: '_id')
-  String get id => throw _privateConstructorUsedError;
+  @JsonKey(name: '_id', includeIfNull: false)
+  String? get idSecondary => throw _privateConstructorUsedError;
+  @JsonKey(name: 'id', includeIfNull: false)
+  String? get id => throw _privateConstructorUsedError;
   String get email => throw _privateConstructorUsedError;
   String? get phone => throw _privateConstructorUsedError;
   Profile? get profile => throw _privateConstructorUsedError;
@@ -49,7 +51,8 @@ abstract class $UserCopyWith<$Res> {
       _$UserCopyWithImpl<$Res, User>;
   @useResult
   $Res call({
-    @JsonKey(name: '_id') String id,
+    @JsonKey(name: '_id', includeIfNull: false) String? idSecondary,
+    @JsonKey(name: 'id', includeIfNull: false) String? id,
     String email,
     String? phone,
     Profile? profile,
@@ -83,7 +86,8 @@ class _$UserCopyWithImpl<$Res, $Val extends User>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? id = null,
+    Object? idSecondary = freezed,
+    Object? id = freezed,
     Object? email = null,
     Object? phone = freezed,
     Object? profile = freezed,
@@ -97,10 +101,14 @@ class _$UserCopyWithImpl<$Res, $Val extends User>
   }) {
     return _then(
       _value.copyWith(
-            id: null == id
+            idSecondary: freezed == idSecondary
+                ? _value.idSecondary
+                : idSecondary // ignore: cast_nullable_to_non_nullable
+                      as String?,
+            id: freezed == id
                 ? _value.id
                 : id // ignore: cast_nullable_to_non_nullable
-                      as String,
+                      as String?,
             email: null == email
                 ? _value.email
                 : email // ignore: cast_nullable_to_non_nullable
@@ -212,7 +220,8 @@ abstract class _$$UserImplCopyWith<$Res> implements $UserCopyWith<$Res> {
   @override
   @useResult
   $Res call({
-    @JsonKey(name: '_id') String id,
+    @JsonKey(name: '_id', includeIfNull: false) String? idSecondary,
+    @JsonKey(name: 'id', includeIfNull: false) String? id,
     String email,
     String? phone,
     Profile? profile,
@@ -247,7 +256,8 @@ class __$$UserImplCopyWithImpl<$Res>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? id = null,
+    Object? idSecondary = freezed,
+    Object? id = freezed,
     Object? email = null,
     Object? phone = freezed,
     Object? profile = freezed,
@@ -261,10 +271,14 @@ class __$$UserImplCopyWithImpl<$Res>
   }) {
     return _then(
       _$UserImpl(
-        id: null == id
+        idSecondary: freezed == idSecondary
+            ? _value.idSecondary
+            : idSecondary // ignore: cast_nullable_to_non_nullable
+                  as String?,
+        id: freezed == id
             ? _value.id
             : id // ignore: cast_nullable_to_non_nullable
-                  as String,
+                  as String?,
         email: null == email
             ? _value.email
             : email // ignore: cast_nullable_to_non_nullable
@@ -312,9 +326,10 @@ class __$$UserImplCopyWithImpl<$Res>
 
 /// @nodoc
 @JsonSerializable()
-class _$UserImpl implements _User {
+class _$UserImpl extends _User {
   const _$UserImpl({
-    @JsonKey(name: '_id') required this.id,
+    @JsonKey(name: '_id', includeIfNull: false) this.idSecondary,
+    @JsonKey(name: 'id', includeIfNull: false) this.id,
     required this.email,
     this.phone,
     this.profile,
@@ -325,14 +340,17 @@ class _$UserImpl implements _User {
     this.isActive = true,
     this.createdAt,
     this.updatedAt,
-  });
+  }) : super._();
 
   factory _$UserImpl.fromJson(Map<String, dynamic> json) =>
       _$$UserImplFromJson(json);
 
   @override
-  @JsonKey(name: '_id')
-  final String id;
+  @JsonKey(name: '_id', includeIfNull: false)
+  final String? idSecondary;
+  @override
+  @JsonKey(name: 'id', includeIfNull: false)
+  final String? id;
   @override
   final String email;
   @override
@@ -358,7 +376,7 @@ class _$UserImpl implements _User {
 
   @override
   String toString() {
-    return 'User(id: $id, email: $email, phone: $phone, profile: $profile, rig: $rig, travelRoute: $travelRoute, isBuilder: $isBuilder, nomadId: $nomadId, isActive: $isActive, createdAt: $createdAt, updatedAt: $updatedAt)';
+    return 'User(idSecondary: $idSecondary, id: $id, email: $email, phone: $phone, profile: $profile, rig: $rig, travelRoute: $travelRoute, isBuilder: $isBuilder, nomadId: $nomadId, isActive: $isActive, createdAt: $createdAt, updatedAt: $updatedAt)';
   }
 
   @override
@@ -366,6 +384,8 @@ class _$UserImpl implements _User {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$UserImpl &&
+            (identical(other.idSecondary, idSecondary) ||
+                other.idSecondary == idSecondary) &&
             (identical(other.id, id) || other.id == id) &&
             (identical(other.email, email) || other.email == email) &&
             (identical(other.phone, phone) || other.phone == phone) &&
@@ -388,6 +408,7 @@ class _$UserImpl implements _User {
   @override
   int get hashCode => Object.hash(
     runtimeType,
+    idSecondary,
     id,
     email,
     phone,
@@ -415,9 +436,10 @@ class _$UserImpl implements _User {
   }
 }
 
-abstract class _User implements User {
+abstract class _User extends User {
   const factory _User({
-    @JsonKey(name: '_id') required final String id,
+    @JsonKey(name: '_id', includeIfNull: false) final String? idSecondary,
+    @JsonKey(name: 'id', includeIfNull: false) final String? id,
     required final String email,
     final String? phone,
     final Profile? profile,
@@ -429,12 +451,16 @@ abstract class _User implements User {
     final DateTime? createdAt,
     final DateTime? updatedAt,
   }) = _$UserImpl;
+  const _User._() : super._();
 
   factory _User.fromJson(Map<String, dynamic> json) = _$UserImpl.fromJson;
 
   @override
-  @JsonKey(name: '_id')
-  String get id;
+  @JsonKey(name: '_id', includeIfNull: false)
+  String? get idSecondary;
+  @override
+  @JsonKey(name: 'id', includeIfNull: false)
+  String? get id;
   @override
   String get email;
   @override

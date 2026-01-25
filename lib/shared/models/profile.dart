@@ -7,8 +7,8 @@ part 'profile.g.dart';
 class Profile with _$Profile {
   const factory Profile({
     required String name,
-    required int age,
-    required String gender,
+    int? age,
+    String? gender,
     String? photoUrl,
     @Default([]) List<String> hobbies,
     @Default('friends') String intent, // 'friends', 'dating', 'both'

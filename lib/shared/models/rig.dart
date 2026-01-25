@@ -6,8 +6,8 @@ part 'rig.g.dart';
 @freezed
 class Rig with _$Rig {
   const factory Rig({
-    required String type, // 'sprinter', 'skoolie', 'suv', 'truck_camper'
-    required String crewType, // 'solo', 'couple', 'with_pets'
+    String? type, // 'sprinter', 'skoolie', 'suv', 'truck_camper'
+    @JsonKey(name: 'crew_type') String? crewType, // 'solo', 'couple', 'with_pets'
     @Default(false) bool petFriendly,
   }) = _Rig;
 

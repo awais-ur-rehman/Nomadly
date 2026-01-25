@@ -23,7 +23,8 @@ Map<String, dynamic> _$$AuthResponseImplToJson(_$AuthResponseImpl instance) =>
 _$RegisterResponseImpl _$$RegisterResponseImplFromJson(
   Map<String, dynamic> json,
 ) => _$RegisterResponseImpl(
-  userId: json['userId'] as String,
+  userIdSecondary: json['userId'] as String?,
+  id: json['id'] as String?,
   email: json['email'] as String,
   isActive: json['isActive'] as bool,
 );
@@ -31,7 +32,8 @@ _$RegisterResponseImpl _$$RegisterResponseImplFromJson(
 Map<String, dynamic> _$$RegisterResponseImplToJson(
   _$RegisterResponseImpl instance,
 ) => <String, dynamic>{
-  'userId': instance.userId,
+  if (instance.userIdSecondary case final value?) 'userId': value,
+  if (instance.id case final value?) 'id': value,
   'email': instance.email,
   'isActive': instance.isActive,
 };

@@ -21,10 +21,10 @@ Rig _$RigFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$Rig {
-  String get type =>
+  String? get type =>
       throw _privateConstructorUsedError; // 'sprinter', 'skoolie', 'suv', 'truck_camper'
-  String get crewType =>
-      throw _privateConstructorUsedError; // 'solo', 'couple', 'with_pets'
+  @JsonKey(name: 'crew_type')
+  String? get crewType => throw _privateConstructorUsedError; // 'solo', 'couple', 'with_pets'
   bool get petFriendly => throw _privateConstructorUsedError;
 
   /// Serializes this Rig to a JSON map.
@@ -41,7 +41,11 @@ abstract class $RigCopyWith<$Res> {
   factory $RigCopyWith(Rig value, $Res Function(Rig) then) =
       _$RigCopyWithImpl<$Res, Rig>;
   @useResult
-  $Res call({String type, String crewType, bool petFriendly});
+  $Res call({
+    String? type,
+    @JsonKey(name: 'crew_type') String? crewType,
+    bool petFriendly,
+  });
 }
 
 /// @nodoc
@@ -58,20 +62,20 @@ class _$RigCopyWithImpl<$Res, $Val extends Rig> implements $RigCopyWith<$Res> {
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? type = null,
-    Object? crewType = null,
+    Object? type = freezed,
+    Object? crewType = freezed,
     Object? petFriendly = null,
   }) {
     return _then(
       _value.copyWith(
-            type: null == type
+            type: freezed == type
                 ? _value.type
                 : type // ignore: cast_nullable_to_non_nullable
-                      as String,
-            crewType: null == crewType
+                      as String?,
+            crewType: freezed == crewType
                 ? _value.crewType
                 : crewType // ignore: cast_nullable_to_non_nullable
-                      as String,
+                      as String?,
             petFriendly: null == petFriendly
                 ? _value.petFriendly
                 : petFriendly // ignore: cast_nullable_to_non_nullable
@@ -88,7 +92,11 @@ abstract class _$$RigImplCopyWith<$Res> implements $RigCopyWith<$Res> {
       __$$RigImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({String type, String crewType, bool petFriendly});
+  $Res call({
+    String? type,
+    @JsonKey(name: 'crew_type') String? crewType,
+    bool petFriendly,
+  });
 }
 
 /// @nodoc
@@ -102,20 +110,20 @@ class __$$RigImplCopyWithImpl<$Res> extends _$RigCopyWithImpl<$Res, _$RigImpl>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? type = null,
-    Object? crewType = null,
+    Object? type = freezed,
+    Object? crewType = freezed,
     Object? petFriendly = null,
   }) {
     return _then(
       _$RigImpl(
-        type: null == type
+        type: freezed == type
             ? _value.type
             : type // ignore: cast_nullable_to_non_nullable
-                  as String,
-        crewType: null == crewType
+                  as String?,
+        crewType: freezed == crewType
             ? _value.crewType
             : crewType // ignore: cast_nullable_to_non_nullable
-                  as String,
+                  as String?,
         petFriendly: null == petFriendly
             ? _value.petFriendly
             : petFriendly // ignore: cast_nullable_to_non_nullable
@@ -129,8 +137,8 @@ class __$$RigImplCopyWithImpl<$Res> extends _$RigCopyWithImpl<$Res, _$RigImpl>
 @JsonSerializable()
 class _$RigImpl implements _Rig {
   const _$RigImpl({
-    required this.type,
-    required this.crewType,
+    this.type,
+    @JsonKey(name: 'crew_type') this.crewType,
     this.petFriendly = false,
   });
 
@@ -138,10 +146,11 @@ class _$RigImpl implements _Rig {
       _$$RigImplFromJson(json);
 
   @override
-  final String type;
+  final String? type;
   // 'sprinter', 'skoolie', 'suv', 'truck_camper'
   @override
-  final String crewType;
+  @JsonKey(name: 'crew_type')
+  final String? crewType;
   // 'solo', 'couple', 'with_pets'
   @override
   @JsonKey()
@@ -184,17 +193,18 @@ class _$RigImpl implements _Rig {
 
 abstract class _Rig implements Rig {
   const factory _Rig({
-    required final String type,
-    required final String crewType,
+    final String? type,
+    @JsonKey(name: 'crew_type') final String? crewType,
     final bool petFriendly,
   }) = _$RigImpl;
 
   factory _Rig.fromJson(Map<String, dynamic> json) = _$RigImpl.fromJson;
 
   @override
-  String get type; // 'sprinter', 'skoolie', 'suv', 'truck_camper'
+  String? get type; // 'sprinter', 'skoolie', 'suv', 'truck_camper'
   @override
-  String get crewType; // 'solo', 'couple', 'with_pets'
+  @JsonKey(name: 'crew_type')
+  String? get crewType; // 'solo', 'couple', 'with_pets'
   @override
   bool get petFriendly;
 

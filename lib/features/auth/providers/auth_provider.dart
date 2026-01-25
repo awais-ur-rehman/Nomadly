@@ -16,12 +16,14 @@ class AuthState {
   final bool isLoading;
   final String? error;
   final bool isAuthenticated;
+  final bool isAppInitialized;
 
   AuthState({
     this.user,
     this.isLoading = false,
     this.error,
     this.isAuthenticated = false,
+    this.isAppInitialized = false,
   });
 
   AuthState copyWith({
@@ -29,12 +31,14 @@ class AuthState {
     bool? isLoading,
     String? error,
     bool? isAuthenticated,
+    bool? isAppInitialized,
   }) {
     return AuthState(
       user: user ?? this.user,
       isLoading: isLoading ?? this.isLoading,
       error: error,
       isAuthenticated: isAuthenticated ?? this.isAuthenticated,
+      isAppInitialized: isAppInitialized ?? this.isAppInitialized,
     );
   }
 }
@@ -53,15 +57,27 @@ class AuthNotifier extends StateNotifier<AuthState> {
     try {
       final isLoggedIn = await _repository.isLoggedIn();
       if (isLoggedIn) {
-        state = state.copyWith(isAuthenticated: true, isLoading: true);
-        final user = await _repository.getMe();
-        state = state.copyWith(
-          user: user,
-          isLoading: false,
-        );
+        state = state.copyWith(isLoading: true);
+        try {
+          final user = await _repository.getMe();
+          state = state.copyWith(
+            user: user,
+            isAuthenticated: true,
+            isLoading: false,
+          );
+        } catch (e) {
+          _logger.e('Failed to fetch user during status check: $e');
+          await _repository.logout();
+          state = state.copyWith(
+            isAuthenticated: false,
+            isLoading: false,
+          );
+        }
       }
     } catch (e) {
       _logger.e('Error checking auth status: $e');
+    } finally {
+      state = state.copyWith(isAppInitialized: true);
     }
   }
 

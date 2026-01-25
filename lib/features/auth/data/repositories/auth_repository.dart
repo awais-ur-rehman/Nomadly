@@ -70,7 +70,7 @@ class AuthRepository {
         );
 
         // Save user info
-        await _storage.saveUserId(authResponse.user.id);
+        await _storage.saveUserId(authResponse.user.uid);
         await _storage.saveUserEmail(authResponse.user.email);
 
         return authResponse;
@@ -125,7 +125,7 @@ class AuthRepository {
         );
 
         // Save user info
-        await _storage.saveUserId(authResponse.user.id);
+        await _storage.saveUserId(authResponse.user.uid);
         await _storage.saveUserEmail(authResponse.user.email);
 
         return authResponse;

@@ -119,7 +119,7 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
                         Row(
                           children: [
                              Text(
-                              '${profile.name}, ${profile.age}',
+                              profile.age != null ? '${profile.name}, ${profile.age}' : profile.name,
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 32,
@@ -133,14 +133,15 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
                           ],
                         ),
                         if (rig != null)
-                           Text(
-                            '${rig.type.toUpperCase()} • ${rig.crewType.toUpperCase()}',
-                            style: const TextStyle(
-                              color: Colors.white70,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
+                           if (rig.type != null || rig.crewType != null)
+                             Text(
+                              '${rig.type?.toUpperCase() ?? 'UNKNOWN'} • ${rig.crewType?.toUpperCase() ?? 'UNKNOWN'}',
+                              style: const TextStyle(
+                                color: Colors.white70,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
-                          ),
                       ],
                     ),
                   ),
@@ -159,7 +160,7 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
                        Expanded(
                         child: ElevatedButton.icon(
                           onPressed: () async {
-                            final conversation = await ref.read(chatListProvider.notifier).createConversation(user.id);
+                            final conversation = await ref.read(chatListProvider.notifier).createConversation(user.uid);
                             if (conversation != null && context.mounted) {
                                context.push('/chat/${conversation.id}', extra: user);
                             }
@@ -215,8 +216,8 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
 
                   if (rig != null) ...[
                      _buildSectionTitle('Rig Details'),
-                     _buildInfoRow('Type', rig.type),
-                     _buildInfoRow('Crew', rig.crewType),
+                     _buildInfoRow('Type', rig.type ?? 'Not Specified'),
+                     _buildInfoRow('Crew', rig.crewType ?? 'Not Specified'),
                      _buildInfoRow('Pets', rig.petFriendly ? 'Pet Friendly' : 'No Pets'),
                   ],
                 ],

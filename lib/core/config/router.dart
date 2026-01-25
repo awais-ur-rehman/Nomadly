@@ -24,13 +24,32 @@ import '../../features/activities/presentation/screens/activities_list_screen.da
 import '../../shared/models/user.dart';
 import '../../shared/models/activity.dart'; // Import Activity model
 
+/// Listenable that notifies GoRouter when auth state changes
+class RouterListenable extends ChangeNotifier {
+  final Ref _ref;
+  bool _isAuthenticated = false;
+
+  RouterListenable(this._ref) {
+    _ref.listen(authProvider, (previous, next) {
+      if (previous?.isAuthenticated != next.isAuthenticated) {
+        _isAuthenticated = next.isAuthenticated;
+        notifyListeners();
+      }
+    });
+    _isAuthenticated = _ref.read(authProvider).isAuthenticated;
+  }
+
+  bool get isAuthenticated => _isAuthenticated;
+}
+
 final routerProvider = Provider<GoRouter>((ref) {
-  final authState = ref.watch(authProvider);
+  final listenable = RouterListenable(ref);
 
   return GoRouter(
     initialLocation: '/',
+    refreshListenable: listenable,
     redirect: (context, state) {
-      final isAuthenticated = authState.isAuthenticated;
+      final isAuthenticated = listenable.isAuthenticated;
       final isOnAuthPage = state.matchedLocation.startsWith('/auth') ||
           state.matchedLocation == '/' ||
           state.matchedLocation == '/onboarding' ||
@@ -44,7 +63,9 @@ final routerProvider = Provider<GoRouter>((ref) {
       }
 
       // If authenticated and on auth pages, redirect to home
-      if (isAuthenticated && isOnAuthPage && state.matchedLocation != '/') {
+      // Note: We don't redirect to /home if matchedLocation is Splash or OTP to allow initial flow
+      if (isAuthenticated && 
+          (state.matchedLocation == '/sign-in' || state.matchedLocation == '/sign-up')) {
         return '/home';
       }
 
@@ -75,7 +96,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/otp',
         builder: (context, state) {
-          final email = state.extra as String?;
+          final email = state.uri.queryParameters['email'];
           return OTPScreen(email: email ?? '');
         },
       ),
