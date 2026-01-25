@@ -41,51 +41,41 @@ class ProfileScreen extends ConsumerWidget {
       );
     }
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(AppStrings.profile),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.settings_outlined),
-            onPressed: () {
-              // TODO: Settings screen
-            },
-          ),
-          IconButton(
-             icon: const Icon(Icons.logout, color: AppColors.error),
-             onPressed: () {
-               ref.read(authProvider.notifier).logout();
-               // Navigation handled by router redirect usually, or force it:
-               context.go('/onboarding');
-             },
-          ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
+    return SingleChildScrollView(
+      child: Column(
+        children: [
             const SizedBox(height: AppDimensions.paddingL),
             // Avatar
             Center(
               child: Stack(
                 children: [
-                  CircleAvatar(
-                    radius: 60,
-                    backgroundImage: profile.photoUrl != null
-                        ? NetworkImage(profile.photoUrl!)
-                        : null,
-                    child: profile.photoUrl == null
-                        ? const Icon(Icons.person, size: 60)
-                        : null,
+                   Container(
+                    width: 120,
+                    height: 120,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: AppColors.primary.withOpacity(0.2), width: 2),
+                    ),
+                    child: ClipOval(
+                      child: profile.photoUrl != null && profile.photoUrl!.isNotEmpty
+                          ? CachedNetworkImage(
+                              imageUrl: profile.photoUrl!,
+                              fit: BoxFit.cover,
+                              placeholder: (context, url) => const CircularProgressIndicator(strokeWidth: 2),
+                              errorWidget: (context, url, error) => const Icon(Icons.person, size: 60),
+                            )
+                          : const Icon(Icons.person, size: 60, color: AppColors.grey),
+                    ),
                   ),
                   Positioned(
                     bottom: 0,
                     right: 0,
                     child: Container(
                       padding: const EdgeInsets.all(4),
-                      decoration: const BoxDecoration(
+                      decoration: BoxDecoration(
                         color: AppColors.primary,
                         shape: BoxShape.circle,
+                        border: Border.all(color: AppColors.white, width: 2),
                       ),
                       child: const Icon(
                         Icons.edit,
@@ -219,7 +209,6 @@ class ProfileScreen extends ConsumerWidget {
             ),
           ],
         ),
-      ),
     );
   }
 

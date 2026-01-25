@@ -123,6 +123,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 );
               },
             ),
+          if (_currentIndex == 4) ...[
+            IconButton(
+              icon: const Icon(Icons.settings_outlined),
+              onPressed: () {
+                // TODO: Settings screen
+              },
+            ),
+            IconButton(
+              icon: const Icon(Icons.logout, color: AppColors.error),
+              onPressed: () {
+                ref.read(authProvider.notifier).logout();
+                context.go('/onboarding');
+              },
+            ),
+          ],
         ],
       ),
       body: IndexedStack(

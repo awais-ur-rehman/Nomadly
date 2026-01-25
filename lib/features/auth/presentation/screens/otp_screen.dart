@@ -101,124 +101,126 @@ class _OTPScreenState extends ConsumerState<OTPScreen> {
         title: const Text(AppStrings.verifyOTP),
       ),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(AppDimensions.paddingL),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const SizedBox(height: AppDimensions.paddingXL),
-
-              // Title
-              const Text(
-                'Verify Your Email',
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(AppDimensions.paddingL),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const SizedBox(height: AppDimensions.paddingXL),
+  
+                // Title
+                const Text(
+                  'Verify Your Email',
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary,
+                  ),
                 ),
-              ),
-              const SizedBox(height: AppDimensions.paddingS),
-              Text(
-                'Enter the 6-digit code sent to\n${widget.email}',
-                style: const TextStyle(
-                  fontSize: 16,
-                  color: AppColors.textSecondary,
+                const SizedBox(height: AppDimensions.paddingS),
+                Text(
+                  'Enter the 6-digit code sent to\n${widget.email}',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    color: AppColors.textSecondary,
+                  ),
                 ),
-              ),
-              const SizedBox(height: AppDimensions.paddingXXL),
-
-              // OTP Input Fields
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: List.generate(6, (index) {
-                  return SizedBox(
-                    width: 50,
-                    child: TextFormField(
-                      controller: _controllers[index],
-                      focusNode: _focusNodes[index],
-                      textAlign: TextAlign.center,
-                      keyboardType: TextInputType.number,
-                      maxLength: 1,
-                      style: const TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      decoration: InputDecoration(
-                        counterText: '',
-                        filled: true,
-                        fillColor: AppColors.greyExtraLight,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide.none,
+                const SizedBox(height: AppDimensions.paddingXXL),
+  
+                // OTP Input Fields
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: List.generate(6, (index) {
+                    return SizedBox(
+                      width: 50,
+                      child: TextFormField(
+                        controller: _controllers[index],
+                        focusNode: _focusNodes[index],
+                        textAlign: TextAlign.center,
+                        keyboardType: TextInputType.number,
+                        maxLength: 1,
+                        style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
                         ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(
-                            color: AppColors.primary,
-                            width: 2,
+                        decoration: InputDecoration(
+                          counterText: '',
+                          filled: true,
+                          fillColor: AppColors.greyExtraLight,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(
+                              color: AppColors.primary,
+                              width: 2,
+                            ),
                           ),
                         ),
+                        onChanged: (value) {
+                          if (value.isNotEmpty && index < 5) {
+                            _focusNodes[index + 1].requestFocus();
+                          } else if (value.isEmpty && index > 0) {
+                            _focusNodes[index - 1].requestFocus();
+                          }
+  
+                          // Auto-verify when all fields are filled
+                          if (index == 5 && value.isNotEmpty) {
+                            _handleVerify();
+                          }
+                        },
                       ),
-                      onChanged: (value) {
-                        if (value.isNotEmpty && index < 5) {
-                          _focusNodes[index + 1].requestFocus();
-                        } else if (value.isEmpty && index > 0) {
-                          _focusNodes[index - 1].requestFocus();
-                        }
-
-                        // Auto-verify when all fields are filled
-                        if (index == 5 && value.isNotEmpty) {
-                          _handleVerify();
-                        }
-                      },
-                    ),
-                  );
-                }),
-              ),
-              const SizedBox(height: AppDimensions.paddingXL),
-
-              // Verify button
-              SizedBox(
-                height: AppDimensions.buttonHeightL,
-                child: ElevatedButton(
-                  onPressed: authState.isLoading ? null : _handleVerify,
-                  child: authState.isLoading
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor:
-                                AlwaysStoppedAnimation<Color>(AppColors.white),
-                          ),
-                        )
-                      : const Text(AppStrings.verify),
+                    );
+                  }),
                 ),
-              ),
-              const SizedBox(height: AppDimensions.paddingL),
-
-              // Resend OTP
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text(
-                    "Didn't receive code? ",
-                    style: TextStyle(color: AppColors.textSecondary),
+                const SizedBox(height: AppDimensions.paddingXL),
+  
+                // Verify button
+                SizedBox(
+                  height: AppDimensions.buttonHeightL,
+                  child: ElevatedButton(
+                    onPressed: authState.isLoading ? null : _handleVerify,
+                    child: authState.isLoading
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor:
+                                  AlwaysStoppedAnimation<Color>(AppColors.white),
+                            ),
+                          )
+                        : const Text(AppStrings.verify),
                   ),
-                  TextButton(
-                    onPressed: _canResend ? _handleResend : null,
-                    child: Text(
-                      _canResend
-                          ? AppStrings.resendOTP
-                          : 'Resend in ${_resendTimer}s',
-                      style: TextStyle(
-                        color: _canResend ? AppColors.primary : AppColors.grey,
+                ),
+                const SizedBox(height: AppDimensions.paddingL),
+  
+                // Resend OTP
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text(
+                      "Didn't receive code? ",
+                      style: TextStyle(color: AppColors.textSecondary),
+                    ),
+                    TextButton(
+                      onPressed: _canResend ? _handleResend : null,
+                      child: Text(
+                        _canResend
+                            ? AppStrings.resendOTP
+                            : 'Resend in ${_resendTimer}s',
+                        style: TextStyle(
+                          color: _canResend ? AppColors.primary : AppColors.grey,
+                        ),
                       ),
                     ),
-                  ),
-                ],
-              ),
-            ],
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
