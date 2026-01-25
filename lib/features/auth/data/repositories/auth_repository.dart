@@ -1,8 +1,9 @@
 import 'package:dio/dio.dart';
 import 'package:logger/logger.dart';
-import '../../../core/config/app_config.dart';
-import '../../../shared/services/api_client.dart';
-import '../../../shared/services/secure_storage_service.dart';
+import '../../../../core/config/app_config.dart';
+import '../../../../shared/services/api_client.dart';
+import '../../../../shared/services/secure_storage_service.dart';
+import '../../../../shared/models/user.dart';
 import '../models/auth_response.dart';
 
 class AuthRepository {

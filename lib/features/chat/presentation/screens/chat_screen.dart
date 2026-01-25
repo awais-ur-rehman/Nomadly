@@ -5,7 +5,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../shared/models/user.dart';
 import '../../providers/chat_provider.dart';
-import '../../providers/auth_provider.dart';
+import '../../../auth/providers/auth_provider.dart';
 import '../widgets/message_bubble.dart';
 
 class ChatScreen extends ConsumerStatefulWidget {

@@ -1,28 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../features/auth/presentation/screens/splash_screen.dart';
-import '../features/auth/presentation/screens/onboarding_screen.dart';
-import '../features/auth/presentation/screens/sign_up_screen.dart';
-import '../features/auth/presentation/screens/sign_in_screen.dart';
-import '../features/auth/presentation/screens/otp_screen.dart';
-import '../features/auth/presentation/screens/profile_setup_screen.dart';
-import '../features/discovery/presentation/screens/home_screen.dart';
-import '../features/chat/presentation/screens/inbox_screen.dart'; // Add this if not present
-import '../features/chat/presentation/screens/chat_screen.dart';
-import '../features/social/presentation/screens/posts_feed_screen.dart';
-import '../features/social/presentation/screens/create_post_screen.dart';
-import '../features/marketplace/presentation/screens/marketplace_screen.dart';
-import '../features/marketplace/presentation/screens/builder_detail_screen.dart';
-import '../features/social/presentation/screens/notifications_screen.dart';
-import '../shared/models/builder.dart';
-import '../features/profile/presentation/screens/user_profile_screen.dart';
-import '../features/auth/providers/auth_provider.dart';
-import '../features/activities/presentation/screens/activity_detail_screen.dart';
-import '../features/activities/presentation/screens/create_activity_screen.dart';
-import '../features/activities/presentation/screens/activities_list_screen.dart';
-import '../shared/models/user.dart';
-import '../shared/models/activity.dart'; // Import Activity model
+import '../../features/auth/presentation/screens/splash_screen.dart';
+import '../../features/auth/presentation/screens/onboarding_screen.dart';
+import '../../features/auth/presentation/screens/sign_up_screen.dart';
+import '../../features/auth/presentation/screens/sign_in_screen.dart';
+import '../../features/auth/presentation/screens/otp_screen.dart';
+import '../../features/auth/presentation/screens/profile_setup_screen.dart';
+import '../../features/discovery/presentation/screens/home_screen.dart';
+import '../../features/chat/presentation/screens/inbox_screen.dart'; // Add this if not present
+import '../../features/chat/presentation/screens/chat_screen.dart';
+import '../../features/social/presentation/screens/posts_feed_screen.dart';
+import '../../features/social/presentation/screens/create_post_screen.dart';
+import '../../features/marketplace/presentation/screens/marketplace_screen.dart';
+import '../../features/marketplace/presentation/screens/builder_detail_screen.dart';
+import '../../features/social/presentation/screens/notifications_screen.dart';
+import '../../shared/models/builder.dart';
+import '../../features/profile/presentation/screens/user_profile_screen.dart';
+import '../../features/auth/providers/auth_provider.dart';
+import '../../features/activities/presentation/screens/activity_detail_screen.dart';
+import '../../features/activities/presentation/screens/create_activity_screen.dart';
+import '../../features/activities/presentation/screens/activities_list_screen.dart';
+import '../../shared/models/user.dart';
+import '../../shared/models/activity.dart'; // Import Activity model
 
 final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authProvider);

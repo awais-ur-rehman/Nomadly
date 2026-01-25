@@ -6,9 +6,10 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:logger/logger.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
-import '../../providers/activity_provider.dart';
+import '../../../activities/providers/activity_provider.dart';
 import '../../../../shared/models/activity.dart';
 import '../../../../shared/models/beacon.dart';
+import '../../../../shared/models/geo_point.dart';
 
 class MapScreen extends ConsumerStatefulWidget {
   const MapScreen({super.key});
@@ -20,12 +21,17 @@ class MapScreen extends ConsumerStatefulWidget {
 class _MapScreenState extends ConsumerState<MapScreen> {
   MapboxMap? _mapboxMap;
   PointAnnotationManager? _pointAnnotationManager;
+  final Map<String, dynamic> _annotationData = {};
   final _logger = Logger();
   bool _locationPermissionGranted = false;
 
   @override
   void initState() {
     super.initState();
+    final token = dotenv.env['MAPBOX_ACCESS_TOKEN'];
+    if (token != null) {
+      MapboxOptions.setAccessToken(token);
+    }
     _requestLocationPermission();
   }
 
@@ -51,19 +57,21 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     if (_mapboxMap == null) return;
     _pointAnnotationManager = await _mapboxMap!.annotations.createPointAnnotationManager();
     _pointAnnotationManager?.addOnPointAnnotationClickListener(
-      AnnotationClickListener(onAnnotationClick: (annotation) {
-        final data = annotation.data;
-        if (data != null && data is Map<String, dynamic>) {
-          if (data.containsKey('title')) {
-            final activity = Activity.fromJson(data);
-            context.push('/activity/${activity.id}', extra: activity);
-          } else if (data.containsKey('message')) {
-            final beacon = Beacon.fromJson(data);
-            _showBeaconDialog(beacon);
+      _PointAnnotationClickListener(
+        onAnnotationClick: (annotation) {
+          final data = _annotationData[annotation.id];
+          if (data != null && data is Map<String, dynamic>) {
+            if (data.containsKey('title')) {
+              final activity = Activity.fromJson(data);
+              context.push('/activity/${activity.id}', extra: activity);
+            } else if (data.containsKey('message')) {
+              final beacon = Beacon.fromJson(data);
+              _showBeaconDialog(beacon);
+            }
           }
-        }
-        return true;
-      }),
+          return true;
+        },
+      ),
     );
     _updateMarkers();
   }
@@ -109,38 +117,55 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     
     final state = ref.read(activityProvider);
     await _pointAnnotationManager?.deleteAll();
+    _annotationData.clear();
     
     final List<PointAnnotationOptions> annotations = [];
 
     // Activities
     for (final activity in state.activities) {
-      annotations.add(PointAnnotationOptions(
+      final options = PointAnnotationOptions(
         geometry: Point(coordinates: Position(activity.location.longitude, activity.location.latitude)),
         iconImage: 'marker-15',
         iconSize: 2.0,
         textField: activity.title,
         textOffset: [0, 1.5],
         textAnchor: TextAnchor.TOP,
-        data: activity.toJson(),
-      ));
+      );
+      final json = activity.toJson();
+      annotations.add(options);
+      // We'll map these after creation or use a different way. 
+      // Actually, PointAnnotationManager.createMulti returns List<PointAnnotation>.
     }
 
     // Beacons
     for (final beacon in state.beacons) {
-      annotations.add(PointAnnotationOptions(
+      final options = PointAnnotationOptions(
         geometry: Point(coordinates: Position(beacon.location.longitude, beacon.location.latitude)),
-        iconImage: 'rocket-15', // Different icon for beacons
+        iconImage: 'rocket-15',
         iconColor: Colors.orange.value,
         iconSize: 2.5,
         textField: beacon.message,
         textMaxWidth: 10.0,
         textOffset: [0, -1.5],
         textAnchor: TextAnchor.BOTTOM,
-        data: beacon.toJson(),
-      ));
+      );
+      annotations.add(options);
     }
 
-    _pointAnnotationManager?.createMulti(annotations);
+    final createdAnnotations = await _pointAnnotationManager?.createMulti(annotations);
+    if (createdAnnotations != null) {
+      int activityCount = state.activities.length;
+      for (int i = 0; i < createdAnnotations.length; i++) {
+        final annotation = createdAnnotations[i];
+        if (annotation != null) {
+          if (i < activityCount) {
+            _annotationData[annotation.id] = state.activities[i].toJson();
+          } else {
+            _annotationData[annotation.id] = state.beacons[i - activityCount].toJson();
+          }
+        }
+      }
+    }
   }
 
   Future<void> _setupLocation() async {
@@ -203,9 +228,6 @@ class _MapScreenState extends ConsumerState<MapScreen> {
           MapWidget(
             key: const ValueKey('mapWidget'),
             onMapCreated: _onMapCreated,
-            resourceOptions: ResourceOptions(
-              accessToken: token,
-            ),
             cameraOptions: CameraOptions(
               center: Point(coordinates: Position(-122.4194, 37.7749)), // SF Default
               zoom: 12.0,
@@ -314,5 +336,16 @@ class _MapScreenState extends ConsumerState<MapScreen> {
         ],
       ),
     );
+  }
+}
+
+class _PointAnnotationClickListener extends OnPointAnnotationClickListener {
+  final bool Function(PointAnnotation) onAnnotationClick;
+
+  _PointAnnotationClickListener({required this.onAnnotationClick});
+
+  @override
+  bool onPointAnnotationClick(PointAnnotation annotation) {
+    return onAnnotationClick(annotation);
   }
 }

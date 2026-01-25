@@ -44,7 +44,7 @@ class AppTheme {
       ),
 
       // Card
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         color: AppColors.white,
         elevation: 2,
         shadowColor: AppColors.shadow,
@@ -129,7 +129,7 @@ class AppTheme {
       ),
 
       // Bottom Navigation Bar
-      bottomNavigationBarTheme: const BottomNavigationBarTheme(
+      bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         backgroundColor: AppColors.white,
         selectedItemColor: AppColors.primary,
         unselectedItemColor: AppColors.grey,

@@ -8,6 +8,7 @@ class AppColors {
   static const Color primary = Color(0xFF007AFF); // Blue from Figma
   static const Color primaryDark = Color(0xFF0051D5);
   static const Color primaryLight = Color(0xFF4DA3FF);
+  static const Color primaryExtraLight = Color(0xFFE5F1FF);
 
   // Secondary Colors
   static const Color secondary = Color(0xFF5856D6);

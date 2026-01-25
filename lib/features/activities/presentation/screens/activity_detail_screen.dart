@@ -6,6 +6,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../shared/models/activity.dart';
+import '../../../../shared/models/geo_point.dart';
 import '../../providers/activity_provider.dart';
 import '../../../auth/providers/auth_provider.dart';
 
@@ -46,9 +47,9 @@ class ActivityDetailScreen extends ConsumerWidget {
           SizedBox(
             height: 250,
             width: double.infinity,
-            child: widget.activity.imageUrl != null
+            child: activity.imageUrl != null
                 ? CachedNetworkImage(
-                    imageUrl: widget.activity.imageUrl!,
+                    imageUrl: activity.imageUrl!,
                     fit: BoxFit.cover,
                   )
                 : Container(
