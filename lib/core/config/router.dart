@@ -10,9 +10,19 @@ import '../features/auth/presentation/screens/profile_setup_screen.dart';
 import '../features/discovery/presentation/screens/home_screen.dart';
 import '../features/chat/presentation/screens/inbox_screen.dart'; // Add this if not present
 import '../features/chat/presentation/screens/chat_screen.dart';
+import '../features/social/presentation/screens/posts_feed_screen.dart';
+import '../features/social/presentation/screens/create_post_screen.dart';
+import '../features/marketplace/presentation/screens/marketplace_screen.dart';
+import '../features/marketplace/presentation/screens/builder_detail_screen.dart';
+import '../features/social/presentation/screens/notifications_screen.dart';
+import '../shared/models/builder.dart';
 import '../features/profile/presentation/screens/user_profile_screen.dart';
 import '../features/auth/providers/auth_provider.dart';
+import '../features/activities/presentation/screens/activity_detail_screen.dart';
+import '../features/activities/presentation/screens/create_activity_screen.dart';
+import '../features/activities/presentation/screens/activities_list_screen.dart';
 import '../shared/models/user.dart';
+import '../shared/models/activity.dart'; // Import Activity model
 
 final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authProvider);
@@ -97,6 +107,52 @@ final routerProvider = Provider<GoRouter>((ref) {
           final conversationId = state.pathParameters['id']!;
           final otherUser = state.extra as User;
           return ChatScreen(conversationId: conversationId, otherUser: otherUser);
+        },
+      ),
+
+      // Activity Detail
+      GoRoute(
+        path: '/activity/:id',
+        builder: (context, state) {
+          final activity = state.extra as Activity;
+          return ActivityDetailScreen(activity: activity);
+        },
+      ),
+
+      // Create Activity
+      GoRoute(
+        path: '/create-activity',
+        builder: (context, state) => const CreateActivityScreen(),
+      ),
+
+      // Activities List
+      GoRoute(
+        path: '/activities',
+        builder: (context, state) => const ActivitiesListScreen(),
+      ),
+
+      // Create Post
+      GoRoute(
+        path: '/create-post',
+        builder: (context, state) => const CreatePostScreen(),
+      ),
+      // Marketplace
+      GoRoute(
+        path: '/marketplace',
+        builder: (context, state) => const MarketplaceScreen(),
+      ),
+      // Notifications
+      GoRoute(
+        path: '/notifications',
+        builder: (context, state) => const NotificationsScreen(),
+      ),
+
+      // Builder Detail
+      GoRoute(
+        path: '/builder/:id',
+        builder: (context, state) {
+          final builder = state.extra as BuilderProfile;
+          return BuilderDetailScreen(builder: builder);
         },
       ),
     ],

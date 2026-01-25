@@ -1,8 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../shared/models/user.dart';
-import '../../../../shared/services/toast_service.dart';
 import '../data/repositories/profile_repository.dart';
-import '../../auth/providers/auth_provider.dart';
 
 // Repository Provider
 final profileRepositoryProvider = Provider<ProfileRepository>((ref) {

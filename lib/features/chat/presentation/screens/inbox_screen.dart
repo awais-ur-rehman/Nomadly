@@ -4,11 +4,9 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_dimensions.dart';
-import '../../../../core/constants/app_strings.dart';
 import '../../providers/chat_provider.dart';
 import '../../../matches/providers/match_provider.dart';
 import '../../../../shared/models/conversation.dart';
-import '../../../../shared/models/user.dart';
 import '../../../auth/providers/auth_provider.dart';
 
 class InboxScreen extends ConsumerStatefulWidget {

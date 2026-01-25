@@ -5,13 +5,13 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/constants/app_strings.dart';
-import '../../../../shared/services/toast_service.dart';
 import '../../providers/discovery_provider.dart';
 import '../widgets/user_card.dart';
 import '../widgets/filter_bottom_sheet.dart';
-import '../../../matches/presentation/screens/matches_screen.dart';
 import '../../../chat/presentation/screens/inbox_screen.dart';
 import '../../../profile/presentation/screens/profile_screen.dart';
+import '../../../map/presentation/screens/map_screen.dart';
+import '../../../social/presentation/screens/posts_feed_screen.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -102,7 +102,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       appBar: AppBar(
         title: Text(_getTitle(_currentIndex)),
         actions: [
-          if (_currentIndex == 0) // Only show filter on discovery
+          if (_currentIndex == 0) ...[
+            IconButton(
+              icon: const Icon(Icons.storefront_outlined),
+              onPressed: () => context.push('/marketplace'),
+            ),
+            IconButton(
+              icon: const Icon(Icons.notifications_none),
+              onPressed: () => context.push('/notifications'),
+            ),
+          ],
+          if (_currentIndex == 1) // Only show filter on discovery
             IconButton(
               icon: const Icon(Icons.filter_list),
               onPressed: () {
@@ -118,18 +128,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       body: IndexedStack(
         index: _currentIndex,
         children: [
-          // 0: Discovery
+          // 0: Feed
+          const PostsFeedScreen(),
+          // 1: Discovery
           _buildDiscoveryFeed(),
-          // 1: Map (Placeholder)
-          const Center(child: Text('Map - Coming Soon')),
-          // 2: Chat / Matches / Inbox
+          // 2: Map
+          const MapScreen(),
+          // 3: Chat / Matches / Inbox
           const InboxScreen(),
-          // 3: Profile
+          // 4: Profile
           const ProfileScreen(),
         ],
       ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
+        selectedItemColor: AppColors.primary,
+        unselectedItemColor: AppColors.grey,
+        type: BottomNavigationBarType.fixed,
         onTap: (index) {
           setState(() {
             _currentIndex = index;
@@ -137,19 +152,28 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         },
         items: const [
           BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Home',
+            icon: Icon(Icons.feed_outlined),
+            activeIcon: Icon(Icons.feed),
+            label: 'Feed',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.map),
+            icon: Icon(Icons.people_outline),
+            activeIcon: Icon(Icons.people),
+            label: 'Discovery',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.map_outlined),
+            activeIcon: Icon(Icons.map),
             label: 'Map',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.chat),
+            icon: Icon(Icons.chat_bubble_outline),
+            activeIcon: Icon(Icons.chat_bubble),
             label: 'Matches',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.person),
+            icon: Icon(Icons.person_outline),
+            activeIcon: Icon(Icons.person),
             label: 'Profile',
           ),
         ],
@@ -160,12 +184,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   String _getTitle(int index) {
     switch (index) {
       case 0:
-        return AppStrings.discovery;
+        return 'Nomad Feed';
       case 1:
-        return 'Map';
+        return AppStrings.discovery;
       case 2:
-        return AppStrings.matches;
+        return 'Explore Map';
       case 3:
+        return AppStrings.matches;
+      case 4:
         return AppStrings.profile;
       default:
         return AppStrings.appName;

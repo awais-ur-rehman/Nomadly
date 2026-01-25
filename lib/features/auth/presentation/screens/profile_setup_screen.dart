@@ -293,7 +293,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
             ),
             const SizedBox(height: AppDimensions.paddingM),
             DropdownButtonFormField<String>(
-              value: _selectedGender,
+              initialValue: _selectedGender,
               items: _genders.map((g) => DropdownMenuItem(value: g, child: Text(g.toUpperCase()))).toList(),
               onChanged: (val) => setState(() => _selectedGender = val!),
               decoration: const InputDecoration(labelText: 'Gender'),
@@ -382,14 +382,14 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
             ),
             const SizedBox(height: AppDimensions.paddingL),
             DropdownButtonFormField<String>(
-              value: _selectedRigType,
+              initialValue: _selectedRigType,
               items: _rigTypes.map((t) => DropdownMenuItem(value: t, child: Text(t.replaceAll('_', ' ').toUpperCase()))).toList(),
               onChanged: (val) => setState(() => _selectedRigType = val!),
               decoration: const InputDecoration(labelText: 'Rig Type'),
             ),
             const SizedBox(height: AppDimensions.paddingM),
             DropdownButtonFormField<String>(
-              value: _selectedCrewType,
+              initialValue: _selectedCrewType,
               items: _crewTypes.map((c) => DropdownMenuItem(value: c, child: Text(c.toUpperCase()))).toList(),
               onChanged: (val) => setState(() => _selectedCrewType = val!),
               decoration: const InputDecoration(labelText: 'Crew Type'),

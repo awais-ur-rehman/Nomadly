@@ -13,7 +13,7 @@ class MatchRepository {
   Future<List<Match>> getMatches() async {
     try {
       final response = await _apiClient.get(
-        '${AppConfig.matchesEndpoint}',
+        AppConfig.matchesEndpoint,
       );
 
       if (response.statusCode == 200) {
