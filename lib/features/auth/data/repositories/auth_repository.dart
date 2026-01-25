@@ -168,6 +168,21 @@ class AuthRepository {
     }
   }
 
+  // Get current user profile
+  Future<User> getMe() async {
+    try {
+      final response = await _apiClient.get('${AppConfig.usersEndpoint}/me');
+      if (response.statusCode == 200) {
+        final data = response.data['data'];
+        return User.fromJson(data);
+      }
+      throw Exception('Failed to fetch user profile');
+    } on DioException catch (e) {
+      _logger.e('GetMe error: ${e.message}');
+      throw _handleError(e);
+    }
+  }
+
   // Logout
   Future<void> logout() async {
     try {

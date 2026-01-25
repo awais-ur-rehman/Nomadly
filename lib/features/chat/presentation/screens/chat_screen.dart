@@ -68,10 +68,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           children: [
             CircleAvatar(
               radius: 18,
-              backgroundImage: widget.otherUser.profile.photoUrl != null
-                  ? NetworkImage(widget.otherUser.profile.photoUrl!)
+              backgroundImage: widget.otherUser.profile?.photoUrl != null
+                  ? NetworkImage(widget.otherUser.profile!.photoUrl!)
                   : null,
-              child: widget.otherUser.profile.photoUrl == null
+              child: widget.otherUser.profile?.photoUrl == null
                   ? const Icon(Icons.person, size: 20)
                   : null,
             ),
@@ -80,7 +80,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  widget.otherUser.profile.name,
+                  widget.otherUser.profile?.name ?? 'Nomad',
                   style: const TextStyle(fontSize: 16),
                 ),
                 if (state.isTyping)

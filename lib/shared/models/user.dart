@@ -13,7 +13,7 @@ class User with _$User {
     @JsonKey(name: '_id') required String id,
     required String email,
     String? phone,
-    required Profile profile,
+    Profile? profile,
     Rig? rig,
     TravelRoute? travelRoute,
     @Default(false) bool isBuilder,

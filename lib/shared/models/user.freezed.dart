@@ -25,7 +25,7 @@ mixin _$User {
   String get id => throw _privateConstructorUsedError;
   String get email => throw _privateConstructorUsedError;
   String? get phone => throw _privateConstructorUsedError;
-  Profile get profile => throw _privateConstructorUsedError;
+  Profile? get profile => throw _privateConstructorUsedError;
   Rig? get rig => throw _privateConstructorUsedError;
   TravelRoute? get travelRoute => throw _privateConstructorUsedError;
   bool get isBuilder => throw _privateConstructorUsedError;
@@ -52,7 +52,7 @@ abstract class $UserCopyWith<$Res> {
     @JsonKey(name: '_id') String id,
     String email,
     String? phone,
-    Profile profile,
+    Profile? profile,
     Rig? rig,
     TravelRoute? travelRoute,
     bool isBuilder,
@@ -62,7 +62,7 @@ abstract class $UserCopyWith<$Res> {
     DateTime? updatedAt,
   });
 
-  $ProfileCopyWith<$Res> get profile;
+  $ProfileCopyWith<$Res>? get profile;
   $RigCopyWith<$Res>? get rig;
   $TravelRouteCopyWith<$Res>? get travelRoute;
   $NomadIdCopyWith<$Res>? get nomadId;
@@ -86,7 +86,7 @@ class _$UserCopyWithImpl<$Res, $Val extends User>
     Object? id = null,
     Object? email = null,
     Object? phone = freezed,
-    Object? profile = null,
+    Object? profile = freezed,
     Object? rig = freezed,
     Object? travelRoute = freezed,
     Object? isBuilder = null,
@@ -109,10 +109,10 @@ class _$UserCopyWithImpl<$Res, $Val extends User>
                 ? _value.phone
                 : phone // ignore: cast_nullable_to_non_nullable
                       as String?,
-            profile: null == profile
+            profile: freezed == profile
                 ? _value.profile
                 : profile // ignore: cast_nullable_to_non_nullable
-                      as Profile,
+                      as Profile?,
             rig: freezed == rig
                 ? _value.rig
                 : rig // ignore: cast_nullable_to_non_nullable
@@ -150,8 +150,12 @@ class _$UserCopyWithImpl<$Res, $Val extends User>
   /// with the given fields replaced by the non-null parameter values.
   @override
   @pragma('vm:prefer-inline')
-  $ProfileCopyWith<$Res> get profile {
-    return $ProfileCopyWith<$Res>(_value.profile, (value) {
+  $ProfileCopyWith<$Res>? get profile {
+    if (_value.profile == null) {
+      return null;
+    }
+
+    return $ProfileCopyWith<$Res>(_value.profile!, (value) {
       return _then(_value.copyWith(profile: value) as $Val);
     });
   }
@@ -211,7 +215,7 @@ abstract class _$$UserImplCopyWith<$Res> implements $UserCopyWith<$Res> {
     @JsonKey(name: '_id') String id,
     String email,
     String? phone,
-    Profile profile,
+    Profile? profile,
     Rig? rig,
     TravelRoute? travelRoute,
     bool isBuilder,
@@ -222,7 +226,7 @@ abstract class _$$UserImplCopyWith<$Res> implements $UserCopyWith<$Res> {
   });
 
   @override
-  $ProfileCopyWith<$Res> get profile;
+  $ProfileCopyWith<$Res>? get profile;
   @override
   $RigCopyWith<$Res>? get rig;
   @override
@@ -246,7 +250,7 @@ class __$$UserImplCopyWithImpl<$Res>
     Object? id = null,
     Object? email = null,
     Object? phone = freezed,
-    Object? profile = null,
+    Object? profile = freezed,
     Object? rig = freezed,
     Object? travelRoute = freezed,
     Object? isBuilder = null,
@@ -269,10 +273,10 @@ class __$$UserImplCopyWithImpl<$Res>
             ? _value.phone
             : phone // ignore: cast_nullable_to_non_nullable
                   as String?,
-        profile: null == profile
+        profile: freezed == profile
             ? _value.profile
             : profile // ignore: cast_nullable_to_non_nullable
-                  as Profile,
+                  as Profile?,
         rig: freezed == rig
             ? _value.rig
             : rig // ignore: cast_nullable_to_non_nullable
@@ -313,7 +317,7 @@ class _$UserImpl implements _User {
     @JsonKey(name: '_id') required this.id,
     required this.email,
     this.phone,
-    required this.profile,
+    this.profile,
     this.rig,
     this.travelRoute,
     this.isBuilder = false,
@@ -334,7 +338,7 @@ class _$UserImpl implements _User {
   @override
   final String? phone;
   @override
-  final Profile profile;
+  final Profile? profile;
   @override
   final Rig? rig;
   @override
@@ -416,7 +420,7 @@ abstract class _User implements User {
     @JsonKey(name: '_id') required final String id,
     required final String email,
     final String? phone,
-    required final Profile profile,
+    final Profile? profile,
     final Rig? rig,
     final TravelRoute? travelRoute,
     final bool isBuilder,
@@ -436,7 +440,7 @@ abstract class _User implements User {
   @override
   String? get phone;
   @override
-  Profile get profile;
+  Profile? get profile;
   @override
   Rig? get rig;
   @override

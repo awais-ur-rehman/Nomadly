@@ -35,9 +35,9 @@ class UserCard extends StatelessWidget {
         fit: StackFit.expand,
         children: [
           // Photo
-          if (profile.photoUrl != null)
+          if (profile?.photoUrl != null)
             CachedNetworkImage(
-              imageUrl: profile.photoUrl!,
+              imageUrl: profile!.photoUrl!,
               fit: BoxFit.cover,
               placeholder: (context, url) => Container(
                 color: AppColors.greyExtraLight,
@@ -82,7 +82,7 @@ class UserCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(
-                      profile.name,
+                      profile?.name ?? 'Unknown Nomad',
                       style: const TextStyle(
                         color: AppColors.white,
                         fontSize: 28,
@@ -93,7 +93,7 @@ class UserCard extends StatelessWidget {
                     Padding(
                       padding: const EdgeInsets.only(bottom: 4),
                       child: Text(
-                        '${profile.age}',
+                        profile?.age != null ? '${profile!.age}' : '',
                         style: const TextStyle(
                           color: AppColors.white,
                           fontSize: 22,
@@ -167,9 +167,9 @@ class UserCard extends StatelessWidget {
                 ],
 
                 // Bio
-                if (profile.bio != null)
+                if (profile?.bio != null)
                   Text(
-                    profile.bio!,
+                    profile!.bio!,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(

@@ -53,8 +53,12 @@ class AuthNotifier extends StateNotifier<AuthState> {
     try {
       final isLoggedIn = await _repository.isLoggedIn();
       if (isLoggedIn) {
-        // TODO: Fetch user profile
-        state = state.copyWith(isAuthenticated: true);
+        state = state.copyWith(isAuthenticated: true, isLoading: true);
+        final user = await _repository.getMe();
+        state = state.copyWith(
+          user: user,
+          isLoading: false,
+        );
       }
     } catch (e) {
       _logger.e('Error checking auth status: $e');

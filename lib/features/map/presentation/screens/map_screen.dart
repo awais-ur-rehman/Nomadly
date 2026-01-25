@@ -84,13 +84,13 @@ class _MapScreenState extends ConsumerState<MapScreen> {
           children: [
             CircleAvatar(
                radius: 16,
-               backgroundImage: beacon.author.profile.photoUrl != null 
-                  ? NetworkImage(beacon.author.profile.photoUrl!) 
+               backgroundImage: beacon.author.profile?.photoUrl != null 
+                  ? NetworkImage(beacon.author.profile!.photoUrl!) 
                   : null,
-               child: beacon.author.profile.photoUrl == null ? const Icon(Icons.person, size: 16) : null,
+               child: beacon.author.profile?.photoUrl == null ? const Icon(Icons.person, size: 16) : null,
             ),
             const SizedBox(width: 8),
-            Text(beacon.author.profile.name),
+            Text(beacon.author.profile?.name ?? 'Unknown Nomad'),
           ],
         ),
         content: Text(beacon.message),

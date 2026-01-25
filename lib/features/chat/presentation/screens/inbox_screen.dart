@@ -181,15 +181,15 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
     return ListTile(
       leading: CircleAvatar(
         radius: 28,
-        backgroundImage: otherUser.profile.photoUrl != null
-            ? NetworkImage(otherUser.profile.photoUrl!)
+        backgroundImage: otherUser.profile?.photoUrl != null
+            ? NetworkImage(otherUser.profile!.photoUrl!)
             : null,
-        child: otherUser.profile.photoUrl == null
+        child: otherUser.profile?.photoUrl == null
             ? const Icon(Icons.person)
             : null,
       ),
       title: Text(
-        otherUser.profile.name,
+        otherUser.profile?.name ?? 'Unknown Nomad',
         style: const TextStyle(fontWeight: FontWeight.bold),
       ),
       subtitle: Text(

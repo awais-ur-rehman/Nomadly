@@ -135,17 +135,17 @@ class PostsFeedScreen extends ConsumerWidget {
             ),
             child: CircleAvatar(
               radius: 28,
-              backgroundImage: story.author.profile.photoUrl != null
-                  ? NetworkImage(story.author.profile.photoUrl!)
+              backgroundImage: story.author.profile?.photoUrl != null
+                  ? NetworkImage(story.author.profile!.photoUrl!)
                   : null,
-              child: story.author.profile.photoUrl == null
+              child: story.author.profile?.photoUrl == null
                   ? const Icon(Icons.person)
                   : null,
             ),
           ),
           const SizedBox(height: 4),
           Text(
-            story.author.profile.name,
+            story.author.profile?.name ?? 'Anon',
             style: const TextStyle(fontSize: 10),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,

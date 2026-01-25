@@ -69,11 +69,11 @@ class _StoryViewScreenState extends State<StoryViewScreen> {
                     children: [
                       CircleAvatar(
                         radius: 18,
-                        backgroundImage: NetworkImage(story.author.profile.photoUrl ?? ''),
+                        backgroundImage: NetworkImage(story.author.profile?.photoUrl ?? ''),
                       ),
                       const SizedBox(width: 10),
                       Text(
-                        story.author.profile.name,
+                        story.author.profile?.name ?? 'Nomad',
                         style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                       ),
                       const Spacer(),

@@ -50,7 +50,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
     // Pre-fill name if available via auth provider (if user just registered)
     final user = ref.read(authProvider).user;
     if (user != null) {
-      _nameController.text = user.profile.name;
+      _nameController.text = user.profile?.name ?? '';
     }
   }
 

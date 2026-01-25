@@ -10,7 +10,9 @@ _$UserImpl _$$UserImplFromJson(Map<String, dynamic> json) => _$UserImpl(
   id: json['_id'] as String,
   email: json['email'] as String,
   phone: json['phone'] as String?,
-  profile: Profile.fromJson(json['profile'] as Map<String, dynamic>),
+  profile: json['profile'] == null
+      ? null
+      : Profile.fromJson(json['profile'] as Map<String, dynamic>),
   rig: json['rig'] == null
       ? null
       : Rig.fromJson(json['rig'] as Map<String, dynamic>),

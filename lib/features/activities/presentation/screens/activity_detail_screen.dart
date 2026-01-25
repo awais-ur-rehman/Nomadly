@@ -92,16 +92,16 @@ class ActivityDetailScreen extends ConsumerWidget {
                     children: [
                       CircleAvatar(
                         radius: 12,
-                        backgroundImage: activity.creator.profile.photoUrl != null
-                            ? NetworkImage(activity.creator.profile.photoUrl!)
+                        backgroundImage: activity.creator.profile?.photoUrl != null
+                            ? NetworkImage(activity.creator.profile!.photoUrl!)
                             : null,
-                        child: activity.creator.profile.photoUrl == null
+                        child: activity.creator.profile?.photoUrl == null
                             ? const Icon(Icons.person, size: 12)
                             : null,
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        'Hosted by ${activity.creator.profile.name}',
+                        'Hosted by ${activity.creator.profile?.name ?? 'Unknown'}',
                         style: const TextStyle(color: AppColors.textSecondary),
                       ),
                     ],
@@ -161,10 +161,10 @@ class ActivityDetailScreen extends ConsumerWidget {
                         itemBuilder: (context, index) {
                           final user = activity.participants[index];
                           return CircleAvatar(
-                             backgroundImage: user.profile.photoUrl != null
-                                ? NetworkImage(user.profile.photoUrl!)
+                             backgroundImage: user.profile?.photoUrl != null
+                                ? NetworkImage(user.profile!.photoUrl!)
                                 : null,
-                             child: user.profile.photoUrl == null
+                             child: user.profile?.photoUrl == null
                                 ? const Icon(Icons.person)
                                 : null,
                           );

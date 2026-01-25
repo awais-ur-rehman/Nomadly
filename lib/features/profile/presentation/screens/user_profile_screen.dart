@@ -53,6 +53,9 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
     }
 
     final profile = user.profile;
+    if (profile == null) {
+      return const Scaffold(body: Center(child: Text('User profile not found')));
+    }
     final rig = user.rig;
 
     return Scaffold(

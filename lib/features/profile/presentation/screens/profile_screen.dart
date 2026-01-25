@@ -22,6 +22,25 @@ class ProfileScreen extends ConsumerWidget {
     final profile = user.profile;
     final rig = user.rig;
 
+    if (profile == null) {
+      return Scaffold(
+        appBar: AppBar(title: const Text(AppStrings.profile)),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Text('Profile not completed'),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () => context.push('/profile-setup'),
+                child: const Text('Complete Profile'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text(AppStrings.profile),

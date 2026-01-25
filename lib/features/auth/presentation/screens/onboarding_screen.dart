@@ -18,12 +18,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   final List<OnboardingPage> _pages = [
     const OnboardingPage(
-      image: 'assets/images/onbaording1.svg', // Note: typo in original filename
+      image: 'assets/images/onboarding1.svg',
       title: AppStrings.onboardingTitle1,
       description: AppStrings.onboardingDesc1,
     ),
     const OnboardingPage(
-      image: 'assets/images/onbaording2.svg', // Note: typo in original filename
+      image: 'assets/images/onboarding2.svg',
       title: AppStrings.onboardingTitle2,
       description: AppStrings.onboardingDesc2,
     ),

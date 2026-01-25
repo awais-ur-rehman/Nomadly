@@ -29,14 +29,15 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
     final authState = ref.read(authProvider);
 
     // Navigate based on auth status
-    if (authState.isAuthenticated && authState.user != null) {
-      // User is logged in, go to home
-      // TODO: Navigate to home screen
-      _navigateToOnboarding(); // Temporary
+    if (authState.isAuthenticated) {
+      context.go('/home');
     } else {
-      // User is not logged in, go to onboarding
-      _navigateToOnboarding();
+      context.go('/onboarding');
     }
+  }
+
+  void _navigateToHome() {
+    context.go('/home');
   }
 
   void _navigateToOnboarding() {

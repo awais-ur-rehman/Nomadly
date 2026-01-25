@@ -53,7 +53,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     if (match != null && match.isMutual && mounted) {
       // Show match dialog
-      _showMatchDialog(user.user.profile.photoUrl);
+      _showMatchDialog(user.user.profile?.photoUrl);
     }
 
     return true;

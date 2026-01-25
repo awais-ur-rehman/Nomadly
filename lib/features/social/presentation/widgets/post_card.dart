@@ -24,15 +24,15 @@ class PostCard extends ConsumerWidget {
           // Author Info
           ListTile(
             leading: CircleAvatar(
-              backgroundImage: post.author.profile.photoUrl != null
-                  ? NetworkImage(post.author.profile.photoUrl!)
+              backgroundImage: post.author.profile?.photoUrl != null
+                  ? NetworkImage(post.author.profile!.photoUrl!)
                   : null,
-              child: post.author.profile.photoUrl == null
+              child: post.author.profile?.photoUrl == null
                   ? const Icon(Icons.person)
                   : null,
             ),
             title: Text(
-              post.author.profile.name,
+              post.author.profile?.name ?? 'Unknown Nomad',
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
             subtitle: Text(
