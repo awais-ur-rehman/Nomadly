@@ -30,6 +30,8 @@ _$UserImpl _$$UserImplFromJson(Map<String, dynamic> json) => _$UserImpl(
   followerCount: (json['followerCount'] as num?)?.toInt() ?? 0,
   followingCount: (json['followingCount'] as num?)?.toInt() ?? 0,
   isFollowing: json['isFollowing'] as bool? ?? false,
+  followsMe: json['followsMe'] as bool? ?? false,
+  isFollowingPending: json['isFollowingPending'] as bool? ?? false,
   createdAt: json['created_at'] == null
       ? null
       : DateTime.parse(json['created_at'] as String),
@@ -55,6 +57,8 @@ Map<String, dynamic> _$$UserImplToJson(_$UserImpl instance) =>
       'followerCount': instance.followerCount,
       'followingCount': instance.followingCount,
       'isFollowing': instance.isFollowing,
+      'followsMe': instance.followsMe,
+      'isFollowingPending': instance.isFollowingPending,
       'created_at': instance.createdAt?.toIso8601String(),
       'updated_at': instance.updatedAt?.toIso8601String(),
     };

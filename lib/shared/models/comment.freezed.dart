@@ -25,11 +25,12 @@ mixin _$Comment {
   String get id => throw _privateConstructorUsedError;
   @JsonKey(name: 'post_id')
   String get postId => throw _privateConstructorUsedError;
-  @JsonKey(name: 'author_id')
+  @JsonKey(readValue: _readAuthor)
   User get author => throw _privateConstructorUsedError;
   String get text => throw _privateConstructorUsedError;
   @JsonKey(name: 'created_at')
   DateTime get createdAt => throw _privateConstructorUsedError;
+  bool get isPending => throw _privateConstructorUsedError;
 
   /// Serializes this Comment to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -48,9 +49,10 @@ abstract class $CommentCopyWith<$Res> {
   $Res call({
     @JsonKey(name: '_id') String id,
     @JsonKey(name: 'post_id') String postId,
-    @JsonKey(name: 'author_id') User author,
+    @JsonKey(readValue: _readAuthor) User author,
     String text,
     @JsonKey(name: 'created_at') DateTime createdAt,
+    bool isPending,
   });
 
   $UserCopyWith<$Res> get author;
@@ -76,6 +78,7 @@ class _$CommentCopyWithImpl<$Res, $Val extends Comment>
     Object? author = null,
     Object? text = null,
     Object? createdAt = null,
+    Object? isPending = null,
   }) {
     return _then(
       _value.copyWith(
@@ -99,6 +102,10 @@ class _$CommentCopyWithImpl<$Res, $Val extends Comment>
                 ? _value.createdAt
                 : createdAt // ignore: cast_nullable_to_non_nullable
                       as DateTime,
+            isPending: null == isPending
+                ? _value.isPending
+                : isPending // ignore: cast_nullable_to_non_nullable
+                      as bool,
           )
           as $Val,
     );
@@ -126,9 +133,10 @@ abstract class _$$CommentImplCopyWith<$Res> implements $CommentCopyWith<$Res> {
   $Res call({
     @JsonKey(name: '_id') String id,
     @JsonKey(name: 'post_id') String postId,
-    @JsonKey(name: 'author_id') User author,
+    @JsonKey(readValue: _readAuthor) User author,
     String text,
     @JsonKey(name: 'created_at') DateTime createdAt,
+    bool isPending,
   });
 
   @override
@@ -154,6 +162,7 @@ class __$$CommentImplCopyWithImpl<$Res>
     Object? author = null,
     Object? text = null,
     Object? createdAt = null,
+    Object? isPending = null,
   }) {
     return _then(
       _$CommentImpl(
@@ -177,6 +186,10 @@ class __$$CommentImplCopyWithImpl<$Res>
             ? _value.createdAt
             : createdAt // ignore: cast_nullable_to_non_nullable
                   as DateTime,
+        isPending: null == isPending
+            ? _value.isPending
+            : isPending // ignore: cast_nullable_to_non_nullable
+                  as bool,
       ),
     );
   }
@@ -188,9 +201,10 @@ class _$CommentImpl implements _Comment {
   const _$CommentImpl({
     @JsonKey(name: '_id') required this.id,
     @JsonKey(name: 'post_id') required this.postId,
-    @JsonKey(name: 'author_id') required this.author,
+    @JsonKey(readValue: _readAuthor) required this.author,
     required this.text,
     @JsonKey(name: 'created_at') required this.createdAt,
+    this.isPending = false,
   });
 
   factory _$CommentImpl.fromJson(Map<String, dynamic> json) =>
@@ -203,17 +217,20 @@ class _$CommentImpl implements _Comment {
   @JsonKey(name: 'post_id')
   final String postId;
   @override
-  @JsonKey(name: 'author_id')
+  @JsonKey(readValue: _readAuthor)
   final User author;
   @override
   final String text;
   @override
   @JsonKey(name: 'created_at')
   final DateTime createdAt;
+  @override
+  @JsonKey()
+  final bool isPending;
 
   @override
   String toString() {
-    return 'Comment(id: $id, postId: $postId, author: $author, text: $text, createdAt: $createdAt)';
+    return 'Comment(id: $id, postId: $postId, author: $author, text: $text, createdAt: $createdAt, isPending: $isPending)';
   }
 
   @override
@@ -226,13 +243,15 @@ class _$CommentImpl implements _Comment {
             (identical(other.author, author) || other.author == author) &&
             (identical(other.text, text) || other.text == text) &&
             (identical(other.createdAt, createdAt) ||
-                other.createdAt == createdAt));
+                other.createdAt == createdAt) &&
+            (identical(other.isPending, isPending) ||
+                other.isPending == isPending));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode =>
-      Object.hash(runtimeType, id, postId, author, text, createdAt);
+      Object.hash(runtimeType, id, postId, author, text, createdAt, isPending);
 
   /// Create a copy of Comment
   /// with the given fields replaced by the non-null parameter values.
@@ -252,9 +271,10 @@ abstract class _Comment implements Comment {
   const factory _Comment({
     @JsonKey(name: '_id') required final String id,
     @JsonKey(name: 'post_id') required final String postId,
-    @JsonKey(name: 'author_id') required final User author,
+    @JsonKey(readValue: _readAuthor) required final User author,
     required final String text,
     @JsonKey(name: 'created_at') required final DateTime createdAt,
+    final bool isPending,
   }) = _$CommentImpl;
 
   factory _Comment.fromJson(Map<String, dynamic> json) = _$CommentImpl.fromJson;
@@ -266,13 +286,15 @@ abstract class _Comment implements Comment {
   @JsonKey(name: 'post_id')
   String get postId;
   @override
-  @JsonKey(name: 'author_id')
+  @JsonKey(readValue: _readAuthor)
   User get author;
   @override
   String get text;
   @override
   @JsonKey(name: 'created_at')
   DateTime get createdAt;
+  @override
+  bool get isPending;
 
   /// Create a copy of Comment
   /// with the given fields replaced by the non-null parameter values.

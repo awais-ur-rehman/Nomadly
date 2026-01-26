@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:logger/logger.dart';
 import '../../../../shared/services/api_client.dart';
 import '../../../../shared/models/post.dart';
+import '../../../../shared/models/comment.dart';
 import '../../../../shared/models/user.dart';
 
 class SocialRepository {
@@ -15,7 +16,7 @@ class SocialRepository {
   // --- Posts ---
 
   // Get home timeline (GET /api/v1/feed)
-  Future<List<Post>> getHomeFeed({int page = 1, int limit = 20}) async {
+  Future<List<Post>> getHomeFeed({int page = 1, int limit = 20, String? currentUserId}) async {
     try {
       final response = await _apiClient.get(
         _feedEndpoint,
@@ -28,7 +29,16 @@ class SocialRepository {
         final posts = <Post>[];
         for (int i = 0; i < data.length; i++) {
           try {
-            final post = Post.fromJson(data[i]);
+            final postJson = data[i] as Map<String, dynamic>;
+            
+            // Calculate isLikedByMe based on current user ID
+            final likes = (postJson['likes'] as List<dynamic>?)?.cast<String>() ?? [];
+            final isLikedByMe = currentUserId != null && likes.contains(currentUserId);
+            
+            // Add isLikedByMe to the JSON before parsing
+            postJson['isLikedByMe'] = isLikedByMe;
+            
+            final post = Post.fromJson(postJson);
             posts.add(post);
           } catch (e, stackTrace) {
             _logger.e('Error parsing post at index $i: $e', error: e, stackTrace: stackTrace);
@@ -105,9 +115,7 @@ class SocialRepository {
   }
   
   // Get Comments (GET /api/v1/feed/posts/:postId/comments)
-  // Assuming returns a list of comments. You might need a Comment model.
-  // For now returning dynamic list.
-  Future<List<dynamic>> getComments(String postId, {int page = 1, int limit = 20}) async {
+  Future<List<Comment>> getComments(String postId, {int page = 1, int limit = 20}) async {
     try {
       final response = await _apiClient.get(
         '$_feedEndpoint/posts/$postId/comments',
@@ -115,7 +123,9 @@ class SocialRepository {
       );
       
       if (response.statusCode == 200) {
-        return response.data['data'] ?? [];
+        final data = response.data['data'];
+        final List<dynamic> commentsJson = data['comments'] ?? [];
+        return commentsJson.map((json) => Comment.fromJson(json)).toList();
       }
       return [];
     } on DioException catch (e) {
@@ -237,11 +247,20 @@ class SocialRepository {
   }
   
   // Get Single Post (GET /api/v1/feed/posts/:postId)
-  Future<Post> getPost(String postId) async {
+  Future<Post> getPost(String postId, {String? currentUserId}) async {
     try {
       final response = await _apiClient.get('$_feedEndpoint/posts/$postId');
       if (response.statusCode == 200) {
-        return Post.fromJson(response.data['data']);
+        final postJson = response.data['data'] as Map<String, dynamic>;
+        
+        // Calculate isLikedByMe based on current user ID
+        final likes = (postJson['likes'] as List<dynamic>?)?.cast<String>() ?? [];
+        final isLikedByMe = currentUserId != null && likes.contains(currentUserId);
+        
+        // Add isLikedByMe to the JSON before parsing
+        postJson['isLikedByMe'] = isLikedByMe;
+        
+        return Post.fromJson(postJson);
       }
       throw Exception('Failed to load post');
     } on DioException catch (e) {

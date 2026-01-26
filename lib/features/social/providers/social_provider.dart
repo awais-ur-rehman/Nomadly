@@ -48,7 +48,11 @@ class SocialNotifier extends StateNotifier<SocialState> {
     state = state.copyWith(isLoading: true, error: null);
     try {
       _logger.i('Loading feed...');
-      final posts = await _repository.getHomeFeed();
+      
+      // Get current user ID for like state calculation
+      final currentUserId = _ref.read(authProvider).user?.uid;
+      
+      final posts = await _repository.getHomeFeed(currentUserId: currentUserId);
       _logger.i('Posts loaded: ${posts.length}');
       
       final stories = await _repository.getActiveStories();
@@ -71,14 +75,19 @@ class SocialNotifier extends StateNotifier<SocialState> {
     if (postIndex == -1) return;
 
     final post = state.posts[postIndex];
+    final currentUserId = _ref.read(authProvider).user?.uid;
+    if (currentUserId == null) return;
+    
     final isLiked = post.isLikedByMe;
     
-    // Optimistic update
+    // Optimistic update with actual user ID
+    final updatedLikes = isLiked 
+        ? post.likes.where((id) => id != currentUserId).toList()
+        : [...post.likes, currentUserId];
+    
     final updatedPost = post.copyWith(
       isLikedByMe: !isLiked,
-      likes: isLiked 
-          ? post.likes.where((id) => id != 'me').toList() // Dummy 'me' ID for UI
-          : [...post.likes, 'me'],
+      likes: updatedLikes,
     );
     
     final updatedPosts = [...state.posts];
@@ -87,6 +96,8 @@ class SocialNotifier extends StateNotifier<SocialState> {
 
     try {
       await _repository.toggleLike(postId);
+      // Don't reload feed automatically to avoid rate limiting
+      // User can pull-to-refresh if they want updated data
     } catch (e) {
       // Revert on error
       updatedPosts[postIndex] = post;

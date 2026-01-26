@@ -39,11 +39,28 @@ class Story with _$Story {
 
 @freezed
 class StoryBundle with _$StoryBundle {
+  const StoryBundle._();
+  
   const factory StoryBundle({
     @JsonKey(name: 'author') required User user,
     required List<Story> stories,
-    @Default(false) bool allViewed,
+    @JsonKey(name: 'hasUnviewed') @Default(false) bool hasUnviewed,
   }) = _StoryBundle;
 
-  factory StoryBundle.fromJson(Map<String, dynamic> json) => _$StoryBundleFromJson(json);
+  factory StoryBundle.fromJson(Map<String, dynamic> json) {
+    // The backend sends 'hasUnviewed' but we want to invert it to 'allViewed'
+    final hasUnviewed = json['hasUnviewed'] as bool? ?? false;
+    
+    return _StoryBundle(
+      user: User.fromJson(json['author'] as Map<String, dynamic>),
+      stories: (json['stories'] as List<dynamic>)
+          .map((e) => Story.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      hasUnviewed: hasUnviewed,
+    );
+  }
+  
+  // Helper getter for UI - inverted hasUnviewed
+  bool get allViewed => !hasUnviewed;
 }
+

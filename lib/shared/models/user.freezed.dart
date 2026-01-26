@@ -42,6 +42,8 @@ mixin _$User {
   int get followerCount => throw _privateConstructorUsedError;
   int get followingCount => throw _privateConstructorUsedError;
   bool get isFollowing => throw _privateConstructorUsedError;
+  bool get followsMe => throw _privateConstructorUsedError;
+  bool get isFollowingPending => throw _privateConstructorUsedError;
   @JsonKey(name: 'created_at')
   DateTime? get createdAt => throw _privateConstructorUsedError;
   @JsonKey(name: 'updated_at')
@@ -77,6 +79,8 @@ abstract class $UserCopyWith<$Res> {
     int followerCount,
     int followingCount,
     bool isFollowing,
+    bool followsMe,
+    bool isFollowingPending,
     @JsonKey(name: 'created_at') DateTime? createdAt,
     @JsonKey(name: 'updated_at') DateTime? updatedAt,
   });
@@ -117,6 +121,8 @@ class _$UserCopyWithImpl<$Res, $Val extends User>
     Object? followerCount = null,
     Object? followingCount = null,
     Object? isFollowing = null,
+    Object? followsMe = null,
+    Object? isFollowingPending = null,
     Object? createdAt = freezed,
     Object? updatedAt = freezed,
   }) {
@@ -181,6 +187,14 @@ class _$UserCopyWithImpl<$Res, $Val extends User>
             isFollowing: null == isFollowing
                 ? _value.isFollowing
                 : isFollowing // ignore: cast_nullable_to_non_nullable
+                      as bool,
+            followsMe: null == followsMe
+                ? _value.followsMe
+                : followsMe // ignore: cast_nullable_to_non_nullable
+                      as bool,
+            isFollowingPending: null == isFollowingPending
+                ? _value.isFollowingPending
+                : isFollowingPending // ignore: cast_nullable_to_non_nullable
                       as bool,
             createdAt: freezed == createdAt
                 ? _value.createdAt
@@ -276,6 +290,8 @@ abstract class _$$UserImplCopyWith<$Res> implements $UserCopyWith<$Res> {
     int followerCount,
     int followingCount,
     bool isFollowing,
+    bool followsMe,
+    bool isFollowingPending,
     @JsonKey(name: 'created_at') DateTime? createdAt,
     @JsonKey(name: 'updated_at') DateTime? updatedAt,
   });
@@ -317,6 +333,8 @@ class __$$UserImplCopyWithImpl<$Res>
     Object? followerCount = null,
     Object? followingCount = null,
     Object? isFollowing = null,
+    Object? followsMe = null,
+    Object? isFollowingPending = null,
     Object? createdAt = freezed,
     Object? updatedAt = freezed,
   }) {
@@ -382,6 +400,14 @@ class __$$UserImplCopyWithImpl<$Res>
             ? _value.isFollowing
             : isFollowing // ignore: cast_nullable_to_non_nullable
                   as bool,
+        followsMe: null == followsMe
+            ? _value.followsMe
+            : followsMe // ignore: cast_nullable_to_non_nullable
+                  as bool,
+        isFollowingPending: null == isFollowingPending
+            ? _value.isFollowingPending
+            : isFollowingPending // ignore: cast_nullable_to_non_nullable
+                  as bool,
         createdAt: freezed == createdAt
             ? _value.createdAt
             : createdAt // ignore: cast_nullable_to_non_nullable
@@ -414,6 +440,8 @@ class _$UserImpl extends _User {
     this.followerCount = 0,
     this.followingCount = 0,
     this.isFollowing = false,
+    this.followsMe = false,
+    this.isFollowingPending = false,
     @JsonKey(name: 'created_at') this.createdAt,
     @JsonKey(name: 'updated_at') this.updatedAt,
   }) : super._();
@@ -461,6 +489,12 @@ class _$UserImpl extends _User {
   @JsonKey()
   final bool isFollowing;
   @override
+  @JsonKey()
+  final bool followsMe;
+  @override
+  @JsonKey()
+  final bool isFollowingPending;
+  @override
   @JsonKey(name: 'created_at')
   final DateTime? createdAt;
   @override
@@ -469,7 +503,7 @@ class _$UserImpl extends _User {
 
   @override
   String toString() {
-    return 'User(idSecondary: $idSecondary, id: $id, email: $email, username: $username, phone: $phone, profile: $profile, rig: $rig, travelRoute: $travelRoute, isBuilder: $isBuilder, isPrivate: $isPrivate, nomadId: $nomadId, isActive: $isActive, followerCount: $followerCount, followingCount: $followingCount, isFollowing: $isFollowing, createdAt: $createdAt, updatedAt: $updatedAt)';
+    return 'User(idSecondary: $idSecondary, id: $id, email: $email, username: $username, phone: $phone, profile: $profile, rig: $rig, travelRoute: $travelRoute, isBuilder: $isBuilder, isPrivate: $isPrivate, nomadId: $nomadId, isActive: $isActive, followerCount: $followerCount, followingCount: $followingCount, isFollowing: $isFollowing, followsMe: $followsMe, isFollowingPending: $isFollowingPending, createdAt: $createdAt, updatedAt: $updatedAt)';
   }
 
   @override
@@ -501,6 +535,10 @@ class _$UserImpl extends _User {
                 other.followingCount == followingCount) &&
             (identical(other.isFollowing, isFollowing) ||
                 other.isFollowing == isFollowing) &&
+            (identical(other.followsMe, followsMe) ||
+                other.followsMe == followsMe) &&
+            (identical(other.isFollowingPending, isFollowingPending) ||
+                other.isFollowingPending == isFollowingPending) &&
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt) &&
             (identical(other.updatedAt, updatedAt) ||
@@ -509,7 +547,7 @@ class _$UserImpl extends _User {
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(
+  int get hashCode => Object.hashAll([
     runtimeType,
     idSecondary,
     id,
@@ -526,9 +564,11 @@ class _$UserImpl extends _User {
     followerCount,
     followingCount,
     isFollowing,
+    followsMe,
+    isFollowingPending,
     createdAt,
     updatedAt,
-  );
+  ]);
 
   /// Create a copy of User
   /// with the given fields replaced by the non-null parameter values.
@@ -561,6 +601,8 @@ abstract class _User extends User {
     final int followerCount,
     final int followingCount,
     final bool isFollowing,
+    final bool followsMe,
+    final bool isFollowingPending,
     @JsonKey(name: 'created_at') final DateTime? createdAt,
     @JsonKey(name: 'updated_at') final DateTime? updatedAt,
   }) = _$UserImpl;
@@ -604,6 +646,10 @@ abstract class _User extends User {
   int get followingCount;
   @override
   bool get isFollowing;
+  @override
+  bool get followsMe;
+  @override
+  bool get isFollowingPending;
   @override
   @JsonKey(name: 'created_at')
   DateTime? get createdAt;
