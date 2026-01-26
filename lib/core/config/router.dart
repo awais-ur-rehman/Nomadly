@@ -22,7 +22,8 @@ import '../../features/marketplace/presentation/screens/marketplace_screen.dart'
 import '../../features/marketplace/presentation/screens/builder_detail_screen.dart';
 import '../../features/social/presentation/screens/notifications_screen.dart';
 import '../../shared/models/builder.dart';
-import '../../features/profile/presentation/screens/user_profile_screen.dart';
+import '../../features/profile/presentation/screens/user_profile_screen.dart' as profile;
+import '../../features/discovery/presentation/screens/user_profile_screen.dart' as discovery;
 import '../../features/auth/providers/auth_provider.dart';
 import '../../features/activities/presentation/screens/activity_detail_screen.dart';
 import '../../features/activities/presentation/screens/create_activity_screen.dart';
@@ -149,9 +150,19 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) {
           final userId = state.pathParameters['id']!;
           final user = state.extra as User?;
-          return UserProfileScreen(userId: userId, preloadedUser: user);
+          return profile.UserProfileScreen(userId: userId, preloadedUser: user);
         },
       ),
+      
+      // User Profile (Discovery - from search)
+      GoRoute(
+        path: '/user/:id',
+        builder: (context, state) {
+          final userId = state.pathParameters['id']!;
+          return discovery.UserProfileScreen(userId: userId);
+        },
+      ),
+      
       GoRoute(
         path: '/profile/:id/connections',
         builder: (context, state) {

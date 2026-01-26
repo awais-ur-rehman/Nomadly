@@ -27,6 +27,8 @@ class User with _$User {
     @Default(0) int followerCount,
     @Default(0) int followingCount,
     @Default(false) bool isFollowing,
+    @Default(false) bool followsMe,
+    @Default(false) bool isFollowingPending,
     @JsonKey(name: 'created_at') DateTime? createdAt,
     @JsonKey(name: 'updated_at') DateTime? updatedAt,
   }) = _User;

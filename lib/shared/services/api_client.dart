@@ -33,6 +33,7 @@ class ApiClient {
     _dio.interceptors.addAll([
       _authInterceptor(),
       _errorInterceptor(),
+      /*
       PrettyDioLogger(
         requestHeader: true,
         requestBody: true,
@@ -42,6 +43,7 @@ class ApiClient {
         compact: true,
         maxWidth: 90,
       ),
+      */
     ]);
   }
 
