@@ -14,16 +14,21 @@ class User with _$User {
   const factory User({
     @JsonKey(name: '_id', includeIfNull: false) String? idSecondary,
     @JsonKey(name: 'id', includeIfNull: false) String? id,
-    required String email,
+    String? email,
+    String? username,
     String? phone,
     Profile? profile,
     Rig? rig,
     TravelRoute? travelRoute,
-    @Default(false) bool isBuilder,
-    NomadId? nomadId,
-    @Default(true) bool isActive,
-    DateTime? createdAt,
-    DateTime? updatedAt,
+    @JsonKey(name: 'is_builder') @Default(false) bool isBuilder,
+    @JsonKey(name: 'is_private') @Default(false) bool isPrivate,
+    @JsonKey(name: 'nomad_id') NomadId? nomadId,
+    @JsonKey(name: 'is_active') @Default(true) bool isActive,
+    @Default(0) int followerCount,
+    @Default(0) int followingCount,
+    @Default(false) bool isFollowing,
+    @JsonKey(name: 'created_at') DateTime? createdAt,
+    @JsonKey(name: 'updated_at') DateTime? updatedAt,
   }) = _User;
 
   String get uid => id ?? idSecondary ?? '';

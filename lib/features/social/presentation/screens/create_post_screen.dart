@@ -5,6 +5,8 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_dimensions.dart';
+import '../../../../shared/services/image_upload_service.dart';
+import '../../../../shared/services/toast_service.dart';
 import '../../providers/social_provider.dart';
 
 class CreatePostScreen extends ConsumerStatefulWidget {
@@ -18,6 +20,7 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
   final _contentController = TextEditingController();
   final List<File> _selectedImages = [];
   final ImagePicker _picker = ImagePicker();
+  bool _isUploading = false;
 
   @override
   void dispose() {
@@ -36,12 +39,54 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
 
   Future<void> _submit() async {
     final content = _contentController.text.trim();
-    if (content.isEmpty) return;
+    if (content.isEmpty && _selectedImages.isEmpty) return;
 
-    // TODO: Upload images to cloud first if any, or pass files to provider
-    // For now, assume provider handles content (I'll add image upload later)
-    await ref.read(socialProvider.notifier).createPost(content);
-    if (mounted) context.pop();
+    if (_isUploading) return;
+    setState(() => _isUploading = true);
+
+    try {
+      List<String> uploadedUrls = [];
+      
+      // Upload images if any
+      if (_selectedImages.isNotEmpty) {
+        final uploadService = ImageUploadService();
+        for (final file in _selectedImages) {
+          final url = await uploadService.uploadImage(file, type: 'post');
+          if (url != null) {
+            uploadedUrls.add(url);
+          }
+        }
+      }
+
+      // 3. Create Post
+      await ref.read(socialProvider.notifier).createPost(
+        content,
+        photos: uploadedUrls,
+      );
+
+      // 4. Reload feed to show the new post
+      await ref.read(socialProvider.notifier).loadFeed(refresh: true);
+
+      if (mounted) {
+        ToastService.showSuccess('Post created!');
+        context.pop();
+      }
+    } catch (e) {
+      if (mounted) {
+        ToastService.showError('Post error: ${e.toString()}');
+      }
+    } finally {
+      if (mounted) setState(() => _isUploading = false);
+    }
+  }
+
+  Future<void> _pickCamera() async {
+    final XFile? image = await _picker.pickImage(source: ImageSource.camera);
+     if (image != null) {
+      setState(() {
+        _selectedImages.add(File(image.path));
+      });
+    }
   }
 
   @override
@@ -50,10 +95,16 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
       appBar: AppBar(
         title: const Text('Create Post'),
         actions: [
-          TextButton(
-            onPressed: _submit,
-            child: const Text('Post', style: TextStyle(fontWeight: FontWeight.bold)),
-          ),
+          if (_isUploading)
+            const Padding(
+              padding: EdgeInsets.only(right: 16),
+              child: Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))),
+            )
+          else
+            TextButton(
+              onPressed: _submit,
+              child: const Text('Post', style: TextStyle(fontWeight: FontWeight.bold)),
+            ),
         ],
       ),
       body: Padding(
@@ -120,9 +171,7 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
                 ),
                 IconButton(
                   icon: const Icon(Icons.camera_alt_outlined, color: AppColors.primary),
-                  onPressed: () {
-                    // TODO: Camera pick
-                  },
+                  onPressed: _pickCamera,
                 ),
                 const Spacer(),
                 const Text('Public', style: TextStyle(color: AppColors.textSecondary)),

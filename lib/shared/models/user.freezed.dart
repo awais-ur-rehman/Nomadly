@@ -25,15 +25,26 @@ mixin _$User {
   String? get idSecondary => throw _privateConstructorUsedError;
   @JsonKey(name: 'id', includeIfNull: false)
   String? get id => throw _privateConstructorUsedError;
-  String get email => throw _privateConstructorUsedError;
+  String? get email => throw _privateConstructorUsedError;
+  String? get username => throw _privateConstructorUsedError;
   String? get phone => throw _privateConstructorUsedError;
   Profile? get profile => throw _privateConstructorUsedError;
   Rig? get rig => throw _privateConstructorUsedError;
   TravelRoute? get travelRoute => throw _privateConstructorUsedError;
+  @JsonKey(name: 'is_builder')
   bool get isBuilder => throw _privateConstructorUsedError;
+  @JsonKey(name: 'is_private')
+  bool get isPrivate => throw _privateConstructorUsedError;
+  @JsonKey(name: 'nomad_id')
   NomadId? get nomadId => throw _privateConstructorUsedError;
+  @JsonKey(name: 'is_active')
   bool get isActive => throw _privateConstructorUsedError;
+  int get followerCount => throw _privateConstructorUsedError;
+  int get followingCount => throw _privateConstructorUsedError;
+  bool get isFollowing => throw _privateConstructorUsedError;
+  @JsonKey(name: 'created_at')
   DateTime? get createdAt => throw _privateConstructorUsedError;
+  @JsonKey(name: 'updated_at')
   DateTime? get updatedAt => throw _privateConstructorUsedError;
 
   /// Serializes this User to a JSON map.
@@ -53,16 +64,21 @@ abstract class $UserCopyWith<$Res> {
   $Res call({
     @JsonKey(name: '_id', includeIfNull: false) String? idSecondary,
     @JsonKey(name: 'id', includeIfNull: false) String? id,
-    String email,
+    String? email,
+    String? username,
     String? phone,
     Profile? profile,
     Rig? rig,
     TravelRoute? travelRoute,
-    bool isBuilder,
-    NomadId? nomadId,
-    bool isActive,
-    DateTime? createdAt,
-    DateTime? updatedAt,
+    @JsonKey(name: 'is_builder') bool isBuilder,
+    @JsonKey(name: 'is_private') bool isPrivate,
+    @JsonKey(name: 'nomad_id') NomadId? nomadId,
+    @JsonKey(name: 'is_active') bool isActive,
+    int followerCount,
+    int followingCount,
+    bool isFollowing,
+    @JsonKey(name: 'created_at') DateTime? createdAt,
+    @JsonKey(name: 'updated_at') DateTime? updatedAt,
   });
 
   $ProfileCopyWith<$Res>? get profile;
@@ -88,14 +104,19 @@ class _$UserCopyWithImpl<$Res, $Val extends User>
   $Res call({
     Object? idSecondary = freezed,
     Object? id = freezed,
-    Object? email = null,
+    Object? email = freezed,
+    Object? username = freezed,
     Object? phone = freezed,
     Object? profile = freezed,
     Object? rig = freezed,
     Object? travelRoute = freezed,
     Object? isBuilder = null,
+    Object? isPrivate = null,
     Object? nomadId = freezed,
     Object? isActive = null,
+    Object? followerCount = null,
+    Object? followingCount = null,
+    Object? isFollowing = null,
     Object? createdAt = freezed,
     Object? updatedAt = freezed,
   }) {
@@ -109,10 +130,14 @@ class _$UserCopyWithImpl<$Res, $Val extends User>
                 ? _value.id
                 : id // ignore: cast_nullable_to_non_nullable
                       as String?,
-            email: null == email
+            email: freezed == email
                 ? _value.email
                 : email // ignore: cast_nullable_to_non_nullable
-                      as String,
+                      as String?,
+            username: freezed == username
+                ? _value.username
+                : username // ignore: cast_nullable_to_non_nullable
+                      as String?,
             phone: freezed == phone
                 ? _value.phone
                 : phone // ignore: cast_nullable_to_non_nullable
@@ -133,6 +158,10 @@ class _$UserCopyWithImpl<$Res, $Val extends User>
                 ? _value.isBuilder
                 : isBuilder // ignore: cast_nullable_to_non_nullable
                       as bool,
+            isPrivate: null == isPrivate
+                ? _value.isPrivate
+                : isPrivate // ignore: cast_nullable_to_non_nullable
+                      as bool,
             nomadId: freezed == nomadId
                 ? _value.nomadId
                 : nomadId // ignore: cast_nullable_to_non_nullable
@@ -140,6 +169,18 @@ class _$UserCopyWithImpl<$Res, $Val extends User>
             isActive: null == isActive
                 ? _value.isActive
                 : isActive // ignore: cast_nullable_to_non_nullable
+                      as bool,
+            followerCount: null == followerCount
+                ? _value.followerCount
+                : followerCount // ignore: cast_nullable_to_non_nullable
+                      as int,
+            followingCount: null == followingCount
+                ? _value.followingCount
+                : followingCount // ignore: cast_nullable_to_non_nullable
+                      as int,
+            isFollowing: null == isFollowing
+                ? _value.isFollowing
+                : isFollowing // ignore: cast_nullable_to_non_nullable
                       as bool,
             createdAt: freezed == createdAt
                 ? _value.createdAt
@@ -222,16 +263,21 @@ abstract class _$$UserImplCopyWith<$Res> implements $UserCopyWith<$Res> {
   $Res call({
     @JsonKey(name: '_id', includeIfNull: false) String? idSecondary,
     @JsonKey(name: 'id', includeIfNull: false) String? id,
-    String email,
+    String? email,
+    String? username,
     String? phone,
     Profile? profile,
     Rig? rig,
     TravelRoute? travelRoute,
-    bool isBuilder,
-    NomadId? nomadId,
-    bool isActive,
-    DateTime? createdAt,
-    DateTime? updatedAt,
+    @JsonKey(name: 'is_builder') bool isBuilder,
+    @JsonKey(name: 'is_private') bool isPrivate,
+    @JsonKey(name: 'nomad_id') NomadId? nomadId,
+    @JsonKey(name: 'is_active') bool isActive,
+    int followerCount,
+    int followingCount,
+    bool isFollowing,
+    @JsonKey(name: 'created_at') DateTime? createdAt,
+    @JsonKey(name: 'updated_at') DateTime? updatedAt,
   });
 
   @override
@@ -258,14 +304,19 @@ class __$$UserImplCopyWithImpl<$Res>
   $Res call({
     Object? idSecondary = freezed,
     Object? id = freezed,
-    Object? email = null,
+    Object? email = freezed,
+    Object? username = freezed,
     Object? phone = freezed,
     Object? profile = freezed,
     Object? rig = freezed,
     Object? travelRoute = freezed,
     Object? isBuilder = null,
+    Object? isPrivate = null,
     Object? nomadId = freezed,
     Object? isActive = null,
+    Object? followerCount = null,
+    Object? followingCount = null,
+    Object? isFollowing = null,
     Object? createdAt = freezed,
     Object? updatedAt = freezed,
   }) {
@@ -279,10 +330,14 @@ class __$$UserImplCopyWithImpl<$Res>
             ? _value.id
             : id // ignore: cast_nullable_to_non_nullable
                   as String?,
-        email: null == email
+        email: freezed == email
             ? _value.email
             : email // ignore: cast_nullable_to_non_nullable
-                  as String,
+                  as String?,
+        username: freezed == username
+            ? _value.username
+            : username // ignore: cast_nullable_to_non_nullable
+                  as String?,
         phone: freezed == phone
             ? _value.phone
             : phone // ignore: cast_nullable_to_non_nullable
@@ -303,6 +358,10 @@ class __$$UserImplCopyWithImpl<$Res>
             ? _value.isBuilder
             : isBuilder // ignore: cast_nullable_to_non_nullable
                   as bool,
+        isPrivate: null == isPrivate
+            ? _value.isPrivate
+            : isPrivate // ignore: cast_nullable_to_non_nullable
+                  as bool,
         nomadId: freezed == nomadId
             ? _value.nomadId
             : nomadId // ignore: cast_nullable_to_non_nullable
@@ -310,6 +369,18 @@ class __$$UserImplCopyWithImpl<$Res>
         isActive: null == isActive
             ? _value.isActive
             : isActive // ignore: cast_nullable_to_non_nullable
+                  as bool,
+        followerCount: null == followerCount
+            ? _value.followerCount
+            : followerCount // ignore: cast_nullable_to_non_nullable
+                  as int,
+        followingCount: null == followingCount
+            ? _value.followingCount
+            : followingCount // ignore: cast_nullable_to_non_nullable
+                  as int,
+        isFollowing: null == isFollowing
+            ? _value.isFollowing
+            : isFollowing // ignore: cast_nullable_to_non_nullable
                   as bool,
         createdAt: freezed == createdAt
             ? _value.createdAt
@@ -330,16 +401,21 @@ class _$UserImpl extends _User {
   const _$UserImpl({
     @JsonKey(name: '_id', includeIfNull: false) this.idSecondary,
     @JsonKey(name: 'id', includeIfNull: false) this.id,
-    required this.email,
+    this.email,
+    this.username,
     this.phone,
     this.profile,
     this.rig,
     this.travelRoute,
-    this.isBuilder = false,
-    this.nomadId,
-    this.isActive = true,
-    this.createdAt,
-    this.updatedAt,
+    @JsonKey(name: 'is_builder') this.isBuilder = false,
+    @JsonKey(name: 'is_private') this.isPrivate = false,
+    @JsonKey(name: 'nomad_id') this.nomadId,
+    @JsonKey(name: 'is_active') this.isActive = true,
+    this.followerCount = 0,
+    this.followingCount = 0,
+    this.isFollowing = false,
+    @JsonKey(name: 'created_at') this.createdAt,
+    @JsonKey(name: 'updated_at') this.updatedAt,
   }) : super._();
 
   factory _$UserImpl.fromJson(Map<String, dynamic> json) =>
@@ -352,7 +428,9 @@ class _$UserImpl extends _User {
   @JsonKey(name: 'id', includeIfNull: false)
   final String? id;
   @override
-  final String email;
+  final String? email;
+  @override
+  final String? username;
   @override
   final String? phone;
   @override
@@ -362,21 +440,36 @@ class _$UserImpl extends _User {
   @override
   final TravelRoute? travelRoute;
   @override
-  @JsonKey()
+  @JsonKey(name: 'is_builder')
   final bool isBuilder;
   @override
+  @JsonKey(name: 'is_private')
+  final bool isPrivate;
+  @override
+  @JsonKey(name: 'nomad_id')
   final NomadId? nomadId;
   @override
-  @JsonKey()
+  @JsonKey(name: 'is_active')
   final bool isActive;
   @override
+  @JsonKey()
+  final int followerCount;
+  @override
+  @JsonKey()
+  final int followingCount;
+  @override
+  @JsonKey()
+  final bool isFollowing;
+  @override
+  @JsonKey(name: 'created_at')
   final DateTime? createdAt;
   @override
+  @JsonKey(name: 'updated_at')
   final DateTime? updatedAt;
 
   @override
   String toString() {
-    return 'User(idSecondary: $idSecondary, id: $id, email: $email, phone: $phone, profile: $profile, rig: $rig, travelRoute: $travelRoute, isBuilder: $isBuilder, nomadId: $nomadId, isActive: $isActive, createdAt: $createdAt, updatedAt: $updatedAt)';
+    return 'User(idSecondary: $idSecondary, id: $id, email: $email, username: $username, phone: $phone, profile: $profile, rig: $rig, travelRoute: $travelRoute, isBuilder: $isBuilder, isPrivate: $isPrivate, nomadId: $nomadId, isActive: $isActive, followerCount: $followerCount, followingCount: $followingCount, isFollowing: $isFollowing, createdAt: $createdAt, updatedAt: $updatedAt)';
   }
 
   @override
@@ -388,6 +481,8 @@ class _$UserImpl extends _User {
                 other.idSecondary == idSecondary) &&
             (identical(other.id, id) || other.id == id) &&
             (identical(other.email, email) || other.email == email) &&
+            (identical(other.username, username) ||
+                other.username == username) &&
             (identical(other.phone, phone) || other.phone == phone) &&
             (identical(other.profile, profile) || other.profile == profile) &&
             (identical(other.rig, rig) || other.rig == rig) &&
@@ -395,9 +490,17 @@ class _$UserImpl extends _User {
                 other.travelRoute == travelRoute) &&
             (identical(other.isBuilder, isBuilder) ||
                 other.isBuilder == isBuilder) &&
+            (identical(other.isPrivate, isPrivate) ||
+                other.isPrivate == isPrivate) &&
             (identical(other.nomadId, nomadId) || other.nomadId == nomadId) &&
             (identical(other.isActive, isActive) ||
                 other.isActive == isActive) &&
+            (identical(other.followerCount, followerCount) ||
+                other.followerCount == followerCount) &&
+            (identical(other.followingCount, followingCount) ||
+                other.followingCount == followingCount) &&
+            (identical(other.isFollowing, isFollowing) ||
+                other.isFollowing == isFollowing) &&
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt) &&
             (identical(other.updatedAt, updatedAt) ||
@@ -411,13 +514,18 @@ class _$UserImpl extends _User {
     idSecondary,
     id,
     email,
+    username,
     phone,
     profile,
     rig,
     travelRoute,
     isBuilder,
+    isPrivate,
     nomadId,
     isActive,
+    followerCount,
+    followingCount,
+    isFollowing,
     createdAt,
     updatedAt,
   );
@@ -440,16 +548,21 @@ abstract class _User extends User {
   const factory _User({
     @JsonKey(name: '_id', includeIfNull: false) final String? idSecondary,
     @JsonKey(name: 'id', includeIfNull: false) final String? id,
-    required final String email,
+    final String? email,
+    final String? username,
     final String? phone,
     final Profile? profile,
     final Rig? rig,
     final TravelRoute? travelRoute,
-    final bool isBuilder,
-    final NomadId? nomadId,
-    final bool isActive,
-    final DateTime? createdAt,
-    final DateTime? updatedAt,
+    @JsonKey(name: 'is_builder') final bool isBuilder,
+    @JsonKey(name: 'is_private') final bool isPrivate,
+    @JsonKey(name: 'nomad_id') final NomadId? nomadId,
+    @JsonKey(name: 'is_active') final bool isActive,
+    final int followerCount,
+    final int followingCount,
+    final bool isFollowing,
+    @JsonKey(name: 'created_at') final DateTime? createdAt,
+    @JsonKey(name: 'updated_at') final DateTime? updatedAt,
   }) = _$UserImpl;
   const _User._() : super._();
 
@@ -462,7 +575,9 @@ abstract class _User extends User {
   @JsonKey(name: 'id', includeIfNull: false)
   String? get id;
   @override
-  String get email;
+  String? get email;
+  @override
+  String? get username;
   @override
   String? get phone;
   @override
@@ -472,14 +587,28 @@ abstract class _User extends User {
   @override
   TravelRoute? get travelRoute;
   @override
+  @JsonKey(name: 'is_builder')
   bool get isBuilder;
   @override
+  @JsonKey(name: 'is_private')
+  bool get isPrivate;
+  @override
+  @JsonKey(name: 'nomad_id')
   NomadId? get nomadId;
   @override
+  @JsonKey(name: 'is_active')
   bool get isActive;
   @override
+  int get followerCount;
+  @override
+  int get followingCount;
+  @override
+  bool get isFollowing;
+  @override
+  @JsonKey(name: 'created_at')
   DateTime? get createdAt;
   @override
+  @JsonKey(name: 'updated_at')
   DateTime? get updatedAt;
 
   /// Create a copy of User

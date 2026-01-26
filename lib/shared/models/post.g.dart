@@ -7,45 +7,71 @@ part of 'post.dart';
 // **************************************************************************
 
 _$PostImpl _$$PostImplFromJson(Map<String, dynamic> json) => _$PostImpl(
-  id: json['id'] as String,
-  author: User.fromJson(json['author'] as Map<String, dynamic>),
-  content: json['content'] as String,
-  imageUrls:
-      (json['imageUrls'] as List<dynamic>?)?.map((e) => e as String).toList() ??
+  id: json['_id'] as String,
+  author: User.fromJson(_readAuthor(json, 'author') as Map<String, dynamic>),
+  caption: json['caption'] as String,
+  photos:
+      (json['photos'] as List<dynamic>?)?.map((e) => e as String).toList() ??
       const [],
-  createdAt: DateTime.parse(json['createdAt'] as String),
+  tags:
+      (json['tags'] as List<dynamic>?)?.map((e) => e as String).toList() ??
+      const [],
+  createdAt: DateTime.parse(json['created_at'] as String),
   likes:
       (json['likes'] as List<dynamic>?)?.map((e) => e as String).toList() ??
       const [],
-  commentCount: (json['commentCount'] as num?)?.toInt() ?? 0,
+  commentCount: (json['comments_count'] as num?)?.toInt() ?? 0,
   isLikedByMe: json['isLikedByMe'] as bool? ?? false,
 );
 
 Map<String, dynamic> _$$PostImplToJson(_$PostImpl instance) =>
     <String, dynamic>{
-      'id': instance.id,
+      '_id': instance.id,
       'author': instance.author,
-      'content': instance.content,
-      'imageUrls': instance.imageUrls,
-      'createdAt': instance.createdAt.toIso8601String(),
+      'caption': instance.caption,
+      'photos': instance.photos,
+      'tags': instance.tags,
+      'created_at': instance.createdAt.toIso8601String(),
       'likes': instance.likes,
-      'commentCount': instance.commentCount,
+      'comments_count': instance.commentCount,
       'isLikedByMe': instance.isLikedByMe,
     };
 
 _$StoryImpl _$$StoryImplFromJson(Map<String, dynamic> json) => _$StoryImpl(
-  id: json['id'] as String,
-  author: User.fromJson(json['author'] as Map<String, dynamic>),
-  imageUrl: json['imageUrl'] as String,
-  createdAt: DateTime.parse(json['createdAt'] as String),
-  expiresAt: DateTime.parse(json['expiresAt'] as String),
+  id: json['_id'] as String,
+  imageUrl: json['asset_url'] as String,
+  type: json['asset_type'] as String,
+  createdAt: json['created_at'] == null
+      ? null
+      : DateTime.parse(json['created_at'] as String),
+  expiresAt: DateTime.parse(json['expires_at'] as String),
+  viewers:
+      (json['viewers'] as List<dynamic>?)?.map((e) => e as String).toList() ??
+      const [],
 );
 
 Map<String, dynamic> _$$StoryImplToJson(_$StoryImpl instance) =>
     <String, dynamic>{
-      'id': instance.id,
-      'author': instance.author,
-      'imageUrl': instance.imageUrl,
-      'createdAt': instance.createdAt.toIso8601String(),
-      'expiresAt': instance.expiresAt.toIso8601String(),
+      '_id': instance.id,
+      'asset_url': instance.imageUrl,
+      'asset_type': instance.type,
+      'created_at': instance.createdAt?.toIso8601String(),
+      'expires_at': instance.expiresAt.toIso8601String(),
+      'viewers': instance.viewers,
+    };
+
+_$StoryBundleImpl _$$StoryBundleImplFromJson(Map<String, dynamic> json) =>
+    _$StoryBundleImpl(
+      user: User.fromJson(json['author'] as Map<String, dynamic>),
+      stories: (json['stories'] as List<dynamic>)
+          .map((e) => Story.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      allViewed: json['allViewed'] as bool? ?? false,
+    );
+
+Map<String, dynamic> _$$StoryBundleImplToJson(_$StoryBundleImpl instance) =>
+    <String, dynamic>{
+      'author': instance.user,
+      'stories': instance.stories,
+      'allViewed': instance.allViewed,
     };

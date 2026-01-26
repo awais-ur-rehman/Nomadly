@@ -91,7 +91,10 @@ class ApiClient {
             // Refresh failed - user needs to login again
             _logger.e('Token refresh failed - redirecting to login');
             await _storage.clearAll();
-            // TODO: Navigate to login screen
+            _logger.i('Redirecting to login (simulated)');
+            // Note: Actual navigation requires a GlobalKey<NavigatorState> or re-auth stream listener
+            // which is handled by RouterListenable in router.dart mostly.
+            // verifying auth state change should trigger redirect.
             return handler.next(error);
           }
         }

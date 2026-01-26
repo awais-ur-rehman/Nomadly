@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_dimensions.dart';
+import '../../../../shared/services/toast_service.dart';
 import '../../providers/notification_provider.dart';
 
 class NotificationsScreen extends ConsumerWidget {
@@ -34,7 +35,7 @@ class NotificationsScreen extends ConsumerWidget {
                     final notification = state.notifications[index];
                     return ListTile(
                       leading: CircleAvatar(
-                        backgroundColor: _getColor(notification.type).withOpacity(0.1),
+                        backgroundColor: _getColor(notification.type).withValues(alpha: 0.1),
                         child: Icon(_getIcon(notification.type), color: _getColor(notification.type)),
                       ),
                       title: Text(
@@ -56,9 +57,17 @@ class NotificationsScreen extends ConsumerWidget {
                       ),
                       onTap: () {
                         ref.read(notificationProvider.notifier).markAsRead(notification.id);
-                        // TODO: Navigate based on notification type
+                        if (notification.type == 'match') {
+                           // Navigate to matches or specific chat? Matches tab for now.
+                           // context.go('/home'); // Switch tab?
+                           // Ideally deep link to match
+                        } else if (notification.type == 'message') {
+                           // context.push('/chat/${notification.referenceId}');
+                        }
+                        // For now just showing toast as routing depends on payload
+                        ToastService.showInfo('Tapped notification: ${notification.type}');
                       },
-                      tileColor: notification.isRead ? null : AppColors.primaryExtraLight.withOpacity(0.3),
+                      tileColor: notification.isRead ? null : AppColors.primaryExtraLight.withValues(alpha: 0.3),
                     );
                   },
                 ),

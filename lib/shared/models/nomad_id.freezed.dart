@@ -22,7 +22,9 @@ NomadId _$NomadIdFromJson(Map<String, dynamic> json) {
 /// @nodoc
 mixin _$NomadId {
   bool get verified => throw _privateConstructorUsedError;
-  DateTime get memberSince => throw _privateConstructorUsedError;
+  @JsonKey(name: 'member_since')
+  DateTime? get memberSince => throw _privateConstructorUsedError;
+  @JsonKey(name: 'vouch_count')
   int get vouchCount => throw _privateConstructorUsedError;
 
   /// Serializes this NomadId to a JSON map.
@@ -39,7 +41,11 @@ abstract class $NomadIdCopyWith<$Res> {
   factory $NomadIdCopyWith(NomadId value, $Res Function(NomadId) then) =
       _$NomadIdCopyWithImpl<$Res, NomadId>;
   @useResult
-  $Res call({bool verified, DateTime memberSince, int vouchCount});
+  $Res call({
+    bool verified,
+    @JsonKey(name: 'member_since') DateTime? memberSince,
+    @JsonKey(name: 'vouch_count') int vouchCount,
+  });
 }
 
 /// @nodoc
@@ -58,7 +64,7 @@ class _$NomadIdCopyWithImpl<$Res, $Val extends NomadId>
   @override
   $Res call({
     Object? verified = null,
-    Object? memberSince = null,
+    Object? memberSince = freezed,
     Object? vouchCount = null,
   }) {
     return _then(
@@ -67,10 +73,10 @@ class _$NomadIdCopyWithImpl<$Res, $Val extends NomadId>
                 ? _value.verified
                 : verified // ignore: cast_nullable_to_non_nullable
                       as bool,
-            memberSince: null == memberSince
+            memberSince: freezed == memberSince
                 ? _value.memberSince
                 : memberSince // ignore: cast_nullable_to_non_nullable
-                      as DateTime,
+                      as DateTime?,
             vouchCount: null == vouchCount
                 ? _value.vouchCount
                 : vouchCount // ignore: cast_nullable_to_non_nullable
@@ -89,7 +95,11 @@ abstract class _$$NomadIdImplCopyWith<$Res> implements $NomadIdCopyWith<$Res> {
   ) = __$$NomadIdImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({bool verified, DateTime memberSince, int vouchCount});
+  $Res call({
+    bool verified,
+    @JsonKey(name: 'member_since') DateTime? memberSince,
+    @JsonKey(name: 'vouch_count') int vouchCount,
+  });
 }
 
 /// @nodoc
@@ -107,7 +117,7 @@ class __$$NomadIdImplCopyWithImpl<$Res>
   @override
   $Res call({
     Object? verified = null,
-    Object? memberSince = null,
+    Object? memberSince = freezed,
     Object? vouchCount = null,
   }) {
     return _then(
@@ -116,10 +126,10 @@ class __$$NomadIdImplCopyWithImpl<$Res>
             ? _value.verified
             : verified // ignore: cast_nullable_to_non_nullable
                   as bool,
-        memberSince: null == memberSince
+        memberSince: freezed == memberSince
             ? _value.memberSince
             : memberSince // ignore: cast_nullable_to_non_nullable
-                  as DateTime,
+                  as DateTime?,
         vouchCount: null == vouchCount
             ? _value.vouchCount
             : vouchCount // ignore: cast_nullable_to_non_nullable
@@ -134,8 +144,8 @@ class __$$NomadIdImplCopyWithImpl<$Res>
 class _$NomadIdImpl implements _NomadId {
   const _$NomadIdImpl({
     this.verified = false,
-    required this.memberSince,
-    this.vouchCount = 0,
+    @JsonKey(name: 'member_since') this.memberSince,
+    @JsonKey(name: 'vouch_count') this.vouchCount = 0,
   });
 
   factory _$NomadIdImpl.fromJson(Map<String, dynamic> json) =>
@@ -145,9 +155,10 @@ class _$NomadIdImpl implements _NomadId {
   @JsonKey()
   final bool verified;
   @override
-  final DateTime memberSince;
+  @JsonKey(name: 'member_since')
+  final DateTime? memberSince;
   @override
-  @JsonKey()
+  @JsonKey(name: 'vouch_count')
   final int vouchCount;
 
   @override
@@ -190,8 +201,8 @@ class _$NomadIdImpl implements _NomadId {
 abstract class _NomadId implements NomadId {
   const factory _NomadId({
     final bool verified,
-    required final DateTime memberSince,
-    final int vouchCount,
+    @JsonKey(name: 'member_since') final DateTime? memberSince,
+    @JsonKey(name: 'vouch_count') final int vouchCount,
   }) = _$NomadIdImpl;
 
   factory _NomadId.fromJson(Map<String, dynamic> json) = _$NomadIdImpl.fromJson;
@@ -199,8 +210,10 @@ abstract class _NomadId implements NomadId {
   @override
   bool get verified;
   @override
-  DateTime get memberSince;
+  @JsonKey(name: 'member_since')
+  DateTime? get memberSince;
   @override
+  @JsonKey(name: 'vouch_count')
   int get vouchCount;
 
   /// Create a copy of NomadId

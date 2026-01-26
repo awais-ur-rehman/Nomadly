@@ -7,10 +7,10 @@ part 'travel_route.g.dart';
 @freezed
 class TravelRoute with _$TravelRoute {
   const factory TravelRoute({
-    required GeoPoint origin,
-    required GeoPoint destination,
-    required DateTime startDate,
-    required int durationDays,
+    GeoPoint? origin,
+    GeoPoint? destination,
+    @JsonKey(name: 'start_date') DateTime? startDate,
+    @JsonKey(name: 'duration_days') int? durationDays,
   }) = _TravelRoute;
 
   factory TravelRoute.fromJson(Map<String, dynamic> json) =>

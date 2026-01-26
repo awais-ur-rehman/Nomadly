@@ -167,18 +167,32 @@ class ActiveChatNotifier extends StateNotifier<ActiveChatState> {
     }
   }
 
-  void sendMessage(String messageContent) {
+  Future<void> sendMessage(String messageContent) async {
     if (state.conversationId == null) return;
-
-    // Send via socket
-    _socketService.sendMessage(
-      conversationId: state.conversationId!,
-      message: messageContent,
-    );
     
-    // Optimistically add to UI?
-    // Usually socket echoes back or we confirm receipt.
-    // For simplicity, wait for echo or add local pending message.
+    // Optimistic update skipped due to missing AuthProvider reference for 'me' user.
+    // Relying on API response and Socket updates.
+    
+    try {
+      // 1. Send via API
+      final sentMessage = await _repository.sendMessage(
+        conversationId: state.conversationId!,
+        message: messageContent,
+      );
+      
+      // 2. Add to list (if socket hasn't already)
+      // Check if message with this ID exists (socket might have delivered it)
+      if (!state.messages.any((m) => m.id == sentMessage.id)) {
+        state = state.copyWith(
+           messages: [sentMessage, ...state.messages]
+        );
+      }
+      
+      // 3. Socket emission is likely handled by backend upon POST
+    } catch (e) {
+      // Show error
+      state = state.copyWith(error: 'Failed to send: ${e.toString()}');
+    }
   }
   
   void sendTyping(bool isTyping) {

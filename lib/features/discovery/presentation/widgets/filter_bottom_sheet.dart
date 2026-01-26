@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_dimensions.dart';
+import '../../providers/discovery_provider.dart';
 
 class FilterBottomSheet extends ConsumerStatefulWidget {
   const FilterBottomSheet({super.key});
@@ -108,9 +109,8 @@ class _FilterBottomSheetState extends ConsumerState<FilterBottomSheet> {
                   if (_verifiedOnly) 'verified': true,
                 };
                 
-                // TODO: Update provider with filters
-                // For now just close, assume provider has a method (need to add it)
-                // ref.read(discoveryProvider.notifier).updateFilters(filters);
+                // Update provider with filters
+                ref.read(discoveryProvider.notifier).updateFilters(filters);
                 
                 Navigator.pop(context);
               },

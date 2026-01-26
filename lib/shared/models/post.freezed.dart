@@ -21,13 +21,17 @@ Post _$PostFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$Post {
+  @JsonKey(name: '_id')
   String get id => throw _privateConstructorUsedError;
+  @JsonKey(readValue: _readAuthor)
   User get author => throw _privateConstructorUsedError;
-  String get content => throw _privateConstructorUsedError;
-  List<String> get imageUrls => throw _privateConstructorUsedError;
+  String get caption => throw _privateConstructorUsedError;
+  List<String> get photos => throw _privateConstructorUsedError;
+  List<String> get tags => throw _privateConstructorUsedError;
+  @JsonKey(name: 'created_at')
   DateTime get createdAt => throw _privateConstructorUsedError;
-  List<String> get likes =>
-      throw _privateConstructorUsedError; // List of user IDs
+  List<String> get likes => throw _privateConstructorUsedError;
+  @JsonKey(name: 'comments_count')
   int get commentCount => throw _privateConstructorUsedError;
   bool get isLikedByMe => throw _privateConstructorUsedError;
 
@@ -46,13 +50,14 @@ abstract class $PostCopyWith<$Res> {
       _$PostCopyWithImpl<$Res, Post>;
   @useResult
   $Res call({
-    String id,
-    User author,
-    String content,
-    List<String> imageUrls,
-    DateTime createdAt,
+    @JsonKey(name: '_id') String id,
+    @JsonKey(readValue: _readAuthor) User author,
+    String caption,
+    List<String> photos,
+    List<String> tags,
+    @JsonKey(name: 'created_at') DateTime createdAt,
     List<String> likes,
-    int commentCount,
+    @JsonKey(name: 'comments_count') int commentCount,
     bool isLikedByMe,
   });
 
@@ -76,8 +81,9 @@ class _$PostCopyWithImpl<$Res, $Val extends Post>
   $Res call({
     Object? id = null,
     Object? author = null,
-    Object? content = null,
-    Object? imageUrls = null,
+    Object? caption = null,
+    Object? photos = null,
+    Object? tags = null,
     Object? createdAt = null,
     Object? likes = null,
     Object? commentCount = null,
@@ -93,13 +99,17 @@ class _$PostCopyWithImpl<$Res, $Val extends Post>
                 ? _value.author
                 : author // ignore: cast_nullable_to_non_nullable
                       as User,
-            content: null == content
-                ? _value.content
-                : content // ignore: cast_nullable_to_non_nullable
+            caption: null == caption
+                ? _value.caption
+                : caption // ignore: cast_nullable_to_non_nullable
                       as String,
-            imageUrls: null == imageUrls
-                ? _value.imageUrls
-                : imageUrls // ignore: cast_nullable_to_non_nullable
+            photos: null == photos
+                ? _value.photos
+                : photos // ignore: cast_nullable_to_non_nullable
+                      as List<String>,
+            tags: null == tags
+                ? _value.tags
+                : tags // ignore: cast_nullable_to_non_nullable
                       as List<String>,
             createdAt: null == createdAt
                 ? _value.createdAt
@@ -142,13 +152,14 @@ abstract class _$$PostImplCopyWith<$Res> implements $PostCopyWith<$Res> {
   @override
   @useResult
   $Res call({
-    String id,
-    User author,
-    String content,
-    List<String> imageUrls,
-    DateTime createdAt,
+    @JsonKey(name: '_id') String id,
+    @JsonKey(readValue: _readAuthor) User author,
+    String caption,
+    List<String> photos,
+    List<String> tags,
+    @JsonKey(name: 'created_at') DateTime createdAt,
     List<String> likes,
-    int commentCount,
+    @JsonKey(name: 'comments_count') int commentCount,
     bool isLikedByMe,
   });
 
@@ -170,8 +181,9 @@ class __$$PostImplCopyWithImpl<$Res>
   $Res call({
     Object? id = null,
     Object? author = null,
-    Object? content = null,
-    Object? imageUrls = null,
+    Object? caption = null,
+    Object? photos = null,
+    Object? tags = null,
     Object? createdAt = null,
     Object? likes = null,
     Object? commentCount = null,
@@ -187,13 +199,17 @@ class __$$PostImplCopyWithImpl<$Res>
             ? _value.author
             : author // ignore: cast_nullable_to_non_nullable
                   as User,
-        content: null == content
-            ? _value.content
-            : content // ignore: cast_nullable_to_non_nullable
+        caption: null == caption
+            ? _value.caption
+            : caption // ignore: cast_nullable_to_non_nullable
                   as String,
-        imageUrls: null == imageUrls
-            ? _value._imageUrls
-            : imageUrls // ignore: cast_nullable_to_non_nullable
+        photos: null == photos
+            ? _value._photos
+            : photos // ignore: cast_nullable_to_non_nullable
+                  as List<String>,
+        tags: null == tags
+            ? _value._tags
+            : tags // ignore: cast_nullable_to_non_nullable
                   as List<String>,
         createdAt: null == createdAt
             ? _value.createdAt
@@ -220,36 +236,50 @@ class __$$PostImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$PostImpl implements _Post {
   const _$PostImpl({
-    required this.id,
-    required this.author,
-    required this.content,
-    final List<String> imageUrls = const [],
-    required this.createdAt,
+    @JsonKey(name: '_id') required this.id,
+    @JsonKey(readValue: _readAuthor) required this.author,
+    required this.caption,
+    final List<String> photos = const [],
+    final List<String> tags = const [],
+    @JsonKey(name: 'created_at') required this.createdAt,
     final List<String> likes = const [],
-    this.commentCount = 0,
+    @JsonKey(name: 'comments_count') this.commentCount = 0,
     this.isLikedByMe = false,
-  }) : _imageUrls = imageUrls,
+  }) : _photos = photos,
+       _tags = tags,
        _likes = likes;
 
   factory _$PostImpl.fromJson(Map<String, dynamic> json) =>
       _$$PostImplFromJson(json);
 
   @override
+  @JsonKey(name: '_id')
   final String id;
   @override
+  @JsonKey(readValue: _readAuthor)
   final User author;
   @override
-  final String content;
-  final List<String> _imageUrls;
+  final String caption;
+  final List<String> _photos;
   @override
   @JsonKey()
-  List<String> get imageUrls {
-    if (_imageUrls is EqualUnmodifiableListView) return _imageUrls;
+  List<String> get photos {
+    if (_photos is EqualUnmodifiableListView) return _photos;
     // ignore: implicit_dynamic_type
-    return EqualUnmodifiableListView(_imageUrls);
+    return EqualUnmodifiableListView(_photos);
+  }
+
+  final List<String> _tags;
+  @override
+  @JsonKey()
+  List<String> get tags {
+    if (_tags is EqualUnmodifiableListView) return _tags;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_tags);
   }
 
   @override
+  @JsonKey(name: 'created_at')
   final DateTime createdAt;
   final List<String> _likes;
   @override
@@ -260,9 +290,8 @@ class _$PostImpl implements _Post {
     return EqualUnmodifiableListView(_likes);
   }
 
-  // List of user IDs
   @override
-  @JsonKey()
+  @JsonKey(name: 'comments_count')
   final int commentCount;
   @override
   @JsonKey()
@@ -270,7 +299,7 @@ class _$PostImpl implements _Post {
 
   @override
   String toString() {
-    return 'Post(id: $id, author: $author, content: $content, imageUrls: $imageUrls, createdAt: $createdAt, likes: $likes, commentCount: $commentCount, isLikedByMe: $isLikedByMe)';
+    return 'Post(id: $id, author: $author, caption: $caption, photos: $photos, tags: $tags, createdAt: $createdAt, likes: $likes, commentCount: $commentCount, isLikedByMe: $isLikedByMe)';
   }
 
   @override
@@ -280,11 +309,9 @@ class _$PostImpl implements _Post {
             other is _$PostImpl &&
             (identical(other.id, id) || other.id == id) &&
             (identical(other.author, author) || other.author == author) &&
-            (identical(other.content, content) || other.content == content) &&
-            const DeepCollectionEquality().equals(
-              other._imageUrls,
-              _imageUrls,
-            ) &&
+            (identical(other.caption, caption) || other.caption == caption) &&
+            const DeepCollectionEquality().equals(other._photos, _photos) &&
+            const DeepCollectionEquality().equals(other._tags, _tags) &&
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt) &&
             const DeepCollectionEquality().equals(other._likes, _likes) &&
@@ -300,8 +327,9 @@ class _$PostImpl implements _Post {
     runtimeType,
     id,
     author,
-    content,
-    const DeepCollectionEquality().hash(_imageUrls),
+    caption,
+    const DeepCollectionEquality().hash(_photos),
+    const DeepCollectionEquality().hash(_tags),
     createdAt,
     const DeepCollectionEquality().hash(_likes),
     commentCount,
@@ -324,31 +352,38 @@ class _$PostImpl implements _Post {
 
 abstract class _Post implements Post {
   const factory _Post({
-    required final String id,
-    required final User author,
-    required final String content,
-    final List<String> imageUrls,
-    required final DateTime createdAt,
+    @JsonKey(name: '_id') required final String id,
+    @JsonKey(readValue: _readAuthor) required final User author,
+    required final String caption,
+    final List<String> photos,
+    final List<String> tags,
+    @JsonKey(name: 'created_at') required final DateTime createdAt,
     final List<String> likes,
-    final int commentCount,
+    @JsonKey(name: 'comments_count') final int commentCount,
     final bool isLikedByMe,
   }) = _$PostImpl;
 
   factory _Post.fromJson(Map<String, dynamic> json) = _$PostImpl.fromJson;
 
   @override
+  @JsonKey(name: '_id')
   String get id;
   @override
+  @JsonKey(readValue: _readAuthor)
   User get author;
   @override
-  String get content;
+  String get caption;
   @override
-  List<String> get imageUrls;
+  List<String> get photos;
   @override
+  List<String> get tags;
+  @override
+  @JsonKey(name: 'created_at')
   DateTime get createdAt;
   @override
-  List<String> get likes; // List of user IDs
+  List<String> get likes;
   @override
+  @JsonKey(name: 'comments_count')
   int get commentCount;
   @override
   bool get isLikedByMe;
@@ -367,11 +402,17 @@ Story _$StoryFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$Story {
+  @JsonKey(name: '_id')
   String get id => throw _privateConstructorUsedError;
-  User get author => throw _privateConstructorUsedError;
+  @JsonKey(name: 'asset_url')
   String get imageUrl => throw _privateConstructorUsedError;
-  DateTime get createdAt => throw _privateConstructorUsedError;
+  @JsonKey(name: 'asset_type')
+  String get type => throw _privateConstructorUsedError; // 'image' or 'video'
+  @JsonKey(name: 'created_at')
+  DateTime? get createdAt => throw _privateConstructorUsedError;
+  @JsonKey(name: 'expires_at')
   DateTime get expiresAt => throw _privateConstructorUsedError;
+  List<String> get viewers => throw _privateConstructorUsedError;
 
   /// Serializes this Story to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -388,14 +429,13 @@ abstract class $StoryCopyWith<$Res> {
       _$StoryCopyWithImpl<$Res, Story>;
   @useResult
   $Res call({
-    String id,
-    User author,
-    String imageUrl,
-    DateTime createdAt,
-    DateTime expiresAt,
+    @JsonKey(name: '_id') String id,
+    @JsonKey(name: 'asset_url') String imageUrl,
+    @JsonKey(name: 'asset_type') String type,
+    @JsonKey(name: 'created_at') DateTime? createdAt,
+    @JsonKey(name: 'expires_at') DateTime expiresAt,
+    List<String> viewers,
   });
-
-  $UserCopyWith<$Res> get author;
 }
 
 /// @nodoc
@@ -414,10 +454,11 @@ class _$StoryCopyWithImpl<$Res, $Val extends Story>
   @override
   $Res call({
     Object? id = null,
-    Object? author = null,
     Object? imageUrl = null,
-    Object? createdAt = null,
+    Object? type = null,
+    Object? createdAt = freezed,
     Object? expiresAt = null,
+    Object? viewers = null,
   }) {
     return _then(
       _value.copyWith(
@@ -425,35 +466,29 @@ class _$StoryCopyWithImpl<$Res, $Val extends Story>
                 ? _value.id
                 : id // ignore: cast_nullable_to_non_nullable
                       as String,
-            author: null == author
-                ? _value.author
-                : author // ignore: cast_nullable_to_non_nullable
-                      as User,
             imageUrl: null == imageUrl
                 ? _value.imageUrl
                 : imageUrl // ignore: cast_nullable_to_non_nullable
                       as String,
-            createdAt: null == createdAt
+            type: null == type
+                ? _value.type
+                : type // ignore: cast_nullable_to_non_nullable
+                      as String,
+            createdAt: freezed == createdAt
                 ? _value.createdAt
                 : createdAt // ignore: cast_nullable_to_non_nullable
-                      as DateTime,
+                      as DateTime?,
             expiresAt: null == expiresAt
                 ? _value.expiresAt
                 : expiresAt // ignore: cast_nullable_to_non_nullable
                       as DateTime,
+            viewers: null == viewers
+                ? _value.viewers
+                : viewers // ignore: cast_nullable_to_non_nullable
+                      as List<String>,
           )
           as $Val,
     );
-  }
-
-  /// Create a copy of Story
-  /// with the given fields replaced by the non-null parameter values.
-  @override
-  @pragma('vm:prefer-inline')
-  $UserCopyWith<$Res> get author {
-    return $UserCopyWith<$Res>(_value.author, (value) {
-      return _then(_value.copyWith(author: value) as $Val);
-    });
   }
 }
 
@@ -466,15 +501,13 @@ abstract class _$$StoryImplCopyWith<$Res> implements $StoryCopyWith<$Res> {
   @override
   @useResult
   $Res call({
-    String id,
-    User author,
-    String imageUrl,
-    DateTime createdAt,
-    DateTime expiresAt,
+    @JsonKey(name: '_id') String id,
+    @JsonKey(name: 'asset_url') String imageUrl,
+    @JsonKey(name: 'asset_type') String type,
+    @JsonKey(name: 'created_at') DateTime? createdAt,
+    @JsonKey(name: 'expires_at') DateTime expiresAt,
+    List<String> viewers,
   });
-
-  @override
-  $UserCopyWith<$Res> get author;
 }
 
 /// @nodoc
@@ -492,10 +525,11 @@ class __$$StoryImplCopyWithImpl<$Res>
   @override
   $Res call({
     Object? id = null,
-    Object? author = null,
     Object? imageUrl = null,
-    Object? createdAt = null,
+    Object? type = null,
+    Object? createdAt = freezed,
     Object? expiresAt = null,
+    Object? viewers = null,
   }) {
     return _then(
       _$StoryImpl(
@@ -503,22 +537,26 @@ class __$$StoryImplCopyWithImpl<$Res>
             ? _value.id
             : id // ignore: cast_nullable_to_non_nullable
                   as String,
-        author: null == author
-            ? _value.author
-            : author // ignore: cast_nullable_to_non_nullable
-                  as User,
         imageUrl: null == imageUrl
             ? _value.imageUrl
             : imageUrl // ignore: cast_nullable_to_non_nullable
                   as String,
-        createdAt: null == createdAt
+        type: null == type
+            ? _value.type
+            : type // ignore: cast_nullable_to_non_nullable
+                  as String,
+        createdAt: freezed == createdAt
             ? _value.createdAt
             : createdAt // ignore: cast_nullable_to_non_nullable
-                  as DateTime,
+                  as DateTime?,
         expiresAt: null == expiresAt
             ? _value.expiresAt
             : expiresAt // ignore: cast_nullable_to_non_nullable
                   as DateTime,
+        viewers: null == viewers
+            ? _value._viewers
+            : viewers // ignore: cast_nullable_to_non_nullable
+                  as List<String>,
       ),
     );
   }
@@ -528,30 +566,45 @@ class __$$StoryImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$StoryImpl implements _Story {
   const _$StoryImpl({
-    required this.id,
-    required this.author,
-    required this.imageUrl,
-    required this.createdAt,
-    required this.expiresAt,
-  });
+    @JsonKey(name: '_id') required this.id,
+    @JsonKey(name: 'asset_url') required this.imageUrl,
+    @JsonKey(name: 'asset_type') required this.type,
+    @JsonKey(name: 'created_at') this.createdAt,
+    @JsonKey(name: 'expires_at') required this.expiresAt,
+    final List<String> viewers = const [],
+  }) : _viewers = viewers;
 
   factory _$StoryImpl.fromJson(Map<String, dynamic> json) =>
       _$$StoryImplFromJson(json);
 
   @override
+  @JsonKey(name: '_id')
   final String id;
   @override
-  final User author;
-  @override
+  @JsonKey(name: 'asset_url')
   final String imageUrl;
   @override
-  final DateTime createdAt;
+  @JsonKey(name: 'asset_type')
+  final String type;
+  // 'image' or 'video'
   @override
+  @JsonKey(name: 'created_at')
+  final DateTime? createdAt;
+  @override
+  @JsonKey(name: 'expires_at')
   final DateTime expiresAt;
+  final List<String> _viewers;
+  @override
+  @JsonKey()
+  List<String> get viewers {
+    if (_viewers is EqualUnmodifiableListView) return _viewers;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_viewers);
+  }
 
   @override
   String toString() {
-    return 'Story(id: $id, author: $author, imageUrl: $imageUrl, createdAt: $createdAt, expiresAt: $expiresAt)';
+    return 'Story(id: $id, imageUrl: $imageUrl, type: $type, createdAt: $createdAt, expiresAt: $expiresAt, viewers: $viewers)';
   }
 
   @override
@@ -560,19 +613,27 @@ class _$StoryImpl implements _Story {
         (other.runtimeType == runtimeType &&
             other is _$StoryImpl &&
             (identical(other.id, id) || other.id == id) &&
-            (identical(other.author, author) || other.author == author) &&
             (identical(other.imageUrl, imageUrl) ||
                 other.imageUrl == imageUrl) &&
+            (identical(other.type, type) || other.type == type) &&
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt) &&
             (identical(other.expiresAt, expiresAt) ||
-                other.expiresAt == expiresAt));
+                other.expiresAt == expiresAt) &&
+            const DeepCollectionEquality().equals(other._viewers, _viewers));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, id, author, imageUrl, createdAt, expiresAt);
+  int get hashCode => Object.hash(
+    runtimeType,
+    id,
+    imageUrl,
+    type,
+    createdAt,
+    expiresAt,
+    const DeepCollectionEquality().hash(_viewers),
+  );
 
   /// Create a copy of Story
   /// with the given fields replaced by the non-null parameter values.
@@ -590,30 +651,272 @@ class _$StoryImpl implements _Story {
 
 abstract class _Story implements Story {
   const factory _Story({
-    required final String id,
-    required final User author,
-    required final String imageUrl,
-    required final DateTime createdAt,
-    required final DateTime expiresAt,
+    @JsonKey(name: '_id') required final String id,
+    @JsonKey(name: 'asset_url') required final String imageUrl,
+    @JsonKey(name: 'asset_type') required final String type,
+    @JsonKey(name: 'created_at') final DateTime? createdAt,
+    @JsonKey(name: 'expires_at') required final DateTime expiresAt,
+    final List<String> viewers,
   }) = _$StoryImpl;
 
   factory _Story.fromJson(Map<String, dynamic> json) = _$StoryImpl.fromJson;
 
   @override
+  @JsonKey(name: '_id')
   String get id;
   @override
-  User get author;
-  @override
+  @JsonKey(name: 'asset_url')
   String get imageUrl;
   @override
-  DateTime get createdAt;
+  @JsonKey(name: 'asset_type')
+  String get type; // 'image' or 'video'
   @override
+  @JsonKey(name: 'created_at')
+  DateTime? get createdAt;
+  @override
+  @JsonKey(name: 'expires_at')
   DateTime get expiresAt;
+  @override
+  List<String> get viewers;
 
   /// Create a copy of Story
   /// with the given fields replaced by the non-null parameter values.
   @override
   @JsonKey(includeFromJson: false, includeToJson: false)
   _$$StoryImplCopyWith<_$StoryImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+StoryBundle _$StoryBundleFromJson(Map<String, dynamic> json) {
+  return _StoryBundle.fromJson(json);
+}
+
+/// @nodoc
+mixin _$StoryBundle {
+  @JsonKey(name: 'author')
+  User get user => throw _privateConstructorUsedError;
+  List<Story> get stories => throw _privateConstructorUsedError;
+  bool get allViewed => throw _privateConstructorUsedError;
+
+  /// Serializes this StoryBundle to a JSON map.
+  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
+
+  /// Create a copy of StoryBundle
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  $StoryBundleCopyWith<StoryBundle> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $StoryBundleCopyWith<$Res> {
+  factory $StoryBundleCopyWith(
+    StoryBundle value,
+    $Res Function(StoryBundle) then,
+  ) = _$StoryBundleCopyWithImpl<$Res, StoryBundle>;
+  @useResult
+  $Res call({
+    @JsonKey(name: 'author') User user,
+    List<Story> stories,
+    bool allViewed,
+  });
+
+  $UserCopyWith<$Res> get user;
+}
+
+/// @nodoc
+class _$StoryBundleCopyWithImpl<$Res, $Val extends StoryBundle>
+    implements $StoryBundleCopyWith<$Res> {
+  _$StoryBundleCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  /// Create a copy of StoryBundle
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? user = null,
+    Object? stories = null,
+    Object? allViewed = null,
+  }) {
+    return _then(
+      _value.copyWith(
+            user: null == user
+                ? _value.user
+                : user // ignore: cast_nullable_to_non_nullable
+                      as User,
+            stories: null == stories
+                ? _value.stories
+                : stories // ignore: cast_nullable_to_non_nullable
+                      as List<Story>,
+            allViewed: null == allViewed
+                ? _value.allViewed
+                : allViewed // ignore: cast_nullable_to_non_nullable
+                      as bool,
+          )
+          as $Val,
+    );
+  }
+
+  /// Create a copy of StoryBundle
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $UserCopyWith<$Res> get user {
+    return $UserCopyWith<$Res>(_value.user, (value) {
+      return _then(_value.copyWith(user: value) as $Val);
+    });
+  }
+}
+
+/// @nodoc
+abstract class _$$StoryBundleImplCopyWith<$Res>
+    implements $StoryBundleCopyWith<$Res> {
+  factory _$$StoryBundleImplCopyWith(
+    _$StoryBundleImpl value,
+    $Res Function(_$StoryBundleImpl) then,
+  ) = __$$StoryBundleImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call({
+    @JsonKey(name: 'author') User user,
+    List<Story> stories,
+    bool allViewed,
+  });
+
+  @override
+  $UserCopyWith<$Res> get user;
+}
+
+/// @nodoc
+class __$$StoryBundleImplCopyWithImpl<$Res>
+    extends _$StoryBundleCopyWithImpl<$Res, _$StoryBundleImpl>
+    implements _$$StoryBundleImplCopyWith<$Res> {
+  __$$StoryBundleImplCopyWithImpl(
+    _$StoryBundleImpl _value,
+    $Res Function(_$StoryBundleImpl) _then,
+  ) : super(_value, _then);
+
+  /// Create a copy of StoryBundle
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? user = null,
+    Object? stories = null,
+    Object? allViewed = null,
+  }) {
+    return _then(
+      _$StoryBundleImpl(
+        user: null == user
+            ? _value.user
+            : user // ignore: cast_nullable_to_non_nullable
+                  as User,
+        stories: null == stories
+            ? _value._stories
+            : stories // ignore: cast_nullable_to_non_nullable
+                  as List<Story>,
+        allViewed: null == allViewed
+            ? _value.allViewed
+            : allViewed // ignore: cast_nullable_to_non_nullable
+                  as bool,
+      ),
+    );
+  }
+}
+
+/// @nodoc
+@JsonSerializable()
+class _$StoryBundleImpl implements _StoryBundle {
+  const _$StoryBundleImpl({
+    @JsonKey(name: 'author') required this.user,
+    required final List<Story> stories,
+    this.allViewed = false,
+  }) : _stories = stories;
+
+  factory _$StoryBundleImpl.fromJson(Map<String, dynamic> json) =>
+      _$$StoryBundleImplFromJson(json);
+
+  @override
+  @JsonKey(name: 'author')
+  final User user;
+  final List<Story> _stories;
+  @override
+  List<Story> get stories {
+    if (_stories is EqualUnmodifiableListView) return _stories;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_stories);
+  }
+
+  @override
+  @JsonKey()
+  final bool allViewed;
+
+  @override
+  String toString() {
+    return 'StoryBundle(user: $user, stories: $stories, allViewed: $allViewed)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$StoryBundleImpl &&
+            (identical(other.user, user) || other.user == user) &&
+            const DeepCollectionEquality().equals(other._stories, _stories) &&
+            (identical(other.allViewed, allViewed) ||
+                other.allViewed == allViewed));
+  }
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  int get hashCode => Object.hash(
+    runtimeType,
+    user,
+    const DeepCollectionEquality().hash(_stories),
+    allViewed,
+  );
+
+  /// Create a copy of StoryBundle
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$StoryBundleImplCopyWith<_$StoryBundleImpl> get copyWith =>
+      __$$StoryBundleImplCopyWithImpl<_$StoryBundleImpl>(this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$$StoryBundleImplToJson(this);
+  }
+}
+
+abstract class _StoryBundle implements StoryBundle {
+  const factory _StoryBundle({
+    @JsonKey(name: 'author') required final User user,
+    required final List<Story> stories,
+    final bool allViewed,
+  }) = _$StoryBundleImpl;
+
+  factory _StoryBundle.fromJson(Map<String, dynamic> json) =
+      _$StoryBundleImpl.fromJson;
+
+  @override
+  @JsonKey(name: 'author')
+  User get user;
+  @override
+  List<Story> get stories;
+  @override
+  bool get allViewed;
+
+  /// Create a copy of StoryBundle
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  _$$StoryBundleImplCopyWith<_$StoryBundleImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

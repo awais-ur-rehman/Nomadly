@@ -6,10 +6,10 @@ part 'profile.g.dart';
 @freezed
 class Profile with _$Profile {
   const factory Profile({
-    required String name,
+    String? name,
     int? age,
     String? gender,
-    String? photoUrl,
+    @JsonKey(name: 'photo_url') String? photoUrl,
     @Default([]) List<String> hobbies,
     @Default('friends') String intent, // 'friends', 'dating', 'both'
     String? bio,

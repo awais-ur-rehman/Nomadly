@@ -7,8 +7,8 @@ part 'nomad_id.g.dart';
 class NomadId with _$NomadId {
   const factory NomadId({
     @Default(false) bool verified,
-    required DateTime memberSince,
-    @Default(0) int vouchCount,
+    @JsonKey(name: 'member_since') DateTime? memberSince,
+    @JsonKey(name: 'vouch_count') @Default(0) int vouchCount,
   }) = _NomadId;
 
   factory NomadId.fromJson(Map<String, dynamic> json) =>

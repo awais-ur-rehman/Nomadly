@@ -9,7 +9,6 @@ class ActivityRepository {
   final _apiClient = ApiClient();
   final _logger = Logger();
 
-  // Get activities nearby
   Future<List<Activity>> getNearbyActivities({
     required double latitude,
     required double longitude,
@@ -17,7 +16,7 @@ class ActivityRepository {
   }) async {
     try {
       final response = await _apiClient.get(
-        '${AppConfig.baseUrl}/api/v1/activities/nearby', // Assuming endpoint structure
+        '/api/v1/beacons/nearby',
         queryParameters: {
           'lat': latitude,
           'lng': longitude,
@@ -26,18 +25,17 @@ class ActivityRepository {
       );
 
       if (response.statusCode == 200) {
-        final List<dynamic> data = response.data['data'];
+        final List<dynamic> data = response.data['data'] ?? [];
         return data.map((json) => Activity.fromJson(json)).toList();
       }
 
       throw Exception('Failed to load activities');
     } on DioException catch (e) {
       _logger.e('Get nearby activities error: ${e.message}');
-      return []; // Return empty list on error to allow map to load
+      return []; 
     }
   }
 
-  // Get beacons nearby
   Future<List<Beacon>> getNearbyBeacons({
     required double latitude,
     required double longitude,
@@ -45,7 +43,7 @@ class ActivityRepository {
   }) async {
     try {
       final response = await _apiClient.get(
-        '${AppConfig.baseUrl}/api/v1/social/beacons/nearby',
+        '/api/v1/beacons/nearby',
         queryParameters: {
           'lat': latitude,
           'lng': longitude,
@@ -54,7 +52,7 @@ class ActivityRepository {
       );
 
       if (response.statusCode == 200) {
-        final List<dynamic> data = response.data['data'];
+        final List<dynamic> data = response.data['data'] ?? [];
         return data.map((json) => Beacon.fromJson(json)).toList();
       }
       return [];
@@ -65,14 +63,11 @@ class ActivityRepository {
   }
 
   // Create Beacon
-  Future<Beacon> createBeacon({required String message, required double lat, required double lng}) async {
+  Future<Beacon> createBeacon(Map<String, dynamic> beaconData) async {
     try {
       final response = await _apiClient.post(
-        '${AppConfig.baseUrl}/api/v1/social/beacons',
-        data: {
-          'message': message,
-          'location': {'latitude': lat, 'longitude': lng},
-        },
+        '/beacons',
+        data: beaconData,
       );
       if (response.statusCode == 201) {
         return Beacon.fromJson(response.data['data']);
@@ -84,11 +79,23 @@ class ActivityRepository {
     }
   }
 
-  // Create activity
+  // ... (keeping joinBeacon etc)
+  
+  // Join Beacon (if relevant to logic, e.g. "I'm interested")
+  Future<void> joinBeacon(String beaconId) async {
+    try {
+      await _apiClient.post('/beacons/$beaconId/join');
+    } on DioException catch (e) {
+       _logger.e('Join beacon error: ${e.message}');
+       throw _handleError(e);
+    }
+  }
+
+  // Create activity (legacy/compatibility, mapping to beacon)
   Future<Activity> createActivity(Map<String, dynamic> activityData) async {
     try {
       final response = await _apiClient.post(
-        '${AppConfig.baseUrl}/api/v1/activities',
+        '/beacons',
         data: activityData,
       );
 

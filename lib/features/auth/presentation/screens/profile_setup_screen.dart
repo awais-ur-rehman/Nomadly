@@ -101,10 +101,6 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
         }
         return true;
       case 1: // Basic Info
-        if (_nameController.text.isEmpty) {
-          ToastService.showError('Please enter your name');
-          return false;
-        }
         if (_ageController.text.isEmpty) {
           ToastService.showError('Please enter your age');
           return false;
@@ -281,11 +277,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
               style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: AppDimensions.paddingL),
-            TextField(
-              controller: _nameController,
-              decoration: const InputDecoration(labelText: AppStrings.name),
-            ),
-            const SizedBox(height: AppDimensions.paddingM),
+            // Name is already set during registration
             TextField(
               controller: _ageController,
               decoration: const InputDecoration(labelText: 'Age'),

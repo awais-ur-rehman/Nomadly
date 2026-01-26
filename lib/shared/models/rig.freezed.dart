@@ -25,6 +25,7 @@ mixin _$Rig {
       throw _privateConstructorUsedError; // 'sprinter', 'skoolie', 'suv', 'truck_camper'
   @JsonKey(name: 'crew_type')
   String? get crewType => throw _privateConstructorUsedError; // 'solo', 'couple', 'with_pets'
+  @JsonKey(name: 'pet_friendly')
   bool get petFriendly => throw _privateConstructorUsedError;
 
   /// Serializes this Rig to a JSON map.
@@ -44,7 +45,7 @@ abstract class $RigCopyWith<$Res> {
   $Res call({
     String? type,
     @JsonKey(name: 'crew_type') String? crewType,
-    bool petFriendly,
+    @JsonKey(name: 'pet_friendly') bool petFriendly,
   });
 }
 
@@ -95,7 +96,7 @@ abstract class _$$RigImplCopyWith<$Res> implements $RigCopyWith<$Res> {
   $Res call({
     String? type,
     @JsonKey(name: 'crew_type') String? crewType,
-    bool petFriendly,
+    @JsonKey(name: 'pet_friendly') bool petFriendly,
   });
 }
 
@@ -139,7 +140,7 @@ class _$RigImpl implements _Rig {
   const _$RigImpl({
     this.type,
     @JsonKey(name: 'crew_type') this.crewType,
-    this.petFriendly = false,
+    @JsonKey(name: 'pet_friendly') this.petFriendly = false,
   });
 
   factory _$RigImpl.fromJson(Map<String, dynamic> json) =>
@@ -153,7 +154,7 @@ class _$RigImpl implements _Rig {
   final String? crewType;
   // 'solo', 'couple', 'with_pets'
   @override
-  @JsonKey()
+  @JsonKey(name: 'pet_friendly')
   final bool petFriendly;
 
   @override
@@ -195,7 +196,7 @@ abstract class _Rig implements Rig {
   const factory _Rig({
     final String? type,
     @JsonKey(name: 'crew_type') final String? crewType,
-    final bool petFriendly,
+    @JsonKey(name: 'pet_friendly') final bool petFriendly,
   }) = _$RigImpl;
 
   factory _Rig.fromJson(Map<String, dynamic> json) = _$RigImpl.fromJson;
@@ -206,6 +207,7 @@ abstract class _Rig implements Rig {
   @JsonKey(name: 'crew_type')
   String? get crewType; // 'solo', 'couple', 'with_pets'
   @override
+  @JsonKey(name: 'pet_friendly')
   bool get petFriendly;
 
   /// Create a copy of Rig

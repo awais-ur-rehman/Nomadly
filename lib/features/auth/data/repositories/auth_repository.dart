@@ -15,6 +15,7 @@ class AuthRepository {
   Future<RegisterResponse> register({
     required String email,
     required String password,
+    required String username,
     required String name,
     String? phone,
     int? age,
@@ -26,6 +27,7 @@ class AuthRepository {
         data: {
           'email': email,
           'password': password,
+          'username': username,
           'name': name,
           if (phone != null) 'phone': phone,
           if (age != null) 'age': age,
@@ -71,7 +73,7 @@ class AuthRepository {
 
         // Save user info
         await _storage.saveUserId(authResponse.user.uid);
-        await _storage.saveUserEmail(authResponse.user.email);
+        await _storage.saveUserEmail(authResponse.user.email ?? '');
 
         return authResponse;
       }
@@ -116,19 +118,31 @@ class AuthRepository {
 
       if (response.statusCode == 200) {
         final data = response.data['data'];
-        final authResponse = AuthResponse.fromJson(data);
+        
+        _logger.i('🔍 Login response received, parsing AuthResponse...');
+        _logger.i('📄 User JSON: ${data['user']}');
+        
+        try {
+          final authResponse = AuthResponse.fromJson(data);
+          _logger.i('✅ AuthResponse parsed successfully!');
+          
+          // Save tokens
+          await _storage.saveTokens(
+            accessToken: authResponse.token,
+            refreshToken: authResponse.refreshToken,
+          );
 
-        // Save tokens
-        await _storage.saveTokens(
-          accessToken: authResponse.token,
-          refreshToken: authResponse.refreshToken,
-        );
+          // Save user info
+          await _storage.saveUserId(authResponse.user.uid);
+          await _storage.saveUserEmail(authResponse.user.email ?? '');
 
-        // Save user info
-        await _storage.saveUserId(authResponse.user.uid);
-        await _storage.saveUserEmail(authResponse.user.email);
-
-        return authResponse;
+          return authResponse;
+        } catch (e, stackTrace) {
+          _logger.e('❌ PARSING ERROR: $e');
+          _logger.e('📋 Stack trace: $stackTrace');
+          _logger.e('📄 Failed JSON: $data');
+          rethrow;
+        }
       }
 
       throw Exception('Login failed');
@@ -179,6 +193,48 @@ class AuthRepository {
       throw Exception('Failed to fetch user profile');
     } on DioException catch (e) {
       _logger.e('GetMe error: ${e.message}');
+      throw _handleError(e);
+    }
+  }
+
+  // Forgot Password - Request reset OTP
+  Future<void> forgotPassword(String email) async {
+    try {
+      final response = await _apiClient.post(
+        '${AppConfig.authEndpoint}/forgot-password',
+        data: {'email': email},
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception('Failed to send reset code');
+      }
+    } on DioException catch (e) {
+      _logger.e('Forgot password error: ${e.message}');
+      throw _handleError(e);
+    }
+  }
+
+  // Reset Password - Verify OTP and set new password
+  Future<void> resetPassword({
+    required String email,
+    required String otp,
+    required String newPassword,
+  }) async {
+    try {
+      final response = await _apiClient.post(
+        '${AppConfig.authEndpoint}/reset-password',
+        data: {
+          'email': email,
+          'otp': otp,
+          'newPassword': newPassword,
+        },
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception('Failed to reset password');
+      }
+    } on DioException catch (e) {
+      _logger.e('Reset password error: ${e.message}');
       throw _handleError(e);
     }
   }

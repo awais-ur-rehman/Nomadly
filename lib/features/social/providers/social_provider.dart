@@ -1,4 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:logger/logger.dart';
+import '../../auth/providers/auth_provider.dart';
 import '../../../../shared/models/post.dart';
 import '../../../../shared/services/toast_service.dart';
 import '../data/repositories/social_repository.dart';
@@ -7,7 +9,7 @@ final socialRepositoryProvider = Provider<SocialRepository>((ref) => SocialRepos
 
 class SocialState {
   final List<Post> posts;
-  final List<Story> stories;
+  final List<StoryBundle> stories;
   final bool isLoading;
   final String? error;
 
@@ -20,7 +22,7 @@ class SocialState {
 
   SocialState copyWith({
     List<Post>? posts,
-    List<Story>? stories,
+    List<StoryBundle>? stories,
     bool? isLoading,
     String? error,
   }) {
@@ -35,22 +37,31 @@ class SocialState {
 
 class SocialNotifier extends StateNotifier<SocialState> {
   final SocialRepository _repository;
+  final Ref _ref;
+  final Logger _logger = Logger();
 
-  SocialNotifier(this._repository) : super(SocialState()) {
+  SocialNotifier(this._repository, this._ref) : super(SocialState()) {
     loadFeed();
   }
 
   Future<void> loadFeed({bool refresh = false}) async {
     state = state.copyWith(isLoading: true, error: null);
     try {
-      final posts = await _repository.getPosts();
-      final stories = await _repository.getStories();
+      _logger.i('Loading feed...');
+      final posts = await _repository.getHomeFeed();
+      _logger.i('Posts loaded: ${posts.length}');
+      
+      final stories = await _repository.getActiveStories();
+      _logger.i('Stories loaded: ${stories.length}');
+
       state = state.copyWith(
         isLoading: false,
         posts: posts,
         stories: stories,
       );
-    } catch (e) {
+      _logger.i('Feed state updated successfully');
+    } catch (e, stackTrace) {
+      _logger.e('Error loading feed: $e', error: e, stackTrace: stackTrace);
       state = state.copyWith(isLoading: false, error: e.toString());
     }
   }
@@ -84,23 +95,58 @@ class SocialNotifier extends StateNotifier<SocialState> {
     }
   }
 
-  Future<void> createPost(String content, {List<String>? imageUrls}) async {
-    state = state.copyWith(isLoading: true);
+  Future<void> createPost(String content, {List<String> photos = const []}) async {
     try {
-      final newPost = await _repository.createPost(content: content, imageUrls: imageUrls);
-      state = state.copyWith(
-        isLoading: false,
-        posts: [newPost, ...state.posts],
-      );
-      ToastService.showSuccess('Post created!');
+      _logger.i('Creating post...');
+      await _repository.createPost(caption: content, photos: photos);
+      _logger.i('Post created, reloading feed...');
+      await loadFeed(refresh: true);
+      _logger.i('Feed reloaded after post creation');
+    } catch (e, stackTrace) {
+      _logger.e('Error creating post: $e', error: e, stackTrace: stackTrace);
+      state = state.copyWith(error: e.toString());
+      rethrow;
+    }
+  }
+
+  Future<void> addComment(String postId, String content) async {
+    try {
+       await _repository.addComment(postId, content);
+       // Ideally refresh post or update local state
+       await loadFeed(); // Simple refresh for now
     } catch (e) {
-      state = state.copyWith(isLoading: false, error: e.toString());
-      ToastService.showError(e.toString());
+       rethrow;
+    }
+  }
+
+  Future<void> createStory(String assetUrl, {required String type}) async {
+    try {
+      _logger.i('Creating story...');
+      await _repository.createStory(assetUrl, type);
+      _logger.i('Story created, reloading feed...');
+      await loadFeed(refresh: true);
+      _logger.i('Feed reloaded after story creation');
+    } catch (e, stackTrace) {
+      _logger.e('Error creating story: $e', error: e, stackTrace: stackTrace);
+      state = state.copyWith(error: e.toString());
+      rethrow;
+    }
+  }
+
+  Future<void> deletePost(String postId) async {
+    try {
+      await _repository.deletePost(postId);
+      state = state.copyWith(
+        posts: state.posts.where((p) => p.id != postId).toList(),
+      );
+    } catch (e, stackTrace) {
+      _logger.e('Error deleting post: $e', error: e, stackTrace: stackTrace);
+      state = state.copyWith(error: e.toString());
     }
   }
 }
 
 final socialProvider = StateNotifierProvider<SocialNotifier, SocialState>((ref) {
   final repository = ref.watch(socialRepositoryProvider);
-  return SocialNotifier(repository);
+  return SocialNotifier(repository, ref);
 });

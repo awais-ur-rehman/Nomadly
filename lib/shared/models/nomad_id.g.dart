@@ -9,13 +9,15 @@ part of 'nomad_id.dart';
 _$NomadIdImpl _$$NomadIdImplFromJson(Map<String, dynamic> json) =>
     _$NomadIdImpl(
       verified: json['verified'] as bool? ?? false,
-      memberSince: DateTime.parse(json['memberSince'] as String),
-      vouchCount: (json['vouchCount'] as num?)?.toInt() ?? 0,
+      memberSince: json['member_since'] == null
+          ? null
+          : DateTime.parse(json['member_since'] as String),
+      vouchCount: (json['vouch_count'] as num?)?.toInt() ?? 0,
     );
 
 Map<String, dynamic> _$$NomadIdImplToJson(_$NomadIdImpl instance) =>
     <String, dynamic>{
       'verified': instance.verified,
-      'memberSince': instance.memberSince.toIso8601String(),
-      'vouchCount': instance.vouchCount,
+      'member_since': instance.memberSince?.toIso8601String(),
+      'vouch_count': instance.vouchCount,
     };

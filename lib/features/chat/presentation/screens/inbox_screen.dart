@@ -7,6 +7,9 @@ import '../../../../core/constants/app_dimensions.dart';
 import '../../providers/chat_provider.dart';
 import '../../../matches/providers/match_provider.dart';
 import '../../../../shared/models/conversation.dart';
+import '../../../../shared/models/match.dart'; // Import Match model
+import '../../../../shared/models/user.dart'; // Import User model
+import '../../../../shared/models/profile.dart'; // Import Profile model
 import '../../../auth/providers/auth_provider.dart';
 
 class InboxScreen extends ConsumerStatefulWidget {
@@ -134,23 +137,21 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
     );
   }
 
-  Widget _buildMatchAvatar(BuildContext context, dynamic match, WidgetRef ref) {
-    // Ideally we have match.user populated
-    // Helper to start chat
+  Widget _buildMatchAvatar(BuildContext context, Match match, WidgetRef ref) {
+    final user = match.matchedUser;
+    
     return GestureDetector(
       onTap: () async {
-        // Create conversation if doesn't exist, then navigate
-        // Assuming we have matchedUserId
-        final matchedUserId = match.matchedUserId; // From Match model (check definition)
-        // If we don't have user object, we can't show photo properly yet without fetching
-        // Assuming optimistic UI or placeholder
+        final conversation = await ref.read(chatListProvider.notifier).createConversation(match.matchedUserId);
         
-        final conversation = await ref.read(chatListProvider.notifier).createConversation(matchedUserId);
         if (conversation != null && context.mounted) {
-             // We need 'otherUser' object for ChatScreen
-             // Phase 1 shortcut: fetch user details or pass minimal
-             // Let's assume we can navigate.
-             // For now, let's create a dummy user or fetch it
+             final otherUser = user ?? 
+                User(
+                  id: match.matchedUserId, 
+                  email: '',
+                  profile: Profile(name: 'Match'), // Fallback
+                );
+             context.push('/chat/${conversation.id}', extra: otherUser);
         }
       },
       child: Column(
@@ -158,12 +159,16 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
           CircleAvatar(
             radius: 30,
             backgroundColor: AppColors.greyExtraLight,
-            // backgroundImage: NetworkImage(...)
-            child: const Icon(Icons.person),
+            backgroundImage: user?.profile?.photoUrl != null
+                ? NetworkImage(user!.profile!.photoUrl!)
+                : null,
+            child: user?.profile?.photoUrl == null
+                ? const Icon(Icons.person)
+                : null,
           ),
           const SizedBox(height: 4),
           Text(
-            'Name', // Placeholder
+            user?.profile?.name ?? 'Match',
             style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
           ),
         ],

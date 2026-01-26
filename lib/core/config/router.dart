@@ -7,11 +7,17 @@ import '../../features/auth/presentation/screens/sign_up_screen.dart';
 import '../../features/auth/presentation/screens/sign_in_screen.dart';
 import '../../features/auth/presentation/screens/otp_screen.dart';
 import '../../features/auth/presentation/screens/profile_setup_screen.dart';
+import '../../features/auth/presentation/screens/forgot_password_screen.dart';
+import '../../features/auth/presentation/screens/reset_password_screen.dart';
+import '../../features/profile/presentation/screens/edit_profile_screen.dart';
+import '../../features/profile/presentation/screens/settings_screen.dart';
+import '../../features/profile/presentation/screens/followers_list_screen.dart';
 import '../../features/discovery/presentation/screens/home_screen.dart';
-import '../../features/chat/presentation/screens/inbox_screen.dart'; // Add this if not present
+import '../../features/discovery/presentation/screens/search_users_screen.dart';
 import '../../features/chat/presentation/screens/chat_screen.dart';
-import '../../features/social/presentation/screens/posts_feed_screen.dart';
 import '../../features/social/presentation/screens/create_post_screen.dart';
+import '../../features/social/presentation/screens/post_detail_screen.dart';
+import '../../features/social/presentation/screens/create_story_screen.dart';
 import '../../features/marketplace/presentation/screens/marketplace_screen.dart';
 import '../../features/marketplace/presentation/screens/builder_detail_screen.dart';
 import '../../features/social/presentation/screens/notifications_screen.dart';
@@ -23,6 +29,7 @@ import '../../features/activities/presentation/screens/create_activity_screen.da
 import '../../features/activities/presentation/screens/activities_list_screen.dart';
 import '../../shared/models/user.dart';
 import '../../shared/models/activity.dart'; // Import Activity model
+import '../../shared/models/post.dart';
 
 /// Listenable that notifies GoRouter when auth state changes
 class RouterListenable extends ChangeNotifier {
@@ -55,7 +62,9 @@ final routerProvider = Provider<GoRouter>((ref) {
           state.matchedLocation == '/onboarding' ||
           state.matchedLocation == '/sign-in' ||
           state.matchedLocation == '/sign-up' ||
-          state.matchedLocation == '/otp';
+          state.matchedLocation == '/otp' ||
+          state.matchedLocation == '/forgot-password' ||
+          state.matchedLocation.startsWith('/reset-password');
 
       // If not authenticated and trying to access protected route
       if (!isAuthenticated && !isOnAuthPage) {
@@ -104,6 +113,29 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/profile-setup',
         builder: (context, state) => const ProfileSetupScreen(),
       ),
+      GoRoute(
+        path: '/edit-profile',
+        builder: (context, state) => const EditProfileScreen(),
+      ),
+      GoRoute(
+        path: '/settings',
+        builder: (context, state) => const SettingsScreen(),
+      ),
+
+      // Forgot Password
+      GoRoute(
+        path: '/forgot-password',
+        builder: (context, state) => const ForgotPasswordScreen(),
+      ),
+
+      // Reset Password
+      GoRoute(
+        path: '/reset-password',
+        builder: (context, state) {
+          final email = state.uri.queryParameters['email'] ?? '';
+          return ResetPasswordScreen(email: email);
+        },
+      ),
 
       // Home
       GoRoute(
@@ -118,6 +150,15 @@ final routerProvider = Provider<GoRouter>((ref) {
           final userId = state.pathParameters['id']!;
           final user = state.extra as User?;
           return UserProfileScreen(userId: userId, preloadedUser: user);
+        },
+      ),
+      GoRoute(
+        path: '/profile/:id/connections',
+        builder: (context, state) {
+          final userId = state.pathParameters['id']!;
+          final tabStr = state.uri.queryParameters['tab'] ?? '0';
+          final initialTab = int.tryParse(tabStr) ?? 0;
+          return FollowersListScreen(userId: userId, initialTab: initialTab);
         },
       ),
       
@@ -157,6 +198,18 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/create-post',
         builder: (context, state) => const CreatePostScreen(),
       ),
+      GoRoute(
+        path: '/post/:id',
+        builder: (context, state) {
+          final postId = state.pathParameters['id']!;
+          final post = state.extra as Post?;
+          return PostDetailScreen(postId: postId, preloadedPost: post);
+        },
+      ),
+      GoRoute(
+        path: '/create-story',
+        builder: (context, state) => const CreateStoryScreen(),
+      ),
       // Marketplace
       GoRoute(
         path: '/marketplace',
@@ -175,6 +228,11 @@ final routerProvider = Provider<GoRouter>((ref) {
           final builder = state.extra as BuilderProfile;
           return BuilderDetailScreen(builder: builder);
         },
+      ),
+      // Search Users
+      GoRoute(
+        path: '/search',
+        builder: (context, state) => const SearchUsersScreen(),
       ),
     ],
   );

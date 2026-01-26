@@ -41,51 +41,41 @@ class ProfileScreen extends ConsumerWidget {
       );
     }
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(AppStrings.profile),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.settings_outlined),
-            onPressed: () {
-              // TODO: Settings screen
-            },
-          ),
-          IconButton(
-             icon: const Icon(Icons.logout, color: AppColors.error),
-             onPressed: () {
-               ref.read(authProvider.notifier).logout();
-               // Navigation handled by router redirect usually, or force it:
-               context.go('/onboarding');
-             },
-          ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
+    return SingleChildScrollView(
+      child: Column(
+        children: [
             const SizedBox(height: AppDimensions.paddingL),
             // Avatar
             Center(
               child: Stack(
                 children: [
-                  CircleAvatar(
-                    radius: 60,
-                    backgroundImage: profile.photoUrl != null
-                        ? NetworkImage(profile.photoUrl!)
-                        : null,
-                    child: profile.photoUrl == null
-                        ? const Icon(Icons.person, size: 60)
-                        : null,
+                   Container(
+                    width: 120,
+                    height: 120,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: AppColors.primary.withOpacity(0.2), width: 2),
+                    ),
+                    child: ClipOval(
+                      child: profile.photoUrl != null && profile.photoUrl!.isNotEmpty
+                          ? CachedNetworkImage(
+                              imageUrl: profile.photoUrl!,
+                              fit: BoxFit.cover,
+                              placeholder: (context, url) => const CircularProgressIndicator(strokeWidth: 2),
+                              errorWidget: (context, url, error) => const Icon(Icons.person, size: 60),
+                            )
+                          : const Icon(Icons.person, size: 60, color: AppColors.grey),
+                    ),
                   ),
                   Positioned(
                     bottom: 0,
                     right: 0,
                     child: Container(
                       padding: const EdgeInsets.all(4),
-                      decoration: const BoxDecoration(
+                      decoration: BoxDecoration(
                         color: AppColors.primary,
                         shape: BoxShape.circle,
+                        border: Border.all(color: AppColors.white, width: 2),
                       ),
                       child: const Icon(
                         Icons.edit,
@@ -101,12 +91,29 @@ class ProfileScreen extends ConsumerWidget {
 
             // Name & Age
             Text(
-              '${profile.name}, ${profile.age}',
+              profile.name ?? 'User',
               style: const TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
               ),
             ),
+            if (profile.age != null)
+              Text(
+                '${profile.age} years old',
+                style: const TextStyle(
+                  fontSize: 16,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+            if (user.username != null)
+              Text(
+                '@${user.username}',
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: AppColors.textSecondary,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
             if (user.nomadId?.verified == true) ...[
               const SizedBox(height: 4),
               Row(
@@ -131,9 +138,15 @@ class ProfileScreen extends ConsumerWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                _buildStatItem('Vouches', '${user.nomadId?.vouchCount ?? 0}'),
-                _buildStatItem('Friends', '0'), // Placeholder
-                _buildStatItem('Trips', '0'), // Placeholder
+                _buildStatItem(context, 'Vouches', '${user.nomadId?.vouchCount ?? 0}', onTap: () {
+                   // TODO: Navigate to vouches list if needed
+                }),
+                _buildStatItem(context, 'Followers', '0', onTap: () {
+                  context.push('/profile/${user.uid}/connections?tab=0');
+                }),
+                _buildStatItem(context, 'Following', '0', onTap: () {
+                  context.push('/profile/${user.uid}/connections?tab=1');
+                }),
               ],
             ),
 
@@ -149,7 +162,7 @@ class ProfileScreen extends ConsumerWidget {
                   : 'Add rig info'),
               trailing: const Icon(Icons.chevron_right),
               onTap: () {
-                // TODO: Edit rig
+                context.push('/edit-profile');
               },
             ),
             
@@ -208,10 +221,7 @@ class ProfileScreen extends ConsumerWidget {
                 width: double.infinity,
                 child: OutlinedButton(
                   onPressed: () {
-                    // TODO: Navigate to edit profile
-                    context.push('/profile-setup'); // Reuse setup screen for update? 
-                    // Better to have separate or mode. For now re-use is okay 
-                    // provided we pre-fill data which ProfileSetupScreen does.
+                    context.push('/edit-profile');
                   },
                   child: const Text('Edit Profile'),
                 ),
@@ -219,29 +229,34 @@ class ProfileScreen extends ConsumerWidget {
             ),
           ],
         ),
-      ),
     );
   }
 
-  Widget _buildStatItem(String label, String value) {
-    return Column(
-      children: [
-        Text(
-          value,
-          style: const TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
+  Widget _buildStatItem(BuildContext context, String label, String value, {VoidCallback? onTap}) {
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: Column(
+          children: [
+            Text(
+              value,
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: const TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 14,
+              ),
+            ),
+          ],
         ),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          style: const TextStyle(
-            color: AppColors.textSecondary,
-            fontSize: 14,
-          ),
-        ),
-      ],
+      ),
     );
   }
 }

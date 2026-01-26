@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-import 'package:geolocator/geolocator.dart';
-import '../../../../core/constants/app_colors.dart';
+import 'package:latlong2/latlong.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../providers/activity_provider.dart';
+import '../../../map/presentation/screens/location_picker_screen.dart';
 
 class CreateActivityScreen extends ConsumerStatefulWidget {
   const CreateActivityScreen({super.key});
@@ -23,6 +23,7 @@ class _CreateActivityScreenState extends ConsumerState<CreateActivityScreen> {
   DateTime _selectedDate = DateTime.now();
   TimeOfDay _selectedTime = TimeOfDay.now();
   String _selectedType = 'social';
+  LatLng? _pickedLocation;
   
   final List<String> _types = ['hike', 'surf', 'yoga', 'meal', 'social', 'cowork', 'other'];
 
@@ -62,8 +63,13 @@ class _CreateActivityScreenState extends ConsumerState<CreateActivityScreen> {
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
-
-    final position = await Geolocator.getCurrentPosition();
+    
+    if (_pickedLocation == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please pick a location')),
+      );
+      return;
+    }
     
     final startTime = DateTime(
       _selectedDate.year,
@@ -78,11 +84,11 @@ class _CreateActivityScreenState extends ConsumerState<CreateActivityScreen> {
       'description': _descriptionController.text.trim(),
       'type': _selectedType,
       'location': {
-        'latitude': position.latitude,
-        'longitude': position.longitude,
+        'latitude': _pickedLocation!.latitude,
+        'longitude': _pickedLocation!.longitude,
       },
       'startTime': startTime.toIso8601String(),
-      'maxParticipants': int.tryParse(_maxParticipantsController.text) ?? 0,
+      'maxParticipants': int.tryParse(_maxParticipantsController.text) ?? 10,
     };
 
     await ref.read(activityProvider.notifier).createActivity(activityData);
@@ -93,7 +99,7 @@ class _CreateActivityScreenState extends ConsumerState<CreateActivityScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Create Activity'),
+        title: const Text('Create Beacon'),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(AppDimensions.paddingL),
@@ -139,6 +145,24 @@ class _CreateActivityScreenState extends ConsumerState<CreateActivityScreen> {
                 subtitle: Text(_selectedTime.format(context)),
                 trailing: const Icon(Icons.access_time),
                 onTap: () => _selectTime(context),
+              ),
+              ListTile(
+                title: Text(_pickedLocation == null ? 'Pick Location on Map' : 'Location Selected'),
+                subtitle: _pickedLocation == null 
+                    ? const Text('Tap to choose')
+                    : Text('${_pickedLocation!.latitude.toStringAsFixed(4)}, ${_pickedLocation!.longitude.toStringAsFixed(4)}'),
+                leading: const Icon(Icons.map, color: Colors.blue),
+                onTap: () async {
+                  final result = await Navigator.push<LatLng>(
+                    context,
+                    MaterialPageRoute(builder: (context) => const LocationPickerScreen()),
+                  );
+                  if (result != null) {
+                    setState(() {
+                      _pickedLocation = result;
+                    });
+                  }
+                },
               ),
               const SizedBox(height: AppDimensions.paddingXL),
               ElevatedButton(

@@ -7,38 +7,32 @@ import '../../../../core/constants/app_dimensions.dart';
 import '../../providers/auth_provider.dart';
 import '../../../../shared/widgets/app_loader.dart';
 
-class SignInScreen extends ConsumerStatefulWidget {
-  const SignInScreen({super.key});
+class ForgotPasswordScreen extends ConsumerStatefulWidget {
+  const ForgotPasswordScreen({super.key});
 
   @override
-  ConsumerState<SignInScreen> createState() => _SignInScreenState();
+  ConsumerState<ForgotPasswordScreen> createState() => _ForgotPasswordScreenState();
 }
 
-class _SignInScreenState extends ConsumerState<SignInScreen> {
+class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
-
-  bool _obscurePassword = true;
 
   @override
   void dispose() {
     _emailController.dispose();
-    _passwordController.dispose();
     super.dispose();
   }
 
-  Future<void> _handleSignIn() async {
+  Future<void> _handleSubmit() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final success = await ref.read(authProvider.notifier).login(
-          email: _emailController.text.trim(),
-          password: _passwordController.text,
-        );
+    final email = _emailController.text.trim();
+    final success = await ref.read(authProvider.notifier).forgotPassword(email);
 
     if (success && mounted) {
-      // Navigate to home
-      context.go('/home');
+      // Navigate to reset password screen with email
+      context.push('/reset-password?email=${Uri.encodeComponent(email)}');
     }
   }
 
@@ -49,7 +43,11 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
     return Scaffold(
       backgroundColor: AppColors.white,
       appBar: AppBar(
-        title: const Text(AppStrings.signIn),
+        title: const Text('Forgot Password'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.pop(),
+        ),
       ),
       body: SafeArea(
         child: Stack(
@@ -63,22 +61,40 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                   children: [
                     const SizedBox(height: AppDimensions.paddingXL),
 
+                    // Icon
+                    Container(
+                      width: 80,
+                      height: 80,
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withOpacity(0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.lock_reset,
+                        size: 40,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                    const SizedBox(height: AppDimensions.paddingL),
+
                     // Title
                     const Text(
-                      'Welcome Back',
+                      'Reset Your Password',
                       style: TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.bold,
                         color: AppColors.textPrimary,
                       ),
+                      textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: AppDimensions.paddingS),
                     const Text(
-                      'Sign in to continue',
+                      'Enter your email address and we\'ll send you a code to reset your password.',
                       style: TextStyle(
                         fontSize: 16,
                         color: AppColors.textSecondary,
                       ),
+                      textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: AppDimensions.paddingXXL),
 
@@ -90,7 +106,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                         prefixIcon: Icon(Icons.email_outlined),
                       ),
                       keyboardType: TextInputType.emailAddress,
-                      textInputAction: TextInputAction.next,
+                      textInputAction: TextInputAction.done,
                       validator: (value) {
                         if (value == null || value.isEmpty) {
                           return AppStrings.errorFieldRequired;
@@ -100,75 +116,31 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                         }
                         return null;
                       },
+                      onFieldSubmitted: (_) => _handleSubmit(),
                     ),
-                    const SizedBox(height: AppDimensions.paddingM),
+                    const SizedBox(height: AppDimensions.paddingXL),
 
-                    // Password field
-                    TextFormField(
-                      controller: _passwordController,
-                      decoration: InputDecoration(
-                        labelText: AppStrings.password,
-                        prefixIcon: const Icon(Icons.lock_outline),
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            _obscurePassword
-                                ? Icons.visibility_outlined
-                                : Icons.visibility_off_outlined,
-                          ),
-                          onPressed: () {
-                            setState(() {
-                              _obscurePassword = !_obscurePassword;
-                            });
-                          },
-                        ),
-                      ),
-                      obscureText: _obscurePassword,
-                      textInputAction: TextInputAction.done,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return AppStrings.errorFieldRequired;
-                        }
-                        return null;
-                      },
-                      onFieldSubmitted: (_) => _handleSignIn(),
-                    ),
-                    const SizedBox(height: AppDimensions.paddingM),
-
-                    // Forgot password
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: TextButton(
-                        onPressed: () {
-                          context.push('/forgot-password');
-                        },
-                        child: const Text(AppStrings.forgotPassword),
+                    // Submit button
+                    SizedBox(
+                      height: AppDimensions.buttonHeightL,
+                      child: ElevatedButton(
+                        onPressed: authState.isLoading ? null : _handleSubmit,
+                        child: const Text('Send Reset Code'),
                       ),
                     ),
                     const SizedBox(height: AppDimensions.paddingL),
 
-                    // Sign In button
-                    SizedBox(
-                      height: AppDimensions.buttonHeightL,
-                      child: ElevatedButton(
-                        onPressed: authState.isLoading ? null : _handleSignIn,
-                        child: const Text(AppStrings.signIn),
-                      ),
-                    ),
-                    const SizedBox(height: AppDimensions.paddingXL),
-
-                    // Don't have account
+                    // Back to sign in
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         const Text(
-                          AppStrings.dontHaveAccount,
+                          'Remember your password?',
                           style: TextStyle(color: AppColors.textSecondary),
                         ),
                         TextButton(
-                          onPressed: () {
-                            context.go('/sign-up');
-                          },
-                          child: const Text(AppStrings.signUp),
+                          onPressed: () => context.go('/sign-in'),
+                          child: const Text(AppStrings.signIn),
                         ),
                       ],
                     ),
@@ -177,7 +149,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
               ),
             ),
             if (authState.isLoading)
-              const AppLoader(isOverlay: true, message: 'Signing in...'),
+              const AppLoader(isOverlay: true, message: 'Sending code...'),
           ],
         ),
       ),

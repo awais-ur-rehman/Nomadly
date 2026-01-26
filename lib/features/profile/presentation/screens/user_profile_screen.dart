@@ -7,6 +7,7 @@ import '../../../../core/constants/app_dimensions.dart';
 import '../../../../shared/models/user.dart';
 import '../../providers/profile_provider.dart';
 import '../../../chat/providers/chat_provider.dart';
+import '../../../discovery/providers/discovery_provider.dart';
 
 class UserProfileScreen extends ConsumerStatefulWidget {
   final String userId;
@@ -119,7 +120,7 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
                         Row(
                           children: [
                              Text(
-                              profile.age != null ? '${profile.name}, ${profile.age}' : profile.name,
+                              profile.age != null ? '${profile.name ?? 'User'}, ${profile.age}' : (profile.name ?? 'User'),
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 32,
@@ -157,7 +158,7 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
                   // Action Buttons
                   Row(
                     children: [
-                       Expanded(
+                      Expanded(
                         child: ElevatedButton.icon(
                           onPressed: () async {
                             final conversation = await ref.read(chatListProvider.notifier).createConversation(user.uid);
@@ -175,14 +176,31 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
                         ),
                       ),
                       const SizedBox(width: 16),
-                      // Vouch Button (Placeholder)
+                      // Follow Button
                       Expanded(
                         child: OutlinedButton.icon(
-                          onPressed: () {},
-                          icon: const Icon(Icons.thumb_up_outlined),
-                          label: const Text('Vouch'),
+                          onPressed: () async {
+                             // Simple toggle logic
+                            // Need to check if following. Since we don't have isFollowing reliable state from all sources yet,
+                             // we can rely on what we have or just optimistic toggle.
+                             // Best approach: Add boolean to User model (done).
+                             // If user.isFollowing is true -> Unfollow, else Follow.
+                             
+                             final repo = ref.read(discoveryRepositoryProvider);
+                             if (user.isFollowing) {
+                               await repo.unfollowUser(user.uid);
+                               // Refresh profile
+                               ref.read(userProfileProvider.notifier).loadUserProfile(user.uid);
+                             } else {
+                               await repo.followUser(user.uid);
+                               ref.read(userProfileProvider.notifier).loadUserProfile(user.uid);
+                             }
+                          },
+                          icon: Icon(user.isFollowing ? Icons.check : Icons.person_add),
+                          label: Text(user.isFollowing ? 'Following' : 'Follow'),
                           style: OutlinedButton.styleFrom(
                              padding: const EdgeInsets.symmetric(vertical: 12),
+                             backgroundColor: user.isFollowing ? AppColors.primaryExtraLight : null,
                           ),
                         ),
                       ),

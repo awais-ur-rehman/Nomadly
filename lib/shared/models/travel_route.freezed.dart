@@ -21,10 +21,12 @@ TravelRoute _$TravelRouteFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$TravelRoute {
-  GeoPoint get origin => throw _privateConstructorUsedError;
-  GeoPoint get destination => throw _privateConstructorUsedError;
-  DateTime get startDate => throw _privateConstructorUsedError;
-  int get durationDays => throw _privateConstructorUsedError;
+  GeoPoint? get origin => throw _privateConstructorUsedError;
+  GeoPoint? get destination => throw _privateConstructorUsedError;
+  @JsonKey(name: 'start_date')
+  DateTime? get startDate => throw _privateConstructorUsedError;
+  @JsonKey(name: 'duration_days')
+  int? get durationDays => throw _privateConstructorUsedError;
 
   /// Serializes this TravelRoute to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -44,14 +46,14 @@ abstract class $TravelRouteCopyWith<$Res> {
   ) = _$TravelRouteCopyWithImpl<$Res, TravelRoute>;
   @useResult
   $Res call({
-    GeoPoint origin,
-    GeoPoint destination,
-    DateTime startDate,
-    int durationDays,
+    GeoPoint? origin,
+    GeoPoint? destination,
+    @JsonKey(name: 'start_date') DateTime? startDate,
+    @JsonKey(name: 'duration_days') int? durationDays,
   });
 
-  $GeoPointCopyWith<$Res> get origin;
-  $GeoPointCopyWith<$Res> get destination;
+  $GeoPointCopyWith<$Res>? get origin;
+  $GeoPointCopyWith<$Res>? get destination;
 }
 
 /// @nodoc
@@ -69,29 +71,29 @@ class _$TravelRouteCopyWithImpl<$Res, $Val extends TravelRoute>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? origin = null,
-    Object? destination = null,
-    Object? startDate = null,
-    Object? durationDays = null,
+    Object? origin = freezed,
+    Object? destination = freezed,
+    Object? startDate = freezed,
+    Object? durationDays = freezed,
   }) {
     return _then(
       _value.copyWith(
-            origin: null == origin
+            origin: freezed == origin
                 ? _value.origin
                 : origin // ignore: cast_nullable_to_non_nullable
-                      as GeoPoint,
-            destination: null == destination
+                      as GeoPoint?,
+            destination: freezed == destination
                 ? _value.destination
                 : destination // ignore: cast_nullable_to_non_nullable
-                      as GeoPoint,
-            startDate: null == startDate
+                      as GeoPoint?,
+            startDate: freezed == startDate
                 ? _value.startDate
                 : startDate // ignore: cast_nullable_to_non_nullable
-                      as DateTime,
-            durationDays: null == durationDays
+                      as DateTime?,
+            durationDays: freezed == durationDays
                 ? _value.durationDays
                 : durationDays // ignore: cast_nullable_to_non_nullable
-                      as int,
+                      as int?,
           )
           as $Val,
     );
@@ -101,8 +103,12 @@ class _$TravelRouteCopyWithImpl<$Res, $Val extends TravelRoute>
   /// with the given fields replaced by the non-null parameter values.
   @override
   @pragma('vm:prefer-inline')
-  $GeoPointCopyWith<$Res> get origin {
-    return $GeoPointCopyWith<$Res>(_value.origin, (value) {
+  $GeoPointCopyWith<$Res>? get origin {
+    if (_value.origin == null) {
+      return null;
+    }
+
+    return $GeoPointCopyWith<$Res>(_value.origin!, (value) {
       return _then(_value.copyWith(origin: value) as $Val);
     });
   }
@@ -111,8 +117,12 @@ class _$TravelRouteCopyWithImpl<$Res, $Val extends TravelRoute>
   /// with the given fields replaced by the non-null parameter values.
   @override
   @pragma('vm:prefer-inline')
-  $GeoPointCopyWith<$Res> get destination {
-    return $GeoPointCopyWith<$Res>(_value.destination, (value) {
+  $GeoPointCopyWith<$Res>? get destination {
+    if (_value.destination == null) {
+      return null;
+    }
+
+    return $GeoPointCopyWith<$Res>(_value.destination!, (value) {
       return _then(_value.copyWith(destination: value) as $Val);
     });
   }
@@ -128,16 +138,16 @@ abstract class _$$TravelRouteImplCopyWith<$Res>
   @override
   @useResult
   $Res call({
-    GeoPoint origin,
-    GeoPoint destination,
-    DateTime startDate,
-    int durationDays,
+    GeoPoint? origin,
+    GeoPoint? destination,
+    @JsonKey(name: 'start_date') DateTime? startDate,
+    @JsonKey(name: 'duration_days') int? durationDays,
   });
 
   @override
-  $GeoPointCopyWith<$Res> get origin;
+  $GeoPointCopyWith<$Res>? get origin;
   @override
-  $GeoPointCopyWith<$Res> get destination;
+  $GeoPointCopyWith<$Res>? get destination;
 }
 
 /// @nodoc
@@ -154,29 +164,29 @@ class __$$TravelRouteImplCopyWithImpl<$Res>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? origin = null,
-    Object? destination = null,
-    Object? startDate = null,
-    Object? durationDays = null,
+    Object? origin = freezed,
+    Object? destination = freezed,
+    Object? startDate = freezed,
+    Object? durationDays = freezed,
   }) {
     return _then(
       _$TravelRouteImpl(
-        origin: null == origin
+        origin: freezed == origin
             ? _value.origin
             : origin // ignore: cast_nullable_to_non_nullable
-                  as GeoPoint,
-        destination: null == destination
+                  as GeoPoint?,
+        destination: freezed == destination
             ? _value.destination
             : destination // ignore: cast_nullable_to_non_nullable
-                  as GeoPoint,
-        startDate: null == startDate
+                  as GeoPoint?,
+        startDate: freezed == startDate
             ? _value.startDate
             : startDate // ignore: cast_nullable_to_non_nullable
-                  as DateTime,
-        durationDays: null == durationDays
+                  as DateTime?,
+        durationDays: freezed == durationDays
             ? _value.durationDays
             : durationDays // ignore: cast_nullable_to_non_nullable
-                  as int,
+                  as int?,
       ),
     );
   }
@@ -186,23 +196,25 @@ class __$$TravelRouteImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$TravelRouteImpl implements _TravelRoute {
   const _$TravelRouteImpl({
-    required this.origin,
-    required this.destination,
-    required this.startDate,
-    required this.durationDays,
+    this.origin,
+    this.destination,
+    @JsonKey(name: 'start_date') this.startDate,
+    @JsonKey(name: 'duration_days') this.durationDays,
   });
 
   factory _$TravelRouteImpl.fromJson(Map<String, dynamic> json) =>
       _$$TravelRouteImplFromJson(json);
 
   @override
-  final GeoPoint origin;
+  final GeoPoint? origin;
   @override
-  final GeoPoint destination;
+  final GeoPoint? destination;
   @override
-  final DateTime startDate;
+  @JsonKey(name: 'start_date')
+  final DateTime? startDate;
   @override
-  final int durationDays;
+  @JsonKey(name: 'duration_days')
+  final int? durationDays;
 
   @override
   String toString() {
@@ -244,23 +256,25 @@ class _$TravelRouteImpl implements _TravelRoute {
 
 abstract class _TravelRoute implements TravelRoute {
   const factory _TravelRoute({
-    required final GeoPoint origin,
-    required final GeoPoint destination,
-    required final DateTime startDate,
-    required final int durationDays,
+    final GeoPoint? origin,
+    final GeoPoint? destination,
+    @JsonKey(name: 'start_date') final DateTime? startDate,
+    @JsonKey(name: 'duration_days') final int? durationDays,
   }) = _$TravelRouteImpl;
 
   factory _TravelRoute.fromJson(Map<String, dynamic> json) =
       _$TravelRouteImpl.fromJson;
 
   @override
-  GeoPoint get origin;
+  GeoPoint? get origin;
   @override
-  GeoPoint get destination;
+  GeoPoint? get destination;
   @override
-  DateTime get startDate;
+  @JsonKey(name: 'start_date')
+  DateTime? get startDate;
   @override
-  int get durationDays;
+  @JsonKey(name: 'duration_days')
+  int? get durationDays;
 
   /// Create a copy of TravelRoute
   /// with the given fields replaced by the non-null parameter values.

@@ -66,7 +66,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
               Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.15),
+                  color: Colors.white.withValues(alpha: 0.15),
                   shape: BoxShape.circle,
                 ),
                 child: SvgPicture.asset(
@@ -98,7 +98,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
               Text(
                 AppStrings.appTagline.toUpperCase(),
                 style: TextStyle(
-                  color: AppColors.white.withOpacity(0.8),
+                  color: AppColors.white.withValues(alpha: 0.8),
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
                   letterSpacing: 4,
