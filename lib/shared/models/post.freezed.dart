@@ -687,19 +687,13 @@ abstract class _Story implements Story {
       throw _privateConstructorUsedError;
 }
 
-StoryBundle _$StoryBundleFromJson(Map<String, dynamic> json) {
-  return _StoryBundle.fromJson(json);
-}
-
 /// @nodoc
 mixin _$StoryBundle {
   @JsonKey(name: 'author')
   User get user => throw _privateConstructorUsedError;
   List<Story> get stories => throw _privateConstructorUsedError;
-  bool get allViewed => throw _privateConstructorUsedError;
-
-  /// Serializes this StoryBundle to a JSON map.
-  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
+  @JsonKey(name: 'hasUnviewed')
+  bool get hasUnviewed => throw _privateConstructorUsedError;
 
   /// Create a copy of StoryBundle
   /// with the given fields replaced by the non-null parameter values.
@@ -718,7 +712,7 @@ abstract class $StoryBundleCopyWith<$Res> {
   $Res call({
     @JsonKey(name: 'author') User user,
     List<Story> stories,
-    bool allViewed,
+    @JsonKey(name: 'hasUnviewed') bool hasUnviewed,
   });
 
   $UserCopyWith<$Res> get user;
@@ -741,7 +735,7 @@ class _$StoryBundleCopyWithImpl<$Res, $Val extends StoryBundle>
   $Res call({
     Object? user = null,
     Object? stories = null,
-    Object? allViewed = null,
+    Object? hasUnviewed = null,
   }) {
     return _then(
       _value.copyWith(
@@ -753,9 +747,9 @@ class _$StoryBundleCopyWithImpl<$Res, $Val extends StoryBundle>
                 ? _value.stories
                 : stories // ignore: cast_nullable_to_non_nullable
                       as List<Story>,
-            allViewed: null == allViewed
-                ? _value.allViewed
-                : allViewed // ignore: cast_nullable_to_non_nullable
+            hasUnviewed: null == hasUnviewed
+                ? _value.hasUnviewed
+                : hasUnviewed // ignore: cast_nullable_to_non_nullable
                       as bool,
           )
           as $Val,
@@ -785,7 +779,7 @@ abstract class _$$StoryBundleImplCopyWith<$Res>
   $Res call({
     @JsonKey(name: 'author') User user,
     List<Story> stories,
-    bool allViewed,
+    @JsonKey(name: 'hasUnviewed') bool hasUnviewed,
   });
 
   @override
@@ -808,7 +802,7 @@ class __$$StoryBundleImplCopyWithImpl<$Res>
   $Res call({
     Object? user = null,
     Object? stories = null,
-    Object? allViewed = null,
+    Object? hasUnviewed = null,
   }) {
     return _then(
       _$StoryBundleImpl(
@@ -820,9 +814,9 @@ class __$$StoryBundleImplCopyWithImpl<$Res>
             ? _value._stories
             : stories // ignore: cast_nullable_to_non_nullable
                   as List<Story>,
-        allViewed: null == allViewed
-            ? _value.allViewed
-            : allViewed // ignore: cast_nullable_to_non_nullable
+        hasUnviewed: null == hasUnviewed
+            ? _value.hasUnviewed
+            : hasUnviewed // ignore: cast_nullable_to_non_nullable
                   as bool,
       ),
     );
@@ -830,16 +824,14 @@ class __$$StoryBundleImplCopyWithImpl<$Res>
 }
 
 /// @nodoc
-@JsonSerializable()
-class _$StoryBundleImpl implements _StoryBundle {
+
+class _$StoryBundleImpl extends _StoryBundle {
   const _$StoryBundleImpl({
     @JsonKey(name: 'author') required this.user,
     required final List<Story> stories,
-    this.allViewed = false,
-  }) : _stories = stories;
-
-  factory _$StoryBundleImpl.fromJson(Map<String, dynamic> json) =>
-      _$$StoryBundleImplFromJson(json);
+    @JsonKey(name: 'hasUnviewed') this.hasUnviewed = false,
+  }) : _stories = stories,
+       super._();
 
   @override
   @JsonKey(name: 'author')
@@ -853,12 +845,12 @@ class _$StoryBundleImpl implements _StoryBundle {
   }
 
   @override
-  @JsonKey()
-  final bool allViewed;
+  @JsonKey(name: 'hasUnviewed')
+  final bool hasUnviewed;
 
   @override
   String toString() {
-    return 'StoryBundle(user: $user, stories: $stories, allViewed: $allViewed)';
+    return 'StoryBundle(user: $user, stories: $stories, hasUnviewed: $hasUnviewed)';
   }
 
   @override
@@ -868,17 +860,16 @@ class _$StoryBundleImpl implements _StoryBundle {
             other is _$StoryBundleImpl &&
             (identical(other.user, user) || other.user == user) &&
             const DeepCollectionEquality().equals(other._stories, _stories) &&
-            (identical(other.allViewed, allViewed) ||
-                other.allViewed == allViewed));
+            (identical(other.hasUnviewed, hasUnviewed) ||
+                other.hasUnviewed == hasUnviewed));
   }
 
-  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode => Object.hash(
     runtimeType,
     user,
     const DeepCollectionEquality().hash(_stories),
-    allViewed,
+    hasUnviewed,
   );
 
   /// Create a copy of StoryBundle
@@ -888,22 +879,15 @@ class _$StoryBundleImpl implements _StoryBundle {
   @pragma('vm:prefer-inline')
   _$$StoryBundleImplCopyWith<_$StoryBundleImpl> get copyWith =>
       __$$StoryBundleImplCopyWithImpl<_$StoryBundleImpl>(this, _$identity);
-
-  @override
-  Map<String, dynamic> toJson() {
-    return _$$StoryBundleImplToJson(this);
-  }
 }
 
-abstract class _StoryBundle implements StoryBundle {
+abstract class _StoryBundle extends StoryBundle {
   const factory _StoryBundle({
     @JsonKey(name: 'author') required final User user,
     required final List<Story> stories,
-    final bool allViewed,
+    @JsonKey(name: 'hasUnviewed') final bool hasUnviewed,
   }) = _$StoryBundleImpl;
-
-  factory _StoryBundle.fromJson(Map<String, dynamic> json) =
-      _$StoryBundleImpl.fromJson;
+  const _StoryBundle._() : super._();
 
   @override
   @JsonKey(name: 'author')
@@ -911,7 +895,8 @@ abstract class _StoryBundle implements StoryBundle {
   @override
   List<Story> get stories;
   @override
-  bool get allViewed;
+  @JsonKey(name: 'hasUnviewed')
+  bool get hasUnviewed;
 
   /// Create a copy of StoryBundle
   /// with the given fields replaced by the non-null parameter values.

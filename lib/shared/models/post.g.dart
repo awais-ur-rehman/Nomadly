@@ -59,19 +59,3 @@ Map<String, dynamic> _$$StoryImplToJson(_$StoryImpl instance) =>
       'expires_at': instance.expiresAt.toIso8601String(),
       'viewers': instance.viewers,
     };
-
-_$StoryBundleImpl _$$StoryBundleImplFromJson(Map<String, dynamic> json) =>
-    _$StoryBundleImpl(
-      user: User.fromJson(json['author'] as Map<String, dynamic>),
-      stories: (json['stories'] as List<dynamic>)
-          .map((e) => Story.fromJson(e as Map<String, dynamic>))
-          .toList(),
-      allViewed: json['allViewed'] as bool? ?? false,
-    );
-
-Map<String, dynamic> _$$StoryBundleImplToJson(_$StoryBundleImpl instance) =>
-    <String, dynamic>{
-      'author': instance.user,
-      'stories': instance.stories,
-      'allViewed': instance.allViewed,
-    };

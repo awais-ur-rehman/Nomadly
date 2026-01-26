@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:logger/logger.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../shared/models/post.dart';
 import '../../../auth/providers/auth_provider.dart';
@@ -10,6 +11,8 @@ import 'story_view_screen.dart';
 
 class PostsFeedScreen extends ConsumerWidget {
   const PostsFeedScreen({super.key});
+  
+  static final _logger = Logger();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -17,11 +20,21 @@ class PostsFeedScreen extends ConsumerWidget {
     final authState = ref.watch(authProvider);
     final currentUserId = authState.user?.uid;
 
-    // Check if user has their own stories
+    // Debug logging
+    _logger.d('📖 [UI] Building feed - Total story bundles: ${state.stories.length}');
+    _logger.d('📖 [UI] Current user ID: $currentUserId');
+    
+    // Find user's own story bundle
     final userStoryIndex = state.stories.indexWhere(
       (bundle) => bundle.user.uid == currentUserId
     );
     final hasUserStory = userStoryIndex != -1;
+    
+    _logger.d('📖 [UI] User has story: $hasUserStory (index: $userStoryIndex)');
+    if (hasUserStory) {
+      final userBundle = state.stories[userStoryIndex];
+      _logger.d('📖 [UI] User story bundle - Stories: ${userBundle.stories.length}, HasUnviewed: ${userBundle.hasUnviewed}');
+    }
 
     return Scaffold(
       body: RefreshIndicator(
@@ -36,28 +49,43 @@ class PostsFeedScreen extends ConsumerWidget {
                 child: ListView.separated(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   scrollDirection: Axis.horizontal,
-                  itemCount: state.stories.length + 1,
+                  itemCount: state.stories.length + 1, // +1 for user's story/add button
                   separatorBuilder: (_, __) => const SizedBox(width: 12),
                   itemBuilder: (context, index) {
+                    _logger.d('📖 [UI] Building story item at index $index');
+                    
                     if (index == 0) {
-                      // Show user's story if they have one, otherwise show add button
+                      // First position: Always show user's story or add button
                       if (hasUserStory) {
                         final userBundle = state.stories[userStoryIndex];
+                        _logger.d('📖 [UI] Index 0: Showing user story with ${userBundle.stories.length} stories');
                         return _buildUserStory(context, userBundle, ref);
+                      } else {
+                        _logger.d('📖 [UI] Index 0: Showing add story button');
+                        return _buildAddStory(context);
                       }
-                      return _buildAddStory(context);
                     }
-                    // Skip user's story in the list since it's shown at index 0
-                    final adjustedIndex = hasUserStory && index - 1 >= userStoryIndex 
-                        ? index 
+                    
+                    // For other positions, show other users' stories
+                    // Adjust index to account for user's story being at position 0
+                    final storyIndex = hasUserStory && index - 1 >= userStoryIndex 
+                        ? index  // If user story was removed from its original position, shift
                         : index - 1;
-                    if (adjustedIndex >= state.stories.length) {
+                    
+                    if (storyIndex >= state.stories.length) {
+                      _logger.d('📖 [UI] Index $index: Out of bounds, returning empty');
                       return const SizedBox.shrink();
                     }
-                    final bundle = state.stories[adjustedIndex];
+                    
+                    final bundle = state.stories[storyIndex];
+                    
+                    // Skip if this is the user's story (already shown at index 0)
                     if (bundle.user.uid == currentUserId) {
-                      return const SizedBox.shrink(); // Already shown at index 0
+                      _logger.d('📖 [UI] Index $index: Skipping duplicate user story');
+                      return const SizedBox.shrink();
                     }
+                    
+                    _logger.d('📖 [UI] Index $index: Showing ${bundle.user.profile?.name}\'s story');
                     return _buildStoryItem(context, bundle, false);
                   },
                 ),
