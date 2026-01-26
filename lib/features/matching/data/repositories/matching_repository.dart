@@ -114,6 +114,52 @@ class MatchingRepository {
     }
   }
 
+  // Update Matching Preferences
+  Future<void> updateMatchingPreferences(int maxDistanceKm) async {
+    try {
+      _logger.d('⚙️ [MatchingRepo] Updating distance to $maxDistanceKm km');
+
+      // 1. Fetch current profile first to avoid overwriting other fields
+      final meResponse = await _apiClient.get('/v1/users/me');
+      if (meResponse.statusCode != 200) throw Exception('Failed to fetch user profile');
+      
+      final userData = meResponse.data['data'];
+      final Map<String, dynamic> matchingProfile = 
+          userData['matching_profile'] != null 
+          ? Map<String, dynamic>.from(userData['matching_profile'])
+          : {};
+          
+      // Ensure nested structure exists
+      if (!matchingProfile.containsKey('preferences')) {
+        matchingProfile['preferences'] = {};
+      }
+      final preferences = Map<String, dynamic>.from(matchingProfile['preferences']);
+      
+      // Update value
+      preferences['max_distance_km'] = maxDistanceKm;
+      matchingProfile['preferences'] = preferences;
+
+      _logger.d('⚙️ [MatchingRepo] Sending full update: $matchingProfile');
+
+      // 2. Send full nested object
+      final response = await _apiClient.patch(
+        '/v1/users/me',
+        data: {
+          'matching_profile': matchingProfile,
+        },
+      );
+
+      if (response.statusCode == 200) {
+        _logger.d('✅ [MatchingRepo] Preferences updated successfully');
+        return;
+      }
+      throw Exception('Failed to update preferences');
+    } on DioException catch (e) {
+      _logger.e('❌ [MatchingRepo] Update preferences error: ${e.message}');
+      throw _handleError(e);
+    }
+  }
+
   String _handleError(DioException error) {
     if (error.response != null) {
       final data = error.response!.data;

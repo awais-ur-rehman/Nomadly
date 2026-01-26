@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../providers/matching_provider.dart';
 import '../widgets/matching_card.dart';
+import '../widgets/distance_filter_sheet.dart';
 
 class MatchingScreen extends ConsumerStatefulWidget {
   const MatchingScreen({super.key});
@@ -156,13 +157,26 @@ class _MatchingScreenState extends ConsumerState<MatchingScreen> {
                 style: TextStyle(color: Colors.grey),
               ),
               const SizedBox(height: 30),
-              ElevatedButton.icon(
-                onPressed: () {
-                  ref.read(matchingProvider.notifier).loadRecommendations(refresh: true);
-                },
-                icon: const Icon(Icons.refresh),
-                label: const Text('Refresh'),
-              )
+                ElevatedButton.icon(
+                  onPressed: () {
+                    ref.read(matchingProvider.notifier).loadRecommendations(refresh: true);
+                  },
+                  icon: const Icon(Icons.refresh),
+                  label: const Text('Refresh'),
+                ),
+                const SizedBox(height: 16),
+                TextButton.icon(
+                  onPressed: () {
+                     showModalBottomSheet(
+                        context: context,
+                        isScrollControlled: true,
+                        backgroundColor: Colors.transparent,
+                        builder: (context) => const DistanceFilterSheet(),
+                      );
+                  },
+                  icon: const Icon(Icons.tune_rounded),
+                  label: const Text('Adjust Search Distance'),
+                ),
             ],
           ),
         ),

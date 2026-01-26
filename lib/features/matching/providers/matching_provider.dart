@@ -109,6 +109,25 @@ class MatchingNotifier extends StateNotifier<MatchingState> {
     }
   }
 
+
+
+  // Update Max Distance Preference
+  Future<void> updateDistance(int distanceKm) async {
+    try {
+      _logger.d('⚙️ [MatchingProvider] Updating distance to $distanceKm km');
+      
+      // 1. Update backend
+      await _repository.updateMatchingPreferences(distanceKm);
+      
+      // 2. Reload deck with new settings
+      await loadRecommendations(refresh: true);
+      
+    } catch (e) {
+      _logger.e('❌ [MatchingProvider] Failed to update distance: $e');
+      // Show error via state if needed, or toast
+    }
+  }
+
   void clearMatch() {
     state = state.copyWith(newMatch: null);
   }
