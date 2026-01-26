@@ -8,6 +8,7 @@ import '../../../chat/presentation/screens/inbox_screen.dart';
 import '../../../profile/presentation/screens/profile_screen.dart';
 import '../../../map/presentation/screens/map_screen.dart';
 import '../../../social/presentation/screens/posts_feed_screen.dart';
+import '../../../matching/presentation/screens/matching_screen.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -54,7 +55,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         children: [
           // 0: Feed
           const PostsFeedScreen(),
-          // 1: Map
+          // 1: Matching (Swipe)
+          const MatchingScreen(),
+          // 2: Map
           const MapScreen(),
           // 2: Chat / Matches / Inbox
           const InboxScreen(),
@@ -77,6 +80,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             icon: Icon(Icons.feed_outlined),
             activeIcon: Icon(Icons.feed),
             label: 'Feed',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.favorite_border),
+            activeIcon: Icon(Icons.favorite),
+            label: 'Meet',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.map_outlined),
@@ -103,10 +111,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       case 0:
         return 'Nomad Feed';
       case 1:
-        return 'Explore Map';
+        return 'Meet Nomads';
       case 2:
-        return AppStrings.matches;
+        return 'Explore Map';
       case 3:
+        return AppStrings.matches;
+      case 4:
         return AppStrings.profile;
       default:
         return AppStrings.appName;

@@ -16,7 +16,7 @@ class ActivityRepository {
   }) async {
     try {
       final response = await _apiClient.get(
-        '/api/v1/beacons/nearby',
+        '/v1/beacons/nearby',
         queryParameters: {
           'lat': latitude,
           'lng': longitude,

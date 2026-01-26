@@ -1,11 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../shared/models/match.dart';
 import '../../../../shared/models/user.dart';
-import '../data/repositories/match_repository.dart';
+import '../../matching/data/repositories/matching_repository.dart';
 
-// Repository Provider
-final matchRepositoryProvider = Provider<MatchRepository>((ref) {
-  return MatchRepository();
+// Repository Provider - Uses the new MatchingRepository
+final matchRepositoryProvider = Provider<MatchingRepository>((ref) {
+  return MatchingRepository();
 });
 
 // State
@@ -39,7 +39,7 @@ class MatchState {
 
 // Notifier
 class MatchNotifier extends StateNotifier<MatchState> {
-  final MatchRepository _repository;
+  final MatchingRepository _repository;
 
   MatchNotifier(this._repository) : super(MatchState()) {
     loadMatches();
@@ -49,17 +49,19 @@ class MatchNotifier extends StateNotifier<MatchState> {
     state = state.copyWith(isLoading: true, error: null);
 
     try {
-      final matches = await _repository.getMatches();
-      state = state.copyWith(matches: matches);
+      final matchesData = await _repository.getMatches();
       
-      // Fetch details for each matched user
-      // Note: In a real app, the match endpoint might return user details expanded
-      // For now, assuming we might need to fetch them if not included
-      // Optimally, backend sends populated 'matchedUserId' as User object
-      // If Match model has userId Strings, we might need to fetch.
-      // Let's assume for this phase we just list them.
-      
-      state = state.copyWith(isLoading: false);
+      // Parse maps to Match objects
+      final List<Match> matches = matchesData.map((m) {
+        try {
+          return Match.fromJson(m);
+        } catch (e) {
+          // Log parsing error but skip invalid item
+           return null;
+        }
+      }).whereType<Match>().toList();
+
+      state = state.copyWith(matches: matches, isLoading: false);
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
     }
