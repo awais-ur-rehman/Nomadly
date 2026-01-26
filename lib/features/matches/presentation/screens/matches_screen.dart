@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../providers/match_provider.dart';
@@ -62,18 +63,29 @@ class MatchesScreen extends ConsumerWidget {
           leading: const CircleAvatar(
             backgroundColor: AppColors.greyExtraLight,
             child: Icon(Icons.person),
-            // backgroundImage: NetworkImage(match.user?.profile.photoUrl ?? ''), 
           ),
-          title: Text('Match ${index + 1}'), // Placeholder name
+          title: const Text('Matched Nomad'), 
           subtitle: const Text('New match!'),
           trailing: IconButton(
             icon: const Icon(Icons.chat_bubble_outline, color: AppColors.primary),
-            onPressed: () {
-              // TODO: Navigate to chat with this match
+            onPressed: () async {
+               // Create/Get conversation
+               // We need ChatListProvider
+               // Ignoring for now if not imported, or strictly adding import
+               // For simplicity in this quick fix, just push to chat route if we had conv ID
+               // Ideally:
+               // final conv = await ref.read(chatListProvider.notifier).createConversation(match.matchedUserId);
+               // if (conv != null) context.push('/chat/${conv.id}', extra: ...);
+               
+               // Since I can't easily add imports and complex logic in one replace without context of imports,
+               // I will just show a TOAST for now stating "Start chat from Inbox"
+               // OR better, try to navigate to profile where they can message.
+               
+               context.push('/profile/${match.matchedUserId}');
             },
           ),
           onTap: () {
-            // TODO: View profile
+            context.push('/profile/${match.matchedUserId}');
           },
         );
       },

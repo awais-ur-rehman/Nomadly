@@ -1,14 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../../../shared/models/post.dart';
+import '../../../../shared/models/user.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
 class StoryViewScreen extends StatefulWidget {
   final List<Story> stories;
+  final User user;
   final int initialIndex;
 
   const StoryViewScreen({
     super.key,
     required this.stories,
+    required this.user,
     this.initialIndex = 0,
   });
 
@@ -18,12 +22,10 @@ class StoryViewScreen extends StatefulWidget {
 
 class _StoryViewScreenState extends State<StoryViewScreen> {
   late PageController _pageController;
-  int _currentIndex = 0;
 
   @override
   void initState() {
     super.initState();
-    _currentIndex = widget.initialIndex;
     _pageController = PageController(initialPage: widget.initialIndex);
   }
 
@@ -39,6 +41,7 @@ class _StoryViewScreenState extends State<StoryViewScreen> {
       backgroundColor: Colors.black,
       body: GestureDetector(
         onTapDown: (details) {
+          HapticFeedback.selectionClick();
           final width = MediaQuery.of(context).size.width;
           if (details.globalPosition.dx < width / 3) {
             _pageController.previousPage(duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
@@ -49,7 +52,6 @@ class _StoryViewScreenState extends State<StoryViewScreen> {
         child: PageView.builder(
           controller: _pageController,
           itemCount: widget.stories.length,
-          onPageChanged: (index) => setState(() => _currentIndex = index),
           itemBuilder: (context, index) {
             final story = widget.stories[index];
             return Stack(
@@ -69,11 +71,16 @@ class _StoryViewScreenState extends State<StoryViewScreen> {
                     children: [
                       CircleAvatar(
                         radius: 18,
-                        backgroundImage: NetworkImage(story.author.profile?.photoUrl ?? ''),
+                        backgroundImage: widget.user.profile?.photoUrl != null 
+                            ? NetworkImage(widget.user.profile!.photoUrl!) 
+                            : null,
+                        child: widget.user.profile?.photoUrl == null 
+                            ? const Icon(Icons.person, size: 20) 
+                            : null,
                       ),
                       const SizedBox(width: 10),
                       Text(
-                        story.author.profile?.name ?? 'Nomad',
+                        widget.user.profile?.name ?? 'Nomad',
                         style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                       ),
                       const Spacer(),

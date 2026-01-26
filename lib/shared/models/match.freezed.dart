@@ -28,6 +28,8 @@ mixin _$Match {
   String get swipeAction =>
       throw _privateConstructorUsedError; // 'left', 'right', 'star'
   bool get isMutual => throw _privateConstructorUsedError;
+  User? get matchedUser =>
+      throw _privateConstructorUsedError; // Populated user details
   DateTime? get createdAt => throw _privateConstructorUsedError;
 
   /// Serializes this Match to a JSON map.
@@ -50,8 +52,11 @@ abstract class $MatchCopyWith<$Res> {
     String matchedUserId,
     String swipeAction,
     bool isMutual,
+    User? matchedUser,
     DateTime? createdAt,
   });
+
+  $UserCopyWith<$Res>? get matchedUser;
 }
 
 /// @nodoc
@@ -74,6 +79,7 @@ class _$MatchCopyWithImpl<$Res, $Val extends Match>
     Object? matchedUserId = null,
     Object? swipeAction = null,
     Object? isMutual = null,
+    Object? matchedUser = freezed,
     Object? createdAt = freezed,
   }) {
     return _then(
@@ -98,6 +104,10 @@ class _$MatchCopyWithImpl<$Res, $Val extends Match>
                 ? _value.isMutual
                 : isMutual // ignore: cast_nullable_to_non_nullable
                       as bool,
+            matchedUser: freezed == matchedUser
+                ? _value.matchedUser
+                : matchedUser // ignore: cast_nullable_to_non_nullable
+                      as User?,
             createdAt: freezed == createdAt
                 ? _value.createdAt
                 : createdAt // ignore: cast_nullable_to_non_nullable
@@ -105,6 +115,20 @@ class _$MatchCopyWithImpl<$Res, $Val extends Match>
           )
           as $Val,
     );
+  }
+
+  /// Create a copy of Match
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $UserCopyWith<$Res>? get matchedUser {
+    if (_value.matchedUser == null) {
+      return null;
+    }
+
+    return $UserCopyWith<$Res>(_value.matchedUser!, (value) {
+      return _then(_value.copyWith(matchedUser: value) as $Val);
+    });
   }
 }
 
@@ -122,8 +146,12 @@ abstract class _$$MatchImplCopyWith<$Res> implements $MatchCopyWith<$Res> {
     String matchedUserId,
     String swipeAction,
     bool isMutual,
+    User? matchedUser,
     DateTime? createdAt,
   });
+
+  @override
+  $UserCopyWith<$Res>? get matchedUser;
 }
 
 /// @nodoc
@@ -145,6 +173,7 @@ class __$$MatchImplCopyWithImpl<$Res>
     Object? matchedUserId = null,
     Object? swipeAction = null,
     Object? isMutual = null,
+    Object? matchedUser = freezed,
     Object? createdAt = freezed,
   }) {
     return _then(
@@ -169,6 +198,10 @@ class __$$MatchImplCopyWithImpl<$Res>
             ? _value.isMutual
             : isMutual // ignore: cast_nullable_to_non_nullable
                   as bool,
+        matchedUser: freezed == matchedUser
+            ? _value.matchedUser
+            : matchedUser // ignore: cast_nullable_to_non_nullable
+                  as User?,
         createdAt: freezed == createdAt
             ? _value.createdAt
             : createdAt // ignore: cast_nullable_to_non_nullable
@@ -187,6 +220,7 @@ class _$MatchImpl implements _Match {
     required this.matchedUserId,
     required this.swipeAction,
     this.isMutual = false,
+    this.matchedUser,
     this.createdAt,
   });
 
@@ -207,11 +241,14 @@ class _$MatchImpl implements _Match {
   @JsonKey()
   final bool isMutual;
   @override
+  final User? matchedUser;
+  // Populated user details
+  @override
   final DateTime? createdAt;
 
   @override
   String toString() {
-    return 'Match(id: $id, userId: $userId, matchedUserId: $matchedUserId, swipeAction: $swipeAction, isMutual: $isMutual, createdAt: $createdAt)';
+    return 'Match(id: $id, userId: $userId, matchedUserId: $matchedUserId, swipeAction: $swipeAction, isMutual: $isMutual, matchedUser: $matchedUser, createdAt: $createdAt)';
   }
 
   @override
@@ -227,6 +264,8 @@ class _$MatchImpl implements _Match {
                 other.swipeAction == swipeAction) &&
             (identical(other.isMutual, isMutual) ||
                 other.isMutual == isMutual) &&
+            (identical(other.matchedUser, matchedUser) ||
+                other.matchedUser == matchedUser) &&
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt));
   }
@@ -240,6 +279,7 @@ class _$MatchImpl implements _Match {
     matchedUserId,
     swipeAction,
     isMutual,
+    matchedUser,
     createdAt,
   );
 
@@ -264,6 +304,7 @@ abstract class _Match implements Match {
     required final String matchedUserId,
     required final String swipeAction,
     final bool isMutual,
+    final User? matchedUser,
     final DateTime? createdAt,
   }) = _$MatchImpl;
 
@@ -280,6 +321,8 @@ abstract class _Match implements Match {
   String get swipeAction; // 'left', 'right', 'star'
   @override
   bool get isMutual;
+  @override
+  User? get matchedUser; // Populated user details
   @override
   DateTime? get createdAt;
 

@@ -8,18 +8,22 @@ part of 'travel_route.dart';
 
 _$TravelRouteImpl _$$TravelRouteImplFromJson(Map<String, dynamic> json) =>
     _$TravelRouteImpl(
-      origin: GeoPoint.fromJson(json['origin'] as Map<String, dynamic>),
-      destination: GeoPoint.fromJson(
-        json['destination'] as Map<String, dynamic>,
-      ),
-      startDate: DateTime.parse(json['startDate'] as String),
-      durationDays: (json['durationDays'] as num).toInt(),
+      origin: json['origin'] == null
+          ? null
+          : GeoPoint.fromJson(json['origin'] as Map<String, dynamic>),
+      destination: json['destination'] == null
+          ? null
+          : GeoPoint.fromJson(json['destination'] as Map<String, dynamic>),
+      startDate: json['start_date'] == null
+          ? null
+          : DateTime.parse(json['start_date'] as String),
+      durationDays: (json['duration_days'] as num?)?.toInt(),
     );
 
 Map<String, dynamic> _$$TravelRouteImplToJson(_$TravelRouteImpl instance) =>
     <String, dynamic>{
       'origin': instance.origin,
       'destination': instance.destination,
-      'startDate': instance.startDate.toIso8601String(),
-      'durationDays': instance.durationDays,
+      'start_date': instance.startDate?.toIso8601String(),
+      'duration_days': instance.durationDays,
     };

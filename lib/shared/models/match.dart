@@ -13,6 +13,7 @@ class Match with _$Match {
     required String matchedUserId,
     required String swipeAction, // 'left', 'right', 'star'
     @Default(false) bool isMutual,
+    User? matchedUser, // Populated user details
     DateTime? createdAt,
   }) = _Match;
 

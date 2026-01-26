@@ -72,21 +72,29 @@ class ActivityNotifier extends StateNotifier<ActivityState> {
   }
 
   Future<void> createBeacon(String message) async {
+    state = state.copyWith(isLoading: true);
+    final pos = await Geolocator.getCurrentPosition();
+    
+    final beaconData = {
+      'message': message,
+      'type': 'social',
+      'startTime': DateTime.now().toIso8601String(),
+      'maxParticipants': 0,
+      'location': {
+        'latitude': pos.latitude,
+        'longitude': pos.longitude,
+      }
+    };
+
     try {
-      state = state.copyWith(isLoading: true);
-      final position = await Geolocator.getCurrentPosition();
-      final newBeacon = await _repository.createBeacon(
-        message: message,
-        lat: position.latitude,
-        lng: position.longitude,
-      );
+      final beacon = await _repository.createBeacon(beaconData);
       state = state.copyWith(
         isLoading: false,
-        beacons: [newBeacon, ...state.beacons],
+        beacons: [beacon, ...state.beacons],
       );
-      ToastService.showSuccess('Beacon sent!');
+      ToastService.showSuccess('Beacon shouted!');
     } catch (e) {
-      state = state.copyWith(isLoading: false);
+      state = state.copyWith(isLoading: false, error: e.toString());
       ToastService.showError(e.toString());
     }
   }
@@ -113,6 +121,16 @@ class ActivityNotifier extends StateNotifier<ActivityState> {
        await _repository.joinActivity(activityId);
        ToastService.showSuccess('Joined activity!');
        await loadNearbyActivities(); // Refresh to show updated participant list
+     } catch (e) {
+       ToastService.showError(e.toString());
+     }
+  }
+
+  Future<void> joinBeacon(String beaconId) async {
+     try {
+       await _repository.joinBeacon(beaconId);
+       ToastService.showSuccess('Joined beacon!');
+       await loadNearbyActivities(); 
      } catch (e) {
        ToastService.showError(e.toString());
      }

@@ -48,6 +48,32 @@ class ChatRepository {
     }
   }
 
+  // Send message
+  Future<Message> sendMessage({
+    required String conversationId,
+    required String message,
+    String type = 'text',
+  }) async {
+    try {
+      final response = await _apiClient.post(
+        '${AppConfig.chatEndpoint}/conversations/$conversationId/messages',
+        data: {
+          'message': message,
+          'type': type,
+        },
+      );
+
+      if (response.statusCode == 201) {
+        return Message.fromJson(response.data['data']);
+      }
+
+      throw Exception('Failed to send message');
+    } on DioException catch (e) {
+      _logger.e('Send message error: ${e.message}');
+      throw _handleError(e);
+    }
+  }
+
   // Create conversation (or get existing)
   Future<Conversation> createConversation(String targetUserId) async {
     try {

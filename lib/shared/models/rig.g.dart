@@ -9,11 +9,11 @@ part of 'rig.dart';
 _$RigImpl _$$RigImplFromJson(Map<String, dynamic> json) => _$RigImpl(
   type: json['type'] as String?,
   crewType: json['crew_type'] as String?,
-  petFriendly: json['petFriendly'] as bool? ?? false,
+  petFriendly: json['pet_friendly'] as bool? ?? false,
 );
 
 Map<String, dynamic> _$$RigImplToJson(_$RigImpl instance) => <String, dynamic>{
   'type': instance.type,
   'crew_type': instance.crewType,
-  'petFriendly': instance.petFriendly,
+  'pet_friendly': instance.petFriendly,
 };

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
@@ -7,53 +8,52 @@ import '../../../../core/constants/app_dimensions.dart';
 import '../../providers/auth_provider.dart';
 import '../../../../shared/widgets/app_loader.dart';
 
-class SignUpScreen extends ConsumerStatefulWidget {
-  const SignUpScreen({super.key});
+class ResetPasswordScreen extends ConsumerStatefulWidget {
+  final String email;
+
+  const ResetPasswordScreen({
+    super.key,
+    required this.email,
+  });
 
   @override
-  ConsumerState<SignUpScreen> createState() => _SignUpScreenState();
+  ConsumerState<ResetPasswordScreen> createState() => _ResetPasswordScreenState();
 }
 
-class _SignUpScreenState extends ConsumerState<SignUpScreen> {
+class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
-  final _usernameController = TextEditingController();
-  final _emailController = TextEditingController();
+  final _otpController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-  final _phoneController = TextEditingController();
 
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
 
   @override
   void dispose() {
-    _nameController.dispose();
-    _usernameController.dispose();
-    _emailController.dispose();
+    _otpController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
-    _phoneController.dispose();
     super.dispose();
   }
 
-  Future<void> _handleSignUp() async {
+  Future<void> _handleSubmit() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final response = await ref.read(authProvider.notifier).register(
-          email: _emailController.text.trim(),
-          password: _passwordController.text,
-          username: _usernameController.text.trim(),
-          name: _nameController.text.trim(),
-          phone: _phoneController.text.trim().isEmpty
-              ? null
-              : _phoneController.text.trim(),
+    final success = await ref.read(authProvider.notifier).resetPassword(
+          email: widget.email,
+          otp: _otpController.text.trim(),
+          newPassword: _passwordController.text,
         );
 
-    if (response != null && mounted) {
-      // Navigate to OTP screen
-      context.go('/otp?email=${Uri.encodeComponent(_emailController.text.trim())}');
+    if (success && mounted) {
+      // Navigate back to sign in
+      context.go('/sign-in');
     }
+  }
+
+  Future<void> _handleResendCode() async {
+    await ref.read(authProvider.notifier).forgotPassword(widget.email);
   }
 
   @override
@@ -63,7 +63,11 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
     return Scaffold(
       backgroundColor: AppColors.white,
       appBar: AppBar(
-        title: const Text(AppStrings.signUp),
+        title: const Text('Reset Password'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.pop(),
+        ),
       ),
       body: SafeArea(
         child: Stack(
@@ -79,7 +83,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
 
                     // Title
                     const Text(
-                      'Create Account',
+                      'Create New Password',
                       style: TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.bold,
@@ -87,92 +91,56 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                       ),
                     ),
                     const SizedBox(height: AppDimensions.paddingS),
-                    const Text(
-                      'Join the nomad community',
-                      style: TextStyle(
+                    Text(
+                      'Enter the code sent to ${widget.email} and create a new password.',
+                      style: const TextStyle(
                         fontSize: 16,
                         color: AppColors.textSecondary,
                       ),
                     ),
                     const SizedBox(height: AppDimensions.paddingXL),
 
-                    // Name field
+                    // OTP field
                     TextFormField(
-                      controller: _nameController,
+                      controller: _otpController,
                       decoration: const InputDecoration(
-                        labelText: AppStrings.name,
-                        prefixIcon: Icon(Icons.person_outline),
+                        labelText: 'Reset Code',
+                        hintText: 'Enter 6-digit code',
+                        prefixIcon: Icon(Icons.pin_outlined),
                       ),
+                      keyboardType: TextInputType.number,
                       textInputAction: TextInputAction.next,
+                      maxLength: 6,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                      ],
                       validator: (value) {
                         if (value == null || value.isEmpty) {
                           return AppStrings.errorFieldRequired;
                         }
-                        return null;
-                      },
-                    ),
-                    // Username field
-                    TextFormField(
-                      controller: _usernameController,
-                      decoration: const InputDecoration(
-                        labelText: 'Username',
-                        prefixIcon: Icon(Icons.alternate_email),
-                        hintText: 'Use letters, numbers, and underscores',
-                      ),
-                      textInputAction: TextInputAction.next,
-                      validator: (value) {
-                         if (value == null || value.isEmpty) {
-                           return AppStrings.errorFieldRequired;
-                         }
-                         if (value.length < 3) {
-                           return 'Username must be at least 3 characters';
-                         }
-                         if (!RegExp(r'^[a-zA-Z0-9_]+$').hasMatch(value)) {
-                           return 'Only letters, numbers and underscores allowed';
-                         }
-                         return null;
-                      },
-                    ),
-                    const SizedBox(height: AppDimensions.paddingM),
-
-                    // Email field
-                    TextFormField(
-                      controller: _emailController,
-                      decoration: const InputDecoration(
-                        labelText: AppStrings.email,
-                        prefixIcon: Icon(Icons.email_outlined),
-                      ),
-                      keyboardType: TextInputType.emailAddress,
-                      textInputAction: TextInputAction.next,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return AppStrings.errorFieldRequired;
-                        }
-                        if (!value.contains('@')) {
-                          return AppStrings.errorInvalidEmail;
+                        if (value.length != 6) {
+                          return 'Please enter a valid 6-digit code';
                         }
                         return null;
                       },
                     ),
                     const SizedBox(height: AppDimensions.paddingM),
 
-                    // Phone field (optional)
-                    TextFormField(
-                      controller: _phoneController,
-                      decoration: const InputDecoration(
-                        labelText: '${AppStrings.phone} (Optional)',
-                        prefixIcon: Icon(Icons.phone_outlined),
+                    // Resend code
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton(
+                        onPressed: authState.isLoading ? null : _handleResendCode,
+                        child: const Text('Resend Code'),
                       ),
-                      keyboardType: TextInputType.phone,
-                      textInputAction: TextInputAction.next,
                     ),
                     const SizedBox(height: AppDimensions.paddingM),
 
-                    // Password field
+                    // New password field
                     TextFormField(
                       controller: _passwordController,
                       decoration: InputDecoration(
-                        labelText: AppStrings.password,
+                        labelText: 'New Password',
                         prefixIcon: const Icon(Icons.lock_outline),
                         suffixIcon: IconButton(
                           icon: Icon(
@@ -193,15 +161,19 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                         if (value == null || value.isEmpty) {
                           return AppStrings.errorFieldRequired;
                         }
-                        if (value.length < 6) {
-                          return AppStrings.errorInvalidPassword;
+                        if (value.length < 8) {
+                          return 'Password must be at least 8 characters';
+                        }
+                        // Check for uppercase, lowercase, and number
+                        if (!RegExp(r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)').hasMatch(value)) {
+                          return 'Must contain uppercase, lowercase, and number';
                         }
                         return null;
                       },
                     ),
                     const SizedBox(height: AppDimensions.paddingM),
 
-                    // Confirm Password field
+                    // Confirm password field
                     TextFormField(
                       controller: _confirmPasswordController,
                       decoration: InputDecoration(
@@ -231,42 +203,24 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                         }
                         return null;
                       },
-                      onFieldSubmitted: (_) => _handleSignUp(),
+                      onFieldSubmitted: (_) => _handleSubmit(),
                     ),
                     const SizedBox(height: AppDimensions.paddingXL),
 
-                    // Sign Up button
+                    // Submit button
                     SizedBox(
                       height: AppDimensions.buttonHeightL,
                       child: ElevatedButton(
-                        onPressed: authState.isLoading ? null : _handleSignUp,
-                        child: const Text(AppStrings.signUp),
+                        onPressed: authState.isLoading ? null : _handleSubmit,
+                        child: const Text('Reset Password'),
                       ),
-                    ),
-                    const SizedBox(height: AppDimensions.paddingL),
-
-                    // Already have account
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Text(
-                          AppStrings.alreadyHaveAccount,
-                          style: TextStyle(color: AppColors.textSecondary),
-                        ),
-                        TextButton(
-                          onPressed: () {
-                            context.go('/sign-in');
-                          },
-                          child: const Text(AppStrings.signIn),
-                        ),
-                      ],
                     ),
                   ],
                 ),
               ),
             ),
             if (authState.isLoading)
-              const AppLoader(isOverlay: true, message: 'Creating Account...'),
+              const AppLoader(isOverlay: true, message: 'Resetting password...'),
           ],
         ),
       ),

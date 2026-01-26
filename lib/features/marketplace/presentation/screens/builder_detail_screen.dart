@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../shared/models/builder.dart';
@@ -21,7 +20,6 @@ class BuilderDetailScreen extends ConsumerStatefulWidget {
 
 class _BuilderDetailScreenState extends ConsumerState<BuilderDetailScreen> {
   final _messageController = TextEditingController();
-  final bool _isReviewing = false;
   List<BuilderReview> _reviews = [];
   bool _isLoadingReviews = false;
 

@@ -12,6 +12,9 @@ _$MatchImpl _$$MatchImplFromJson(Map<String, dynamic> json) => _$MatchImpl(
   matchedUserId: json['matchedUserId'] as String,
   swipeAction: json['swipeAction'] as String,
   isMutual: json['isMutual'] as bool? ?? false,
+  matchedUser: json['matchedUser'] == null
+      ? null
+      : User.fromJson(json['matchedUser'] as Map<String, dynamic>),
   createdAt: json['createdAt'] == null
       ? null
       : DateTime.parse(json['createdAt'] as String),
@@ -24,6 +27,7 @@ Map<String, dynamic> _$$MatchImplToJson(_$MatchImpl instance) =>
       'matchedUserId': instance.matchedUserId,
       'swipeAction': instance.swipeAction,
       'isMutual': instance.isMutual,
+      'matchedUser': instance.matchedUser,
       'createdAt': instance.createdAt?.toIso8601String(),
     };
 

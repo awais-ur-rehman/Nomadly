@@ -14,12 +14,14 @@ class DiscoveryState {
   final bool isLoading;
   final String? error;
   final bool noMoreUsers;
+  final Map<String, dynamic> filters;
 
   DiscoveryState({
     this.users = const [],
     this.isLoading = false,
     this.error,
     this.noMoreUsers = false,
+    this.filters = const {},
   });
 
   DiscoveryState copyWith({
@@ -27,12 +29,14 @@ class DiscoveryState {
     bool? isLoading,
     String? error,
     bool? noMoreUsers,
+    Map<String, dynamic>? filters,
   }) {
     return DiscoveryState(
       users: users ?? this.users,
       isLoading: isLoading ?? this.isLoading,
       error: error,
       noMoreUsers: noMoreUsers ?? this.noMoreUsers,
+      filters: filters ?? this.filters,
     );
   }
 }
@@ -49,14 +53,17 @@ class DiscoveryNotifier extends StateNotifier<DiscoveryState> {
   Future<void> loadDiscoveryFeed({bool refresh = false}) async {
     if (refresh) {
       _page = 1;
-      state = DiscoveryState(isLoading: true);
+      state = state.copyWith(isLoading: true, noMoreUsers: false, users: [], error: null);
     } else {
       if (state.isLoading || state.noMoreUsers) return;
       state = state.copyWith(isLoading: true, error: null);
     }
 
     try {
-      final newUsers = await _repository.getDiscoveryFeed(page: _page);
+      final newUsers = await _repository.getDiscoveryFeed(
+        page: _page,
+        filters: state.filters,
+      );
       
       if (newUsers.isEmpty) {
         state = state.copyWith(isLoading: false, noMoreUsers: true);
@@ -70,6 +77,11 @@ class DiscoveryNotifier extends StateNotifier<DiscoveryState> {
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
     }
+  }
+  
+  void updateFilters(Map<String, dynamic> filters) {
+    state = state.copyWith(filters: filters);
+    loadDiscoveryFeed(refresh: true);
   }
 
   Future<Match?> swipeUser(String userId, String action) async {

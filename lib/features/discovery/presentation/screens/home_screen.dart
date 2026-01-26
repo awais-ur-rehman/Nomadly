@@ -111,6 +111,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               icon: const Icon(Icons.notifications_none),
               onPressed: () => context.push('/notifications'),
             ),
+            IconButton(
+              icon: const Icon(Icons.search),
+              onPressed: () => context.push('/search'),
+            ),
           ],
           if (_currentIndex == 1) // Only show filter on discovery
             IconButton(
@@ -123,21 +127,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 );
               },
             ),
-          if (_currentIndex == 4) ...[
+          if (_currentIndex == 4)
             IconButton(
               icon: const Icon(Icons.settings_outlined),
-              onPressed: () {
-                // TODO: Settings screen
-              },
+              onPressed: () => context.push('/settings'),
             ),
-            IconButton(
-              icon: const Icon(Icons.logout, color: AppColors.error),
-              onPressed: () {
-                ref.read(authProvider.notifier).logout();
-                context.go('/onboarding');
-              },
-            ),
-          ],
         ],
       ),
       body: IndexedStack(
@@ -276,17 +270,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               _FloatingActionButton(
                 icon: Icons.close,
                 color: AppColors.error,
+                tooltip: 'Pass',
                 onPressed: () => _controller.swipe(CardSwiperDirection.left),
               ),
               _FloatingActionButton(
                 icon: Icons.star,
                 color: AppColors.warning,
+                tooltip: 'Super Like',
                 onPressed: () => _controller.swipe(CardSwiperDirection.top),
                 isSmall: true,
               ),
               _FloatingActionButton(
                 icon: Icons.favorite,
                 color: AppColors.success,
+                tooltip: 'Like',
                 onPressed: () => _controller.swipe(CardSwiperDirection.right),
               ),
             ],
@@ -302,12 +299,14 @@ class _FloatingActionButton extends StatelessWidget {
   final Color color;
   final VoidCallback onPressed;
   final bool isSmall;
+  final String tooltip;
 
   const _FloatingActionButton({
     required this.icon,
     required this.color,
     required this.onPressed,
     this.isSmall = false,
+    required this.tooltip,
   });
 
   @override
@@ -318,7 +317,7 @@ class _FloatingActionButton extends StatelessWidget {
         color: AppColors.white,
         boxShadow: [
           BoxShadow(
-            color: AppColors.shadow.withOpacity(0.1),
+            color: AppColors.shadow.withValues(alpha: 0.1),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -327,7 +326,8 @@ class _FloatingActionButton extends StatelessWidget {
       child: IconButton(
         iconSize: isSmall ? 24 : 32,
         padding: EdgeInsets.all(isSmall ? 12 : 16),
-        icon: Icon(icon, color: color),
+        icon: Icon(icon, color: color, semanticLabel: tooltip),
+        tooltip: tooltip,
         onPressed: onPressed,
       ),
     );

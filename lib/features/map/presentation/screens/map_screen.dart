@@ -256,7 +256,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
+                      color: Colors.black.withValues(alpha: 0.1),
                       blurRadius: 10,
                     ),
                   ],
@@ -284,21 +284,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
               children: [
                 FloatingActionButton(
                   heroTag: 'createBeacon',
-                  backgroundColor: Colors.orange,
-                  onPressed: _showCreateBeaconDialog,
-                  child: const Icon(Icons.rocket_launch, color: Colors.white),
-                ),
-                const SizedBox(height: 16),
-                FloatingActionButton(
-                  heroTag: 'createActivity',
+                  backgroundColor: AppColors.primary,
                   onPressed: () => context.push('/create-activity'),
-                  child: const Icon(Icons.add),
-                ),
-                const SizedBox(height: 16),
-                FloatingActionButton(
-                  heroTag: 'listActivities',
-                  onPressed: () => context.push('/activities'),
-                  child: const Icon(Icons.list),
+                  child: const Icon(Icons.rocket_launch, color: Colors.white),
                 ),
               ],
             ),
@@ -308,35 +296,6 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     );
   }
 
-  void _showCreateBeaconDialog() {
-    final controller = TextEditingController();
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Send a Beacon'),
-        content: TextField(
-          controller: controller,
-          decoration: const InputDecoration(
-            hintText: "What's happening? (e.g., 'Coffee at 3!')",
-          ),
-          maxLength: 50,
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-          ElevatedButton(
-            onPressed: () {
-              final msg = controller.text.trim();
-              if (msg.isNotEmpty) {
-                ref.read(activityProvider.notifier).createBeacon(msg);
-                Navigator.pop(context);
-              }
-            },
-            child: const Text('Shout!'),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 class _PointAnnotationClickListener extends OnPointAnnotationClickListener {

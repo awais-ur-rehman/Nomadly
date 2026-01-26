@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../shared/models/builder.dart';
+import '../../../../shared/services/toast_service.dart';
 import '../data/repositories/marketplace_repository.dart';
 
 final marketplaceRepositoryProvider = Provider<MarketplaceRepository>((ref) => MarketplaceRepository());
@@ -70,6 +71,15 @@ class MarketplaceNotifier extends StateNotifier<MarketplaceState> {
     }
     state = state.copyWith(selectedSpecialties: newList);
     searchBuilders();
+  }
+
+  Future<void> requestConsultation(String builderId, String message) async {
+    try {
+      await _repository.requestConsultation(builderId, message);
+      ToastService.showSuccess('Consultation request sent!');
+    } catch (e) {
+      ToastService.showError(e.toString());
+    }
   }
 }
 

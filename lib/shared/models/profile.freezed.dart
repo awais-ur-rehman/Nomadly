@@ -21,9 +21,10 @@ Profile _$ProfileFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$Profile {
-  String get name => throw _privateConstructorUsedError;
+  String? get name => throw _privateConstructorUsedError;
   int? get age => throw _privateConstructorUsedError;
   String? get gender => throw _privateConstructorUsedError;
+  @JsonKey(name: 'photo_url')
   String? get photoUrl => throw _privateConstructorUsedError;
   List<String> get hobbies => throw _privateConstructorUsedError;
   String get intent =>
@@ -45,10 +46,10 @@ abstract class $ProfileCopyWith<$Res> {
       _$ProfileCopyWithImpl<$Res, Profile>;
   @useResult
   $Res call({
-    String name,
+    String? name,
     int? age,
     String? gender,
-    String? photoUrl,
+    @JsonKey(name: 'photo_url') String? photoUrl,
     List<String> hobbies,
     String intent,
     String? bio,
@@ -70,7 +71,7 @@ class _$ProfileCopyWithImpl<$Res, $Val extends Profile>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? name = null,
+    Object? name = freezed,
     Object? age = freezed,
     Object? gender = freezed,
     Object? photoUrl = freezed,
@@ -80,10 +81,10 @@ class _$ProfileCopyWithImpl<$Res, $Val extends Profile>
   }) {
     return _then(
       _value.copyWith(
-            name: null == name
+            name: freezed == name
                 ? _value.name
                 : name // ignore: cast_nullable_to_non_nullable
-                      as String,
+                      as String?,
             age: freezed == age
                 ? _value.age
                 : age // ignore: cast_nullable_to_non_nullable
@@ -123,10 +124,10 @@ abstract class _$$ProfileImplCopyWith<$Res> implements $ProfileCopyWith<$Res> {
   @override
   @useResult
   $Res call({
-    String name,
+    String? name,
     int? age,
     String? gender,
-    String? photoUrl,
+    @JsonKey(name: 'photo_url') String? photoUrl,
     List<String> hobbies,
     String intent,
     String? bio,
@@ -147,7 +148,7 @@ class __$$ProfileImplCopyWithImpl<$Res>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? name = null,
+    Object? name = freezed,
     Object? age = freezed,
     Object? gender = freezed,
     Object? photoUrl = freezed,
@@ -157,10 +158,10 @@ class __$$ProfileImplCopyWithImpl<$Res>
   }) {
     return _then(
       _$ProfileImpl(
-        name: null == name
+        name: freezed == name
             ? _value.name
             : name // ignore: cast_nullable_to_non_nullable
-                  as String,
+                  as String?,
         age: freezed == age
             ? _value.age
             : age // ignore: cast_nullable_to_non_nullable
@@ -194,10 +195,10 @@ class __$$ProfileImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$ProfileImpl implements _Profile {
   const _$ProfileImpl({
-    required this.name,
+    this.name,
     this.age,
     this.gender,
-    this.photoUrl,
+    @JsonKey(name: 'photo_url') this.photoUrl,
     final List<String> hobbies = const [],
     this.intent = 'friends',
     this.bio,
@@ -207,12 +208,13 @@ class _$ProfileImpl implements _Profile {
       _$$ProfileImplFromJson(json);
 
   @override
-  final String name;
+  final String? name;
   @override
   final int? age;
   @override
   final String? gender;
   @override
+  @JsonKey(name: 'photo_url')
   final String? photoUrl;
   final List<String> _hobbies;
   @override
@@ -279,10 +281,10 @@ class _$ProfileImpl implements _Profile {
 
 abstract class _Profile implements Profile {
   const factory _Profile({
-    required final String name,
+    final String? name,
     final int? age,
     final String? gender,
-    final String? photoUrl,
+    @JsonKey(name: 'photo_url') final String? photoUrl,
     final List<String> hobbies,
     final String intent,
     final String? bio,
@@ -291,12 +293,13 @@ abstract class _Profile implements Profile {
   factory _Profile.fromJson(Map<String, dynamic> json) = _$ProfileImpl.fromJson;
 
   @override
-  String get name;
+  String? get name;
   @override
   int? get age;
   @override
   String? get gender;
   @override
+  @JsonKey(name: 'photo_url')
   String? get photoUrl;
   @override
   List<String> get hobbies;

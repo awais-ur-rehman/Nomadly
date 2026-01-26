@@ -85,6 +85,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
   Future<RegisterResponse?> register({
     required String email,
     required String password,
+    required String username,
     required String name,
     String? phone,
     int? age,
@@ -96,6 +97,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       final response = await _repository.register(
         email: email,
         password: password,
+        username: username,
         name: name,
         phone: phone,
         age: age,
@@ -201,6 +203,46 @@ class AuthNotifier extends StateNotifier<AuthState> {
       );
 
       ToastService.showSuccess('Profile completed successfully!');
+      return true;
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: e.toString());
+      ToastService.showError(e.toString());
+      return false;
+    }
+  }
+
+  // Forgot Password - Request reset OTP
+  Future<bool> forgotPassword(String email) async {
+    state = state.copyWith(isLoading: true, error: null);
+
+    try {
+      await _repository.forgotPassword(email);
+      state = state.copyWith(isLoading: false);
+      ToastService.showSuccess('Reset code sent to your email');
+      return true;
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: e.toString());
+      ToastService.showError(e.toString());
+      return false;
+    }
+  }
+
+  // Reset Password
+  Future<bool> resetPassword({
+    required String email,
+    required String otp,
+    required String newPassword,
+  }) async {
+    state = state.copyWith(isLoading: true, error: null);
+
+    try {
+      await _repository.resetPassword(
+        email: email,
+        otp: otp,
+        newPassword: newPassword,
+      );
+      state = state.copyWith(isLoading: false);
+      ToastService.showSuccess('Password reset successfully! Please login.');
       return true;
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
