@@ -18,6 +18,7 @@ import '../../features/chat/presentation/screens/chat_screen.dart';
 import '../../features/social/presentation/screens/create_post_screen.dart';
 import '../../features/social/presentation/screens/post_detail_screen.dart';
 import '../../features/social/presentation/screens/create_story_screen.dart';
+import '../../features/social/presentation/screens/create_trip_screen.dart';
 import '../../features/marketplace/presentation/screens/marketplace_screen.dart';
 import '../../features/marketplace/presentation/screens/builder_detail_screen.dart';
 import '../../features/social/presentation/screens/notifications_screen.dart';
@@ -209,6 +210,11 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/create-post',
         builder: (context, state) => const CreatePostScreen(),
+      ),
+      // Create Trip
+      GoRoute(
+        path: '/create-trip',
+        builder: (context, state) => const CreateTripScreen(),
       ),
       GoRoute(
         path: '/post/:id',

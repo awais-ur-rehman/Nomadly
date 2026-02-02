@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../shared/models/user.dart';
+import '../../../../shared/services/toast_service.dart';
 import '../../providers/chat_provider.dart';
 import '../../../auth/providers/auth_provider.dart';
+import '../../../safety/providers/safety_provider.dart';
 import '../widgets/message_bubble.dart';
 
 class ChatScreen extends ConsumerStatefulWidget {
@@ -51,6 +54,151 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     // _scrollController.animateTo(0, duration: const Duration(milliseconds: 300), curve: Curves.easeOut);
   }
 
+  void _showSafetySheet(BuildContext context) {
+    final otherUserId = widget.otherUser?.id;
+    if (otherUserId == null || otherUserId.isEmpty) return;
+
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40, height: 4,
+              margin: const EdgeInsets.only(top: 12, bottom: 16),
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.block, color: Colors.red),
+              title: const Text('Block User'),
+              subtitle: const Text('They won\'t be able to contact you'),
+              onTap: () async {
+                Navigator.pop(ctx);
+                final confirmed = await showDialog<bool>(
+                  context: context,
+                  builder: (c) => AlertDialog(
+                    title: const Text('Block User?'),
+                    content: const Text(
+                      'They won\'t be able to see your profile or message you. You can unblock them later from settings.',
+                    ),
+                    actions: [
+                      TextButton(onPressed: () => Navigator.pop(c, false), child: const Text('Cancel')),
+                      TextButton(
+                        onPressed: () => Navigator.pop(c, true),
+                        child: const Text('Block', style: TextStyle(color: Colors.red)),
+                      ),
+                    ],
+                  ),
+                );
+                if (confirmed == true && mounted) {
+                  final success = await ref.read(safetyProvider.notifier).blockUser(otherUserId);
+                  if (success && mounted) {
+                    ToastService.showSuccess('User blocked');
+                    context.pop();
+                  } else if (mounted) {
+                    ToastService.showError('Failed to block user');
+                  }
+                }
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.flag_outlined, color: Colors.orange),
+              title: const Text('Report User'),
+              subtitle: const Text('Let us know what\'s wrong'),
+              onTap: () {
+                Navigator.pop(ctx);
+                _showReportDialog(context, otherUserId);
+              },
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showReportDialog(BuildContext context, String userId) {
+    const reasons = [
+      ('harassment', 'Harassment'),
+      ('fake_profile', 'Fake Profile'),
+      ('inappropriate_content', 'Inappropriate Content'),
+      ('spam', 'Spam'),
+      ('threatening_behavior', 'Threatening Behavior'),
+      ('scam', 'Scam'),
+      ('other', 'Other'),
+    ];
+
+    String? selectedReason;
+    final descController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          title: const Text('Report User'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Select a reason:'),
+                const SizedBox(height: 8),
+                ...reasons.map((r) => RadioListTile<String>(
+                  value: r.$1,
+                  groupValue: selectedReason,
+                  title: Text(r.$2, style: const TextStyle(fontSize: 14)),
+                  dense: true,
+                  contentPadding: EdgeInsets.zero,
+                  onChanged: (v) => setDialogState(() => selectedReason = v),
+                )),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: descController,
+                  maxLines: 2,
+                  decoration: const InputDecoration(
+                    hintText: 'Additional details (optional)',
+                    border: OutlineInputBorder(),
+                    isDense: true,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+            TextButton(
+              onPressed: () async {
+                if (selectedReason == null) {
+                  ToastService.showError('Select a reason');
+                  return;
+                }
+                Navigator.pop(ctx);
+                final success = await ref.read(safetyProvider.notifier).reportUser(
+                  userId,
+                  selectedReason!,
+                  description: descController.text.trim(),
+                );
+                if (mounted) {
+                  success
+                      ? ToastService.showSuccess('Report submitted')
+                      : ToastService.showError('Failed to submit report');
+                }
+              },
+              child: const Text('Submit', style: TextStyle(color: Colors.red)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(activeChatProvider);
@@ -95,6 +243,12 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             ),
           ],
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.more_vert),
+            onPressed: () => _showSafetySheet(context),
+          ),
+        ],
       ),
       body: Column(
         children: [
