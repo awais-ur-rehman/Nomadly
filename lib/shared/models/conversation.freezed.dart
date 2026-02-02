@@ -27,7 +27,10 @@ mixin _$Conversation {
   String get type => throw _privateConstructorUsedError; // 'direct', 'group'
   String? get lastMessage => throw _privateConstructorUsedError;
   DateTime? get lastMessageTime => throw _privateConstructorUsedError;
-  DateTime get createdAt => throw _privateConstructorUsedError;
+  @JsonKey(name: 'created_at')
+  DateTime? get createdAt => throw _privateConstructorUsedError;
+  @JsonKey(name: 'updated_at')
+  DateTime? get updatedAt => throw _privateConstructorUsedError;
 
   /// Serializes this Conversation to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -52,7 +55,8 @@ abstract class $ConversationCopyWith<$Res> {
     String type,
     String? lastMessage,
     DateTime? lastMessageTime,
-    DateTime createdAt,
+    @JsonKey(name: 'created_at') DateTime? createdAt,
+    @JsonKey(name: 'updated_at') DateTime? updatedAt,
   });
 }
 
@@ -76,7 +80,8 @@ class _$ConversationCopyWithImpl<$Res, $Val extends Conversation>
     Object? type = null,
     Object? lastMessage = freezed,
     Object? lastMessageTime = freezed,
-    Object? createdAt = null,
+    Object? createdAt = freezed,
+    Object? updatedAt = freezed,
   }) {
     return _then(
       _value.copyWith(
@@ -100,10 +105,14 @@ class _$ConversationCopyWithImpl<$Res, $Val extends Conversation>
                 ? _value.lastMessageTime
                 : lastMessageTime // ignore: cast_nullable_to_non_nullable
                       as DateTime?,
-            createdAt: null == createdAt
+            createdAt: freezed == createdAt
                 ? _value.createdAt
                 : createdAt // ignore: cast_nullable_to_non_nullable
-                      as DateTime,
+                      as DateTime?,
+            updatedAt: freezed == updatedAt
+                ? _value.updatedAt
+                : updatedAt // ignore: cast_nullable_to_non_nullable
+                      as DateTime?,
           )
           as $Val,
     );
@@ -125,7 +134,8 @@ abstract class _$$ConversationImplCopyWith<$Res>
     String type,
     String? lastMessage,
     DateTime? lastMessageTime,
-    DateTime createdAt,
+    @JsonKey(name: 'created_at') DateTime? createdAt,
+    @JsonKey(name: 'updated_at') DateTime? updatedAt,
   });
 }
 
@@ -148,7 +158,8 @@ class __$$ConversationImplCopyWithImpl<$Res>
     Object? type = null,
     Object? lastMessage = freezed,
     Object? lastMessageTime = freezed,
-    Object? createdAt = null,
+    Object? createdAt = freezed,
+    Object? updatedAt = freezed,
   }) {
     return _then(
       _$ConversationImpl(
@@ -172,10 +183,14 @@ class __$$ConversationImplCopyWithImpl<$Res>
             ? _value.lastMessageTime
             : lastMessageTime // ignore: cast_nullable_to_non_nullable
                   as DateTime?,
-        createdAt: null == createdAt
+        createdAt: freezed == createdAt
             ? _value.createdAt
             : createdAt // ignore: cast_nullable_to_non_nullable
-                  as DateTime,
+                  as DateTime?,
+        updatedAt: freezed == updatedAt
+            ? _value.updatedAt
+            : updatedAt // ignore: cast_nullable_to_non_nullable
+                  as DateTime?,
       ),
     );
   }
@@ -186,11 +201,12 @@ class __$$ConversationImplCopyWithImpl<$Res>
 class _$ConversationImpl implements _Conversation {
   const _$ConversationImpl({
     @JsonKey(name: '_id') required this.id,
-    required final List<User> participants,
+    final List<User> participants = const [],
     this.type = 'direct',
     this.lastMessage,
     this.lastMessageTime,
-    required this.createdAt,
+    @JsonKey(name: 'created_at') this.createdAt,
+    @JsonKey(name: 'updated_at') this.updatedAt,
   }) : _participants = participants;
 
   factory _$ConversationImpl.fromJson(Map<String, dynamic> json) =>
@@ -201,6 +217,7 @@ class _$ConversationImpl implements _Conversation {
   final String id;
   final List<User> _participants;
   @override
+  @JsonKey()
   List<User> get participants {
     if (_participants is EqualUnmodifiableListView) return _participants;
     // ignore: implicit_dynamic_type
@@ -216,11 +233,15 @@ class _$ConversationImpl implements _Conversation {
   @override
   final DateTime? lastMessageTime;
   @override
-  final DateTime createdAt;
+  @JsonKey(name: 'created_at')
+  final DateTime? createdAt;
+  @override
+  @JsonKey(name: 'updated_at')
+  final DateTime? updatedAt;
 
   @override
   String toString() {
-    return 'Conversation(id: $id, participants: $participants, type: $type, lastMessage: $lastMessage, lastMessageTime: $lastMessageTime, createdAt: $createdAt)';
+    return 'Conversation(id: $id, participants: $participants, type: $type, lastMessage: $lastMessage, lastMessageTime: $lastMessageTime, createdAt: $createdAt, updatedAt: $updatedAt)';
   }
 
   @override
@@ -239,7 +260,9 @@ class _$ConversationImpl implements _Conversation {
             (identical(other.lastMessageTime, lastMessageTime) ||
                 other.lastMessageTime == lastMessageTime) &&
             (identical(other.createdAt, createdAt) ||
-                other.createdAt == createdAt));
+                other.createdAt == createdAt) &&
+            (identical(other.updatedAt, updatedAt) ||
+                other.updatedAt == updatedAt));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -252,6 +275,7 @@ class _$ConversationImpl implements _Conversation {
     lastMessage,
     lastMessageTime,
     createdAt,
+    updatedAt,
   );
 
   /// Create a copy of Conversation
@@ -271,11 +295,12 @@ class _$ConversationImpl implements _Conversation {
 abstract class _Conversation implements Conversation {
   const factory _Conversation({
     @JsonKey(name: '_id') required final String id,
-    required final List<User> participants,
+    final List<User> participants,
     final String type,
     final String? lastMessage,
     final DateTime? lastMessageTime,
-    required final DateTime createdAt,
+    @JsonKey(name: 'created_at') final DateTime? createdAt,
+    @JsonKey(name: 'updated_at') final DateTime? updatedAt,
   }) = _$ConversationImpl;
 
   factory _Conversation.fromJson(Map<String, dynamic> json) =
@@ -293,7 +318,11 @@ abstract class _Conversation implements Conversation {
   @override
   DateTime? get lastMessageTime;
   @override
-  DateTime get createdAt;
+  @JsonKey(name: 'created_at')
+  DateTime? get createdAt;
+  @override
+  @JsonKey(name: 'updated_at')
+  DateTime? get updatedAt;
 
   /// Create a copy of Conversation
   /// with the given fields replaced by the non-null parameter values.

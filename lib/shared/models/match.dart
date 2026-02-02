@@ -7,17 +7,27 @@ part 'match.g.dart';
 
 @freezed
 class Match with _$Match {
+  const Match._();
+
   const factory Match({
-    @JsonKey(name: '_id') required String id,
-    required String userId,
-    required String matchedUserId,
-    required String swipeAction, // 'left', 'right', 'star'
+    @JsonKey(name: '_id') String? id,
+    String? userId,
+    String? matchedUserId,
+    @JsonKey(name: 'conversation_id') dynamic conversationId,
     @Default(false) bool isMutual,
-    User? matchedUser, // Populated user details
+    User? matchedUser,
     DateTime? createdAt,
   }) = _Match;
 
   factory Match.fromJson(Map<String, dynamic> json) => _$MatchFromJson(json);
+
+  String get safeId => id ?? '';
+
+  String? get safeConversationId {
+    if (conversationId is String) return conversationId as String;
+    if (conversationId is Map) return (conversationId as Map)['_id'] as String?;
+    return null;
+  }
 }
 
 @freezed

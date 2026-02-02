@@ -31,6 +31,7 @@ import '../../features/activities/presentation/screens/activities_list_screen.da
 import '../../shared/models/user.dart';
 import '../../shared/models/activity.dart'; // Import Activity model
 import '../../shared/models/post.dart';
+import '../../features/map/presentation/screens/location_picker_screen.dart';
 
 /// Listenable that notifies GoRouter when auth state changes
 class RouterListenable extends ChangeNotifier {
@@ -178,7 +179,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/chat/:id',
         builder: (context, state) {
           final conversationId = state.pathParameters['id']!;
-          final otherUser = state.extra as User;
+          final otherUser = state.extra as User?;
           return ChatScreen(conversationId: conversationId, otherUser: otherUser);
         },
       ),
@@ -239,6 +240,11 @@ final routerProvider = Provider<GoRouter>((ref) {
           final builder = state.extra as BuilderProfile;
           return BuilderDetailScreen(builder: builder);
         },
+      ),
+      // Location Picker (returns LatLng via pop)
+      GoRoute(
+        path: '/location-picker',
+        builder: (context, state) => const LocationPickerScreen(),
       ),
       // Search Users
       GoRoute(

@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:logger/logger.dart';
 import '../../../../shared/models/conversation.dart';
 import '../../../../shared/models/message.dart';
 import '../../../../shared/services/socket_service.dart';
@@ -38,6 +39,7 @@ class ChatListState {
 class ChatListNotifier extends StateNotifier<ChatListState> {
   final ChatRepository _repository;
   final SocketService _socketService;
+  final _logger = Logger();
 
   ChatListNotifier(this._repository)
       : _socketService = SocketService(),
@@ -63,6 +65,7 @@ class ChatListNotifier extends StateNotifier<ChatListState> {
     }
   }
 
+// ...
   Future<Conversation?> createConversation(String targetUserId) async {
     try {
       final conversation = await _repository.createConversation(targetUserId);
@@ -71,6 +74,7 @@ class ChatListNotifier extends StateNotifier<ChatListState> {
       await loadConversations();
       return conversation;
     } catch (e) {
+      _logger.e('Failed to create/parse conversation: $e');
       return null;
     }
   }

@@ -38,17 +38,25 @@ class DiscoveryRepository {
     }
   }
 
+  /// Maps legacy UI swipe directions to backend action enums.
+  static const _actionMap = {
+    'left': 'pass',
+    'right': 'like',
+    'star': 'super_like',
+  };
+
   // Swipe on user (POST /api/v1/discovery/swipe)
   Future<Match?> swipeUser({
     required String targetUserId,
-    required String action, // 'left', 'right', 'star'
+    required String action, // 'left', 'right', 'star' (mapped to pass/like/super_like)
   }) async {
     try {
+      final mappedAction = _actionMap[action] ?? action;
       final response = await _apiClient.post(
         '$_discoveryEndpoint/swipe',
         data: {
-          'matched_user_id': targetUserId,
-          'action': action,
+          'targetUserId': targetUserId,
+          'action': mappedAction,
         },
       );
 

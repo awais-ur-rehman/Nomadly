@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
-import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../chat/presentation/screens/inbox_screen.dart';
 import '../../../profile/presentation/screens/profile_screen.dart';
@@ -19,8 +18,6 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   int _currentIndex = 0;
-
-
 
   @override
   Widget build(BuildContext context) {
@@ -48,7 +45,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               onPressed: () => context.push('/settings'),
             ),
         ],
-
       ),
       body: IndexedStack(
         index: _currentIndex,
@@ -123,5 +119,3 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     }
   }
 }
-
-

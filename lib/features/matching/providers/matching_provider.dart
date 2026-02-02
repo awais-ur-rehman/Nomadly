@@ -1,37 +1,41 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logger/logger.dart';
-import '../../../../shared/models/user.dart';
+import '../../../../shared/models/recommended_user.dart';
 import '../data/repositories/matching_repository.dart';
 
 // State Class
 class MatchingState {
-  final List<User> recommendations;
+  final List<RecommendedUser> recommendations;
   final bool isLoading;
   final String? error;
   final bool noMoreUsers;
-  final Map<String, dynamic>? newMatch; // Temporarily holds a new match to show UI
+  final String mode; // 'friends', 'dating', 'both'
+  final Map<String, dynamic>? newMatch;
 
   MatchingState({
     this.recommendations = const [],
     this.isLoading = false,
     this.error,
     this.noMoreUsers = false,
+    this.mode = 'both',
     this.newMatch,
   });
 
   MatchingState copyWith({
-    List<User>? recommendations,
+    List<RecommendedUser>? recommendations,
     bool? isLoading,
     String? error,
     bool? noMoreUsers,
+    String? mode,
     Map<String, dynamic>? newMatch,
   }) {
     return MatchingState(
       recommendations: recommendations ?? this.recommendations,
       isLoading: isLoading ?? this.isLoading,
-      error: error, // Nullable update
+      error: error,
       noMoreUsers: noMoreUsers ?? this.noMoreUsers,
-      newMatch: newMatch, // Nullable update for clearing match
+      mode: mode ?? this.mode,
+      newMatch: newMatch,
     );
   }
 }
@@ -45,27 +49,28 @@ class MatchingNotifier extends StateNotifier<MatchingState> {
 
   Future<void> loadRecommendations({bool refresh = false}) async {
     if (state.isLoading) return;
-    
-    // If we already have users and not refreshing, maybe load more? 
-    // For now, let's keep it simple: fetch initial batch
     if (!refresh && state.recommendations.isNotEmpty) return;
 
     state = state.copyWith(isLoading: true, error: null);
 
     try {
-      _logger.d('🔄 [MatchingProvider] Loading recommendations...');
-      
-      final users = await _repository.getRecommendations(page: 1, limit: 20); // Always page 1 of *unseen* users
-      
-      _logger.d('✅ [MatchingProvider] Loaded ${users.length} users');
-      
+      _logger.d('[MatchingProvider] Loading recommendations (mode: ${state.mode})...');
+
+      final users = await _repository.getRecommendations(
+        page: 1,
+        limit: 20,
+        mode: state.mode,
+      );
+
+      _logger.d('[MatchingProvider] Loaded ${users.length} recommendations');
+
       state = state.copyWith(
         isLoading: false,
         recommendations: users,
         noMoreUsers: users.isEmpty,
       );
     } catch (e) {
-      _logger.e('❌ [MatchingProvider] Error loading: $e');
+      _logger.e('[MatchingProvider] Error loading: $e');
       state = state.copyWith(
         isLoading: false,
         error: e.toString(),
@@ -74,20 +79,12 @@ class MatchingNotifier extends StateNotifier<MatchingState> {
   }
 
   Future<void> swipeUser(String userId, String action) async {
-    // 1. Optimistic Update: Remove user from deck immediately
-    final currentList = List<User>.from(state.recommendations);
-    currentList.removeWhere((u) => u.uid == userId);
+    // 1. Optimistic Update: REMOVED to prevent CardSwiper index issues. 
+    // The UI (CardSwiper) handles the visual removal. We just track the API call.
+    // We will clear the list only when the stack is fully consumed.
     
-    state = state.copyWith(
-      recommendations: currentList,
-      newMatch: null, // Clear previous match info if any
-    );
-
-    // If running low on cards, fetch more?
-    if (currentList.length < 3) {
-      _logger.d('⚠️ [MatchingProvider] Low on cards, pre-fetching more (TODO)');
-       // Ideally trigger background fetch
-    }
+    // Clear previous match info if any
+    state = state.copyWith(newMatch: null);
 
     try {
       // 2. API Call
@@ -104,12 +101,20 @@ class MatchingNotifier extends StateNotifier<MatchingState> {
       }
     } catch (e) {
       _logger.e('❌ [MatchingProvider] Swipe failed: $e');
-      // Ideally revert the removal or show error toast
-      // For a dating app, silent failure on "pass" is usually fine, but "like" failure hurts.
+      // Ideally show error toast
     }
   }
 
+  void resetDeck() {
+    state = state.copyWith(recommendations: [], noMoreUsers: false);
+  }
 
+  /// Switch matching mode and reload the deck.
+  Future<void> setMode(String mode) async {
+    if (mode == state.mode) return;
+    state = state.copyWith(mode: mode, recommendations: [], noMoreUsers: false);
+    await loadRecommendations(refresh: true);
+  }
 
   // Update Max Distance Preference
   Future<void> updateDistance(int distanceKm) async {
@@ -122,7 +127,7 @@ class MatchingNotifier extends StateNotifier<MatchingState> {
       // 2. Reload deck with new settings
       await loadRecommendations(refresh: true);
       
-    } catch (e) {
+      } catch (e) {
       _logger.e('❌ [MatchingProvider] Failed to update distance: $e');
       // Show error via state if needed, or toast
     }

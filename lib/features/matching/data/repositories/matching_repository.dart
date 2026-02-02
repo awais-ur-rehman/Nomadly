@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:logger/logger.dart';
 import '../../../../shared/services/api_client.dart';
 import '../../../../shared/models/user.dart';
+import '../../../../shared/models/recommended_user.dart';
 
 class MatchingRepository {
   final _apiClient = ApiClient();
@@ -10,50 +11,46 @@ class MatchingRepository {
   static const _matchingEndpoint = '/v1/matching';
 
   // Get Recommendations (The Deck)
-  Future<List<User>> getRecommendations({int page = 1, int limit = 10}) async {
+  Future<List<RecommendedUser>> getRecommendations({
+    int page = 1,
+    int limit = 10,
+    String mode = 'both', // 'friends', 'dating', 'both'
+  }) async {
     try {
-      _logger.d('🔍 [MatchingRepo] Fetching recommendations - Page: $page');
-      
+      _logger.d('[MatchingRepo] Fetching recommendations - page: $page, mode: $mode');
+
       final response = await _apiClient.get(
         '$_matchingEndpoint/recommendations',
         queryParameters: {
           'page': page,
           'limit': limit,
+          'mode': mode,
         },
       );
 
-      _logger.d('✅ [MatchingRepo] Recommendations response: ${response.statusCode}');
-      _logger.d('📦 [MatchingRepo] Raw Response: ${response.data}'); // Added debug log
-
       if (response.statusCode == 200) {
         final data = response.data['data'];
-        
-        // Handle both direct array or wrapped in 'users' object (defensive programming)
+
+        // Handle both direct array or wrapped in 'users' object
         List<dynamic> usersJson = [];
         if (data is List) {
           usersJson = data;
-        } else if (data['users'] != null) {
-          usersJson = data['users'];
+        } else if (data is Map && data['users'] != null) {
+          usersJson = data['users'] as List<dynamic>;
         }
 
-        _logger.d('📦 [MatchingRepo] Parsed ${usersJson.length} users from response');
-        
-        return usersJson.map((json) {
-          try {
-            return User.fromJson(json);
-          } catch (e) {
-            _logger.e('❌ [MatchingRepo] Error parsing user: $e');
-            // Return a partial user or handle gracefully
-            // For now, rethrowing to see in logs which user failed
-            rethrow; 
-          }
-        }).toList();
+        _logger.d('[MatchingRepo] Parsed ${usersJson.length} recommendations');
+
+        return usersJson
+            .map((json) => RecommendedUser.fromRecommendationJson(
+                Map<String, dynamic>.from(json)))
+            .toList();
       }
       return [];
     } on DioException catch (e) {
-      _logger.e('❌ [MatchingRepo] Get recommendations error: ${e.message}');
+      _logger.e('[MatchingRepo] Get recommendations error: ${e.message}');
       if (e.response != null) {
-        _logger.e('❌ [MatchingRepo] API Error Response: ${e.response?.data}');
+        _logger.e('[MatchingRepo] API error response: ${e.response?.data}');
       }
       throw _handleError(e);
     }

@@ -5,6 +5,7 @@ import 'package:logger/logger.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../providers/matching_provider.dart';
+import '../../../matches/providers/match_provider.dart';
 import '../widgets/matching_card.dart';
 import '../widgets/distance_filter_sheet.dart';
 
@@ -35,7 +36,7 @@ class _MatchingScreenState extends ConsumerState<MatchingScreen> {
     final state = ref.read(matchingProvider);
     if (previousIndex >= state.recommendations.length) return true;
 
-    final user = state.recommendations[previousIndex];
+    final recommended = state.recommendations[previousIndex];
     String action;
 
     if (direction == CardSwiperDirection.right) {
@@ -48,24 +49,42 @@ class _MatchingScreenState extends ConsumerState<MatchingScreen> {
       return true;
     }
 
-    _logger.d('👆 [MatchingUI] Swiping $action on ${user.username}');
+    _logger.d('[MatchingUI] Swiping $action on ${recommended.user.username}');
+
+    await ref.read(matchingProvider.notifier).swipeUser(recommended.user.uid, action);
     
-    // Fire and forget (Provider handles state update optimistically)
-    await ref.read(matchingProvider.notifier).swipeUser(user.uid, action);
-    
-    // Check for match (need to wait a microsecond for state to update? 
-    // actually swipeUser is async and we await it, so state.newMatch might be set now)
-    final checkState = ref.read(matchingProvider);
-    if (checkState.newMatch != null && mounted) {
-        _showMatchDialog(checkState.newMatch!['match']?['user']);
-        ref.read(matchingProvider.notifier).clearMatch();
+    // Check for match
+    if (mounted) { 
+      final checkState = ref.read(matchingProvider);
+      if (checkState.newMatch != null) {
+          // Sync matches list immediately
+          ref.read(matchProvider.notifier).loadMatches();
+          
+          _showMatchDialog(checkState.newMatch!['match']);
+          ref.read(matchingProvider.notifier).clearMatch();
+      }
+    }
+
+    // Check if we just swiped the last card
+    if (previousIndex == state.recommendations.length - 1) {
+       _logger.i('🏁 [MatchingUI] End of stack reached');
+       // Delay slightly to let the swipe animation complete before rebuilding the UI
+       Future.delayed(const Duration(milliseconds: 300), () {
+         if (mounted) {
+           ref.read(matchingProvider.notifier).resetDeck();
+         }
+       });
     }
 
     return true;
   }
 
-  void _showMatchDialog(Map<String, dynamic>? matchedUser) {
+  void _showMatchDialog(Map<String, dynamic>? matchData) {
+    if (matchData == null) return;
+    
     _logger.i('🎉 [MatchingUI] Showing match dialog');
+    final matchedUser = matchData['user'];
+    final conversationId = matchData['conversation_id'];
     
     showDialog(
       context: context,
@@ -106,10 +125,12 @@ class _MatchingScreenState extends ConsumerState<MatchingScreen> {
               ElevatedButton(
                 onPressed: () {
                    Navigator.pop(context);
-                   // Navigate to chat
-                   // context.push('/chat/${match['conversation_id']}'); 
-                   // Ideally we get conversation ID from match data
-                   // For now just close dialog
+                   if (conversationId != null) {
+                     context.push('/chat/$conversationId');
+                   } else {
+                     // Fallback to matches screen if something is weird
+                     context.go('/matches'); 
+                   }
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
@@ -119,7 +140,9 @@ class _MatchingScreenState extends ConsumerState<MatchingScreen> {
               ),
               const SizedBox(height: 10),
               TextButton(
-                onPressed: () => Navigator.pop(context),
+                onPressed: () {
+                  Navigator.pop(context); // Just close
+                },
                 child: const Text('Keep Swiping'),
               ),
             ],
@@ -145,16 +168,24 @@ class _MatchingScreenState extends ConsumerState<MatchingScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.style, size: 80, color: Colors.grey),
+              Icon(
+                state.error != null ? Icons.error_outline : Icons.style, 
+                size: 80, 
+                color: Colors.grey
+              ),
               const SizedBox(height: 20),
-              const Text(
-                'No more profiles',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              Text(
+                state.error != null ? 'Something went wrong' : 'No more profiles',
+                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 10),
-              const Text(
-                'Check back later for more nomads nearby!',
-                style: TextStyle(color: Colors.grey),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 40),
+                child: Text(
+                  state.error ?? 'Check back later for more nomads nearby!',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Colors.grey),
+                ),
               ),
               const SizedBox(height: 30),
                 ElevatedButton.icon(
@@ -205,9 +236,11 @@ class _MatchingScreenState extends ConsumerState<MatchingScreen> {
                   IconButton(
                     icon: const Icon(Icons.filter_list),
                     onPressed: () {
-                      // TODO: Open preferences
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Preferences coming soon!')),
+                       showModalBottomSheet(
+                        context: context,
+                        isScrollControlled: true,
+                        backgroundColor: Colors.transparent,
+                        builder: (context) => const DistanceFilterSheet(),
                       );
                     },
                   ),
@@ -221,11 +254,11 @@ class _MatchingScreenState extends ConsumerState<MatchingScreen> {
                 controller: _controller,
                 cardsCount: state.recommendations.length,
                 onSwipe: _onSwipe,
-                numberOfCardsDisplayed: 2,
+                numberOfCardsDisplayed: state.recommendations.length == 1 ? 1 : 2,
                 backCardOffset: const Offset(0, 30),
                 padding: const EdgeInsets.all(20),
                 cardBuilder: (context, index, percentThresholdX, percentThresholdY) {
-                  return MatchingCard(user: state.recommendations[index]);
+                  return MatchingCard(recommended: state.recommendations[index]);
                 },
               ),
             ),
@@ -291,7 +324,7 @@ class _SwipeButton extends StatelessWidget {
           color: Colors.white,
           boxShadow: [
             BoxShadow(
-              color: Colors.grey.withOpacity(0.2),
+              color: Colors.grey.withValues(alpha: 0.2),
               spreadRadius: 2,
               blurRadius: 8,
               offset: const Offset(0, 4),

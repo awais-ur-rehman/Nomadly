@@ -13,13 +13,16 @@ class AppConfig {
   static const String authEndpoint = '/auth';
   static const String usersEndpoint = '/users';
   static const String matchesEndpoint = '/matches';
-  static const String chatEndpoint = '/chat';
+  static const String chatEndpoint = '/v1/chat';
   static const String activitiesEndpoint = '/activities';
   static const String marketplaceEndpoint = '/marketplace';
   static const String uploadEndpoint = '/upload';
   static const String vouchEndpoint = '/vouch';
   static const String paymentsEndpoint = '/payments';
   static const String notificationsEndpoint = '/notifications';
+  static const String safetyEndpoint = '/v1/safety';
+  static const String inviteEndpoint = '/v1/invite';
+  static const String verificationEndpoint = '/v1/verification';
   
   // Timeouts
   static const Duration connectTimeout = Duration(seconds: 30);

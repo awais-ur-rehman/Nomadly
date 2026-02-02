@@ -9,12 +9,12 @@ import '../widgets/message_bubble.dart';
 
 class ChatScreen extends ConsumerStatefulWidget {
   final String conversationId;
-  final User otherUser; // Passing minimal user info for app bar
+  final User? otherUser; // Passing minimal user info for app bar
 
   const ChatScreen({
     super.key,
     required this.conversationId,
-    required this.otherUser,
+    this.otherUser,
   });
 
   @override
@@ -67,10 +67,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           children: [
             CircleAvatar(
               radius: 18,
-              backgroundImage: widget.otherUser.profile?.photoUrl != null
-                  ? NetworkImage(widget.otherUser.profile!.photoUrl!)
+              backgroundImage: widget.otherUser?.profile?.photoUrl != null
+                  ? NetworkImage(widget.otherUser!.profile!.photoUrl!)
                   : null,
-              child: widget.otherUser.profile?.photoUrl == null
+              child: widget.otherUser?.profile?.photoUrl == null
                   ? const Icon(Icons.person, size: 20)
                   : null,
             ),
@@ -79,7 +79,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  widget.otherUser.profile?.name ?? 'Nomad',
+                  widget.otherUser?.profile?.name ?? 'Nomad',
                   style: const TextStyle(fontSize: 16),
                 ),
                 if (state.isTyping)
@@ -121,7 +121,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               color: AppColors.white,
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.shadow.withOpacity(0.05),
+                  color: AppColors.shadow.withValues(alpha: 0.05),
                   offset: const Offset(0, -2),
                   blurRadius: 5,
                 ),

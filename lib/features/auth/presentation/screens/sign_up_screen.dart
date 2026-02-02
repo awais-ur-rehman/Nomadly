@@ -22,6 +22,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   final _phoneController = TextEditingController();
+  final _inviteCodeController = TextEditingController();
 
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
@@ -34,6 +35,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     _phoneController.dispose();
+    _inviteCodeController.dispose();
     super.dispose();
   }
 
@@ -45,6 +47,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
           password: _passwordController.text,
           username: _usernameController.text.trim(),
           name: _nameController.text.trim(),
+          inviteCode: _inviteCodeController.text.trim(),
           phone: _phoneController.text.trim().isEmpty
               ? null
               : _phoneController.text.trim(),
@@ -95,6 +98,25 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                       ),
                     ),
                     const SizedBox(height: AppDimensions.paddingXL),
+
+                    // Invite code field
+                    TextFormField(
+                      controller: _inviteCodeController,
+                      decoration: const InputDecoration(
+                        labelText: 'Invite Code',
+                        prefixIcon: Icon(Icons.card_giftcard_outlined),
+                        hintText: 'NOMAD-XXXXX',
+                      ),
+                      textCapitalization: TextCapitalization.characters,
+                      textInputAction: TextInputAction.next,
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'An invite code is required to join Nomadly';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: AppDimensions.paddingM),
 
                     // Name field
                     TextFormField(

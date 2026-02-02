@@ -1,6 +1,5 @@
 import 'package:dio/dio.dart';
 import 'package:logger/logger.dart';
-import 'package:pretty_dio_logger/pretty_dio_logger.dart';
 import '../../core/config/app_config.dart';
 import 'secure_storage_service.dart';
 

@@ -62,11 +62,9 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
               initialCenter: _currentCenter,
               initialZoom: 13,
               onPositionChanged: (position, hasGesture) {
-                if (position.center != null) {
-                  setState(() {
-                    _currentCenter = position.center!;
-                  });
-                }
+                setState(() {
+                  _currentCenter = position.center!;
+                });
               },
             ),
             children: [

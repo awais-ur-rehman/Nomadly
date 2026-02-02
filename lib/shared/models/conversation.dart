@@ -8,11 +8,12 @@ part 'conversation.g.dart';
 class Conversation with _$Conversation {
   const factory Conversation({
     @JsonKey(name: '_id') required String id,
-    required List<User> participants,
+    @Default([]) List<User> participants,
     @Default('direct') String type, // 'direct', 'group'
     String? lastMessage,
     DateTime? lastMessageTime,
-    required DateTime createdAt,
+    @JsonKey(name: 'created_at') DateTime? createdAt,
+    @JsonKey(name: 'updated_at') DateTime? updatedAt,
   }) = _Conversation;
 
   factory Conversation.fromJson(Map<String, dynamic> json) =>

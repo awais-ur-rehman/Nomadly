@@ -9,7 +9,6 @@ import '../../../../shared/models/post.dart';
 import '../../../../shared/models/comment.dart';
 import '../../../auth/providers/auth_provider.dart';
 import '../../providers/social_provider.dart';
-import '../../data/repositories/social_repository.dart';
 import '../../../../shared/services/toast_service.dart';
 
 class PostDetailScreen extends ConsumerStatefulWidget {
@@ -28,7 +27,7 @@ class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
   List<Comment> _comments = [];
   bool _isLoading = false;
   bool _isLoadingComments = false;
-  
+
   @override
   void initState() {
     super.initState();
@@ -36,19 +35,18 @@ class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
     _loadPost();
     _loadComments();
   }
-  
+
   Future<void> _loadPost() async {
     if (_post == null) setState(() => _isLoading = true);
-    
+
     try {
-       final currentUserId = ref.read(authProvider).user?.uid;
-       final post = await ref.read(socialRepositoryProvider).getPost(
-         widget.postId,
-         currentUserId: currentUserId,
-       );
-       if (mounted) {
-         setState(() => _post = post);
-       }
+      final currentUserId = ref.read(authProvider).user?.uid;
+      final post = await ref
+          .read(socialRepositoryProvider)
+          .getPost(widget.postId, currentUserId: currentUserId);
+      if (mounted) {
+        setState(() => _post = post);
+      }
     } catch (e) {
       // Keep preloaded post if fetch fails
     } finally {
@@ -58,9 +56,11 @@ class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
 
   Future<void> _loadComments() async {
     setState(() => _isLoadingComments = true);
-    
+
     try {
-      final comments = await ref.read(socialRepositoryProvider).getComments(widget.postId);
+      final comments = await ref
+          .read(socialRepositoryProvider)
+          .getComments(widget.postId);
       if (mounted) {
         setState(() {
           _comments = comments;
@@ -77,7 +77,7 @@ class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
   Future<void> _addComment() async {
     final text = _commentController.text.trim();
     if (text.isEmpty || text.length > 1000) return;
-    
+
     final currentUser = ref.read(authProvider).user;
     if (currentUser == null) return;
 
@@ -99,10 +99,10 @@ class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
     // Clear input
     _commentController.clear();
     FocusScope.of(context).unfocus();
-    
+
     try {
       await ref.read(socialProvider.notifier).addComment(widget.postId, text);
-      
+
       // Reload comments to get the real one from server
       await _loadComments();
     } catch (e) {
@@ -117,10 +117,7 @@ class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
   }
 
   Future<void> _refresh() async {
-    await Future.wait([
-      _loadPost(),
-      _loadComments(),
-    ]);
+    await Future.wait([_loadPost(), _loadComments()]);
   }
 
   @override
@@ -128,9 +125,10 @@ class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
     if (_isLoading && _post == null) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
-    
+
     final post = _post;
-    if (post == null) return const Scaffold(body: Center(child: Text('Post not found')));
+    if (post == null)
+      return const Scaffold(body: Center(child: Text('Post not found')));
 
     return Scaffold(
       appBar: AppBar(title: const Text('Post')),
@@ -147,14 +145,18 @@ class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
                     ListTile(
                       leading: CircleAvatar(
                         backgroundImage: post.author.profile?.photoUrl != null
-                            ? CachedNetworkImageProvider(post.author.profile!.photoUrl!)
+                            ? CachedNetworkImageProvider(
+                                post.author.profile!.photoUrl!,
+                              )
                             : null,
-                        child: post.author.profile?.photoUrl == null ? const Icon(Icons.person) : null,
+                        child: post.author.profile?.photoUrl == null
+                            ? const Icon(Icons.person)
+                            : null,
                       ),
                       title: Text(post.author.profile?.name ?? 'Unknown'),
                       subtitle: Text(timeago.format(post.createdAt)),
                     ),
-                    
+
                     // Post Image
                     if (post.photos.isNotEmpty)
                       CachedNetworkImage(
@@ -164,10 +166,12 @@ class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
                         placeholder: (context, url) => Container(
                           height: 300,
                           color: AppColors.greyExtraLight,
-                          child: const Center(child: CircularProgressIndicator()),
+                          child: const Center(
+                            child: CircularProgressIndicator(),
+                          ),
                         ),
                       ),
-                    
+
                     // Content
                     Padding(
                       padding: const EdgeInsets.all(AppDimensions.paddingL),
@@ -176,35 +180,45 @@ class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
                         children: [
                           Text(post.caption),
                           const SizedBox(height: AppDimensions.paddingM),
-                          
+
                           // Like and Comment Actions
                           Row(
                             children: [
                               // Like Button
                               IconButton(
                                 icon: Icon(
-                                  post.isLikedByMe ? Icons.favorite : Icons.favorite_border,
-                                  color: post.isLikedByMe ? Colors.red : AppColors.grey,
+                                  post.isLikedByMe
+                                      ? Icons.favorite
+                                      : Icons.favorite_border,
+                                  color: post.isLikedByMe
+                                      ? Colors.red
+                                      : AppColors.grey,
                                 ),
                                 onPressed: () {
                                   HapticFeedback.lightImpact();
-                                  ref.read(socialProvider.notifier).toggleLike(post.id);
+                                  ref
+                                      .read(socialProvider.notifier)
+                                      .toggleLike(post.id);
                                   // Note: Like state updates optimistically
                                   // Pull-to-refresh to get server data
                                 },
                               ),
                               Text('${post.likes.length} likes'),
                               const SizedBox(width: 16),
-                              const Icon(Icons.chat_bubble_outline, color: AppColors.grey, size: 20),
+                              const Icon(
+                                Icons.chat_bubble_outline,
+                                color: AppColors.grey,
+                                size: 20,
+                              ),
                               const SizedBox(width: 4),
                               Text('${_comments.length} comments'),
                             ],
                           ),
-                          
+
                           const SizedBox(height: AppDimensions.paddingL),
                           const Divider(),
                           const SizedBox(height: AppDimensions.paddingM),
-                          
+
                           // Comments Section
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -220,12 +234,14 @@ class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
                                 const SizedBox(
                                   width: 16,
                                   height: 16,
-                                  child: CircularProgressIndicator(strokeWidth: 2),
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
                                 ),
                             ],
                           ),
                           const SizedBox(height: AppDimensions.paddingM),
-                          
+
                           // Comments List
                           if (_comments.isEmpty && !_isLoadingComments)
                             const Center(
@@ -234,12 +250,16 @@ class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
                                 child: Text(
                                   'No comments yet.\nBe the first to comment!',
                                   textAlign: TextAlign.center,
-                                  style: TextStyle(color: AppColors.textSecondary),
+                                  style: TextStyle(
+                                    color: AppColors.textSecondary,
+                                  ),
                                 ),
                               ),
                             )
                           else
-                            ..._comments.map((comment) => _buildCommentItem(comment)),
+                            ..._comments.map(
+                              (comment) => _buildCommentItem(comment),
+                            ),
                         ],
                       ),
                     ),
@@ -248,7 +268,7 @@ class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
               ),
             ),
           ),
-          
+
           // Comment Input
           Container(
             padding: const EdgeInsets.all(AppDimensions.paddingM),
@@ -267,13 +287,22 @@ class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
                         border: InputBorder.none,
                       ),
                       maxLength: 1000,
-                      buildCounter: (context, {required currentLength, required isFocused, maxLength}) {
-                        if (!isFocused || currentLength == 0) return null;
-                        return Text(
-                          '$currentLength/$maxLength',
-                          style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
-                        );
-                      },
+                      buildCounter:
+                          (
+                            context, {
+                            required currentLength,
+                            required isFocused,
+                            maxLength,
+                          }) {
+                            if (!isFocused || currentLength == 0) return null;
+                            return Text(
+                              '$currentLength/$maxLength',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: AppColors.textSecondary,
+                              ),
+                            );
+                          },
                     ),
                   ),
                   IconButton(
@@ -300,7 +329,9 @@ class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
             CircleAvatar(
               radius: 16,
               backgroundImage: comment.author.profile?.photoUrl != null
-                  ? CachedNetworkImageProvider(comment.author.profile!.photoUrl!)
+                  ? CachedNetworkImageProvider(
+                      comment.author.profile!.photoUrl!,
+                    )
                   : null,
               child: comment.author.profile?.photoUrl == null
                   ? const Icon(Icons.person, size: 16)

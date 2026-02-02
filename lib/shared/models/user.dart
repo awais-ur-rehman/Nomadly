@@ -3,6 +3,7 @@ import 'profile.dart';
 import 'rig.dart';
 import 'travel_route.dart';
 import 'nomad_id.dart';
+import 'verification.dart';
 
 part 'user.freezed.dart';
 part 'user.g.dart';
@@ -19,10 +20,13 @@ class User with _$User {
     String? phone,
     Profile? profile,
     Rig? rig,
-    TravelRoute? travelRoute,
+    @JsonKey(name: 'travel_route') TravelRoute? travelRoute,
     @JsonKey(name: 'is_builder') @Default(false) bool isBuilder,
     @JsonKey(name: 'is_private') @Default(false) bool isPrivate,
     @JsonKey(name: 'nomad_id') NomadId? nomadId,
+    Verification? verification,
+    @JsonKey(name: 'invited_by') String? invitedBy,
+    @JsonKey(name: 'invite_count') @Default(0) int inviteCount,
     @JsonKey(name: 'is_active') @Default(true) bool isActive,
     @Default(0) int followerCount,
     @Default(0) int followingCount,
@@ -34,6 +38,12 @@ class User with _$User {
   }) = _User;
 
   String get uid => id ?? idSecondary ?? '';
+
+  /// Verification level (0-5). Falls back to legacy nomadId check.
+  int get verificationLevel => verification?.level ?? (nomadId?.verified == true ? 3 : 0);
+
+  /// Human-readable badge name for display.
+  String get verificationBadge => verification?.badge ?? 'none';
 
   factory User.fromJson(Map<String, dynamic> json) => _$UserFromJson(json);
 }

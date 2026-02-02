@@ -142,12 +142,12 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
     
     return GestureDetector(
       onTap: () async {
-        final conversation = await ref.read(chatListProvider.notifier).createConversation(match.matchedUserId);
-        
+        final conversation = await ref.read(chatListProvider.notifier).createConversation(match.matchedUserId ?? '');
+
         if (conversation != null && context.mounted) {
-             final otherUser = user ?? 
+             final otherUser = user ??
                 User(
-                  id: match.matchedUserId, 
+                  id: match.matchedUserId ?? '',
                   email: '',
                   profile: Profile(name: 'Match'), // Fallback
                 );
