@@ -28,6 +28,8 @@ mixin _$Post {
   String get caption => throw _privateConstructorUsedError;
   List<String> get photos => throw _privateConstructorUsedError;
   List<String> get tags => throw _privateConstructorUsedError;
+  String get type =>
+      throw _privateConstructorUsedError; // 'post', 'trip', 'activity'
   @JsonKey(name: 'created_at')
   DateTime get createdAt => throw _privateConstructorUsedError;
   List<String> get likes => throw _privateConstructorUsedError;
@@ -55,6 +57,7 @@ abstract class $PostCopyWith<$Res> {
     String caption,
     List<String> photos,
     List<String> tags,
+    String type,
     @JsonKey(name: 'created_at') DateTime createdAt,
     List<String> likes,
     @JsonKey(name: 'comments_count') int commentCount,
@@ -84,6 +87,7 @@ class _$PostCopyWithImpl<$Res, $Val extends Post>
     Object? caption = null,
     Object? photos = null,
     Object? tags = null,
+    Object? type = null,
     Object? createdAt = null,
     Object? likes = null,
     Object? commentCount = null,
@@ -111,6 +115,10 @@ class _$PostCopyWithImpl<$Res, $Val extends Post>
                 ? _value.tags
                 : tags // ignore: cast_nullable_to_non_nullable
                       as List<String>,
+            type: null == type
+                ? _value.type
+                : type // ignore: cast_nullable_to_non_nullable
+                      as String,
             createdAt: null == createdAt
                 ? _value.createdAt
                 : createdAt // ignore: cast_nullable_to_non_nullable
@@ -157,6 +165,7 @@ abstract class _$$PostImplCopyWith<$Res> implements $PostCopyWith<$Res> {
     String caption,
     List<String> photos,
     List<String> tags,
+    String type,
     @JsonKey(name: 'created_at') DateTime createdAt,
     List<String> likes,
     @JsonKey(name: 'comments_count') int commentCount,
@@ -184,6 +193,7 @@ class __$$PostImplCopyWithImpl<$Res>
     Object? caption = null,
     Object? photos = null,
     Object? tags = null,
+    Object? type = null,
     Object? createdAt = null,
     Object? likes = null,
     Object? commentCount = null,
@@ -211,6 +221,10 @@ class __$$PostImplCopyWithImpl<$Res>
             ? _value._tags
             : tags // ignore: cast_nullable_to_non_nullable
                   as List<String>,
+        type: null == type
+            ? _value.type
+            : type // ignore: cast_nullable_to_non_nullable
+                  as String,
         createdAt: null == createdAt
             ? _value.createdAt
             : createdAt // ignore: cast_nullable_to_non_nullable
@@ -234,20 +248,22 @@ class __$$PostImplCopyWithImpl<$Res>
 
 /// @nodoc
 @JsonSerializable()
-class _$PostImpl implements _Post {
+class _$PostImpl extends _Post {
   const _$PostImpl({
     @JsonKey(name: '_id') required this.id,
     @JsonKey(readValue: _readAuthor) required this.author,
     required this.caption,
     final List<String> photos = const [],
     final List<String> tags = const [],
+    this.type = 'post',
     @JsonKey(name: 'created_at') required this.createdAt,
     final List<String> likes = const [],
     @JsonKey(name: 'comments_count') this.commentCount = 0,
     this.isLikedByMe = false,
   }) : _photos = photos,
        _tags = tags,
-       _likes = likes;
+       _likes = likes,
+       super._();
 
   factory _$PostImpl.fromJson(Map<String, dynamic> json) =>
       _$$PostImplFromJson(json);
@@ -279,6 +295,10 @@ class _$PostImpl implements _Post {
   }
 
   @override
+  @JsonKey()
+  final String type;
+  // 'post', 'trip', 'activity'
+  @override
   @JsonKey(name: 'created_at')
   final DateTime createdAt;
   final List<String> _likes;
@@ -299,7 +319,7 @@ class _$PostImpl implements _Post {
 
   @override
   String toString() {
-    return 'Post(id: $id, author: $author, caption: $caption, photos: $photos, tags: $tags, createdAt: $createdAt, likes: $likes, commentCount: $commentCount, isLikedByMe: $isLikedByMe)';
+    return 'Post(id: $id, author: $author, caption: $caption, photos: $photos, tags: $tags, type: $type, createdAt: $createdAt, likes: $likes, commentCount: $commentCount, isLikedByMe: $isLikedByMe)';
   }
 
   @override
@@ -312,6 +332,7 @@ class _$PostImpl implements _Post {
             (identical(other.caption, caption) || other.caption == caption) &&
             const DeepCollectionEquality().equals(other._photos, _photos) &&
             const DeepCollectionEquality().equals(other._tags, _tags) &&
+            (identical(other.type, type) || other.type == type) &&
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt) &&
             const DeepCollectionEquality().equals(other._likes, _likes) &&
@@ -330,6 +351,7 @@ class _$PostImpl implements _Post {
     caption,
     const DeepCollectionEquality().hash(_photos),
     const DeepCollectionEquality().hash(_tags),
+    type,
     createdAt,
     const DeepCollectionEquality().hash(_likes),
     commentCount,
@@ -350,18 +372,20 @@ class _$PostImpl implements _Post {
   }
 }
 
-abstract class _Post implements Post {
+abstract class _Post extends Post {
   const factory _Post({
     @JsonKey(name: '_id') required final String id,
     @JsonKey(readValue: _readAuthor) required final User author,
     required final String caption,
     final List<String> photos,
     final List<String> tags,
+    final String type,
     @JsonKey(name: 'created_at') required final DateTime createdAt,
     final List<String> likes,
     @JsonKey(name: 'comments_count') final int commentCount,
     final bool isLikedByMe,
   }) = _$PostImpl;
+  const _Post._() : super._();
 
   factory _Post.fromJson(Map<String, dynamic> json) = _$PostImpl.fromJson;
 
@@ -377,6 +401,8 @@ abstract class _Post implements Post {
   List<String> get photos;
   @override
   List<String> get tags;
+  @override
+  String get type; // 'post', 'trip', 'activity'
   @override
   @JsonKey(name: 'created_at')
   DateTime get createdAt;

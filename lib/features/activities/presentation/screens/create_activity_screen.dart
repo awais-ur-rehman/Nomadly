@@ -5,7 +5,6 @@ import 'package:intl/intl.dart';
 import 'package:latlong2/latlong.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../providers/activity_provider.dart';
-import '../../../map/presentation/screens/location_picker_screen.dart';
 
 class CreateActivityScreen extends ConsumerStatefulWidget {
   const CreateActivityScreen({super.key});
@@ -122,7 +121,7 @@ class _CreateActivityScreenState extends ConsumerState<CreateActivityScreen> {
               ),
               const SizedBox(height: AppDimensions.paddingM),
               DropdownButtonFormField<String>(
-                initialValue: _selectedType,
+                value: _selectedType,
                 items: _types.map((t) => DropdownMenuItem(value: t, child: Text(t.toUpperCase()))).toList(),
                 onChanged: (val) => setState(() => _selectedType = val!),
                 decoration: const InputDecoration(labelText: 'Activity Type'),
@@ -148,15 +147,12 @@ class _CreateActivityScreenState extends ConsumerState<CreateActivityScreen> {
               ),
               ListTile(
                 title: Text(_pickedLocation == null ? 'Pick Location on Map' : 'Location Selected'),
-                subtitle: _pickedLocation == null 
+                subtitle: _pickedLocation == null
                     ? const Text('Tap to choose')
                     : Text('${_pickedLocation!.latitude.toStringAsFixed(4)}, ${_pickedLocation!.longitude.toStringAsFixed(4)}'),
                 leading: const Icon(Icons.map, color: Colors.blue),
                 onTap: () async {
-                  final result = await Navigator.push<LatLng>(
-                    context,
-                    MaterialPageRoute(builder: (context) => const LocationPickerScreen()),
-                  );
+                  final result = await context.push<LatLng>('/location-picker');
                   if (result != null) {
                     setState(() {
                       _pickedLocation = result;

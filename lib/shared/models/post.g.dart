@@ -16,6 +16,7 @@ _$PostImpl _$$PostImplFromJson(Map<String, dynamic> json) => _$PostImpl(
   tags:
       (json['tags'] as List<dynamic>?)?.map((e) => e as String).toList() ??
       const [],
+  type: json['type'] as String? ?? 'post',
   createdAt: DateTime.parse(json['created_at'] as String),
   likes:
       (json['likes'] as List<dynamic>?)?.map((e) => e as String).toList() ??
@@ -31,6 +32,7 @@ Map<String, dynamic> _$$PostImplToJson(_$PostImpl instance) =>
       'caption': instance.caption,
       'photos': instance.photos,
       'tags': instance.tags,
+      'type': instance.type,
       'created_at': instance.createdAt.toIso8601String(),
       'likes': instance.likes,
       'comments_count': instance.commentCount,

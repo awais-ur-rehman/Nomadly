@@ -10,7 +10,7 @@ _$ConversationImpl _$$ConversationImplFromJson(Map<String, dynamic> json) =>
     _$ConversationImpl(
       id: json['_id'] as String,
       participants:
-          (json['participants'] as List<dynamic>?)
+          (_readParticipants(json, 'participants') as List<dynamic>?)
               ?.map((e) => User.fromJson(e as Map<String, dynamic>))
               .toList() ??
           const [],

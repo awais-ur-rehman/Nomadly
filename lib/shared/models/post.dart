@@ -6,17 +6,24 @@ part 'post.g.dart';
 
 @freezed
 class Post with _$Post {
+  const Post._();
+
   const factory Post({
     @JsonKey(name: '_id') required String id,
     @JsonKey(readValue: _readAuthor) required User author,
     required String caption,
     @Default([]) List<String> photos,
     @Default([]) List<String> tags,
+    @Default('post') String type, // 'post', 'trip', 'activity'
     @JsonKey(name: 'created_at') required DateTime createdAt,
     @Default([]) List<String> likes,
     @JsonKey(name: 'comments_count') @Default(0) int commentCount,
     @Default(false) bool isLikedByMe,
   }) = _Post;
+
+  bool get isTrip => type == 'trip';
+  bool get isActivity => type == 'activity';
+  bool get isRegularPost => type == 'post' || type.isEmpty;
 
   factory Post.fromJson(Map<String, dynamic> json) => _$PostFromJson(json);
 }

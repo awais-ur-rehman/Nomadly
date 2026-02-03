@@ -5,6 +5,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../shared/models/post.dart';
+import '../../../../core/constants/app_colors.dart';
 import '../../providers/social_provider.dart';
 
 class PostCard extends ConsumerWidget {
@@ -51,6 +52,36 @@ class PostCard extends ConsumerWidget {
                 onPressed: () {},
               ),
             ),
+
+            // Type badge for trip/activity
+            if (post.isTrip || post.isActivity)
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: post.isTrip ? Colors.blue.shade50 : Colors.orange.shade50,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      post.isTrip ? Icons.route : Icons.event,
+                      size: 16,
+                      color: post.isTrip ? Colors.blue : Colors.orange,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      post.isTrip ? 'Trip Announcement' : 'Activity',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: post.isTrip ? Colors.blue : Colors.orange,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
 
             // Content
             Padding(

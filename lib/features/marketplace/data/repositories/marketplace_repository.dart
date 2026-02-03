@@ -46,11 +46,14 @@ class MarketplaceRepository {
   }
 
   // Request consultation
-  Future<void> requestConsultation(String builderId, String message) async {
+  Future<void> requestConsultation(String builderId, String specialty) async {
     try {
       await _apiClient.post(
-        '${AppConfig.baseUrl}/api/v1/marketplace/builders/$builderId/consult',
-        data: {'message': message},
+        '${AppConfig.marketplaceEndpoint}/consult',
+        data: {
+          'builder_id': builderId,
+          'specialty': specialty,
+        },
       );
     } on DioException catch (e) {
       _logger.e('Request consultation error: ${e.message}');

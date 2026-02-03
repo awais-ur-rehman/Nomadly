@@ -6,6 +6,8 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../providers/matching_provider.dart';
 import '../../../matches/providers/match_provider.dart';
+import '../../../safety/providers/safety_provider.dart';
+import '../../../../shared/services/toast_service.dart';
 import '../widgets/matching_card.dart';
 import '../widgets/distance_filter_sheet.dart';
 
@@ -25,6 +27,7 @@ class _MatchingScreenState extends ConsumerState<MatchingScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(matchingProvider.notifier).loadRecommendations();
+      ref.read(safetyProvider.notifier).loadBlockedUsers();
     });
   }
 
@@ -34,9 +37,13 @@ class _MatchingScreenState extends ConsumerState<MatchingScreen> {
     CardSwiperDirection direction,
   ) async {
     final state = ref.read(matchingProvider);
-    if (previousIndex >= state.recommendations.length) return true;
+    final blockedIds = ref.read(safetyProvider).blockedUserIds;
+    final recs = state.recommendations
+        .where((r) => !blockedIds.contains(r.user.uid))
+        .toList();
+    if (previousIndex >= recs.length) return true;
 
-    final recommended = state.recommendations[previousIndex];
+    final recommended = recs[previousIndex];
     String action;
 
     if (direction == CardSwiperDirection.right) {
@@ -66,7 +73,7 @@ class _MatchingScreenState extends ConsumerState<MatchingScreen> {
     }
 
     // Check if we just swiped the last card
-    if (previousIndex == state.recommendations.length - 1) {
+    if (previousIndex == recs.length - 1) {
        _logger.i('🏁 [MatchingUI] End of stack reached');
        // Delay slightly to let the swipe animation complete before rebuilding the UI
        Future.delayed(const Duration(milliseconds: 300), () {
@@ -152,17 +159,102 @@ class _MatchingScreenState extends ConsumerState<MatchingScreen> {
     );
   }
 
+  void _showCardSafetySheet(String userId) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(width: 40, height: 4, margin: const EdgeInsets.only(top: 12, bottom: 16), decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2))),
+            ListTile(
+              leading: const Icon(Icons.block, color: Colors.red),
+              title: const Text('Block User'),
+              onTap: () async {
+                Navigator.pop(ctx);
+                final ok = await ref.read(safetyProvider.notifier).blockUser(userId);
+                if (ok && mounted) {
+                  ToastService.showSuccess('User blocked');
+                  _controller.swipe(CardSwiperDirection.left);
+                }
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.flag_outlined, color: Colors.orange),
+              title: const Text('Report User'),
+              onTap: () {
+                Navigator.pop(ctx);
+                _showReportDialog(userId);
+              },
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showReportDialog(String userId) {
+    const reasons = [
+      ('harassment', 'Harassment'),
+      ('fake_profile', 'Fake Profile'),
+      ('inappropriate_content', 'Inappropriate Content'),
+      ('spam', 'Spam'),
+      ('other', 'Other'),
+    ];
+    String? selectedReason;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          title: const Text('Report User'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: reasons.map((r) => RadioListTile<String>(
+              value: r.$1,
+              groupValue: selectedReason,
+              title: Text(r.$2, style: const TextStyle(fontSize: 14)),
+              dense: true,
+              contentPadding: EdgeInsets.zero,
+              onChanged: (v) => setDialogState(() => selectedReason = v),
+            )).toList(),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+            TextButton(
+              onPressed: () async {
+                if (selectedReason == null) { ToastService.showError('Select a reason'); return; }
+                Navigator.pop(ctx);
+                final ok = await ref.read(safetyProvider.notifier).reportUser(userId, selectedReason!);
+                if (mounted) ok ? ToastService.showSuccess('Report submitted') : ToastService.showError('Failed');
+              },
+              child: const Text('Submit', style: TextStyle(color: Colors.red)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(matchingProvider);
+    final blockedIds = ref.watch(safetyProvider).blockedUserIds;
 
-    if (state.isLoading && state.recommendations.isEmpty) {
+    // Filter blocked users from recommendations
+    final recommendations = state.recommendations
+        .where((r) => !blockedIds.contains(r.user.uid))
+        .toList();
+
+    if (state.isLoading && recommendations.isEmpty) {
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
       );
     }
 
-    if (state.recommendations.isEmpty) {
+    if (recommendations.isEmpty) {
       return Scaffold(
         body: Center(
           child: Column(
@@ -219,29 +311,41 @@ class _MatchingScreenState extends ConsumerState<MatchingScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // Header
+            // Header with mode toggle
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Column(
                 children: [
-                  const Text(
-                    'Discover',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
-                    ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Discover',
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black,
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.filter_list),
+                        onPressed: () {
+                          showModalBottomSheet(
+                            context: context,
+                            isScrollControlled: true,
+                            backgroundColor: Colors.transparent,
+                            builder: (context) => const DistanceFilterSheet(),
+                          );
+                        },
+                      ),
+                    ],
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.filter_list),
-                    onPressed: () {
-                       showModalBottomSheet(
-                        context: context,
-                        isScrollControlled: true,
-                        backgroundColor: Colors.transparent,
-                        builder: (context) => const DistanceFilterSheet(),
-                      );
+                  const SizedBox(height: 8),
+                  // Mode toggle
+                  _ModeToggle(
+                    currentMode: state.mode,
+                    onModeChanged: (mode) {
+                      ref.read(matchingProvider.notifier).setMode(mode);
                     },
                   ),
                 ],
@@ -252,13 +356,18 @@ class _MatchingScreenState extends ConsumerState<MatchingScreen> {
             Expanded(
               child: CardSwiper(
                 controller: _controller,
-                cardsCount: state.recommendations.length,
+                cardsCount: recommendations.length,
                 onSwipe: _onSwipe,
-                numberOfCardsDisplayed: state.recommendations.length == 1 ? 1 : 2,
+                numberOfCardsDisplayed: recommendations.length == 1 ? 1 : 2,
                 backCardOffset: const Offset(0, 30),
                 padding: const EdgeInsets.all(20),
                 cardBuilder: (context, index, percentThresholdX, percentThresholdY) {
-                  return MatchingCard(recommended: state.recommendations[index]);
+                  final rec = recommendations[index];
+                  return MatchingCard(
+                    recommended: rec,
+                    onReport: () => _showCardSafetySheet(rec.user.uid),
+                    onTap: () => context.push('/profile/${rec.user.uid}', extra: rec.user),
+                  );
                 },
               ),
             ),
@@ -335,6 +444,63 @@ class _SwipeButton extends StatelessWidget {
           icon,
           color: color,
           size: size * 0.5,
+        ),
+      ),
+    );
+  }
+}
+
+class _ModeToggle extends StatelessWidget {
+  final String currentMode;
+  final ValueChanged<String> onModeChanged;
+
+  const _ModeToggle({required this.currentMode, required this.onModeChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: Colors.grey[200],
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        children: [
+          _buildSegment('friends', 'Friends', Icons.people_outline),
+          _buildSegment('dating', 'Dating', Icons.favorite_outline),
+          _buildSegment('both', 'Both', Icons.shuffle),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSegment(String mode, String label, IconData icon) {
+    final isSelected = currentMode == mode;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => onModeChanged(mode),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            color: isSelected ? AppColors.primary : Colors.transparent,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 18, color: isSelected ? Colors.white : Colors.grey[600]),
+              const SizedBox(width: 4),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: isSelected ? Colors.white : Colors.grey[600],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

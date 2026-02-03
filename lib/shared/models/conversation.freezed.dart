@@ -23,6 +23,7 @@ Conversation _$ConversationFromJson(Map<String, dynamic> json) {
 mixin _$Conversation {
   @JsonKey(name: '_id')
   String get id => throw _privateConstructorUsedError;
+  @JsonKey(readValue: _readParticipants)
   List<User> get participants => throw _privateConstructorUsedError;
   String get type => throw _privateConstructorUsedError; // 'direct', 'group'
   String? get lastMessage => throw _privateConstructorUsedError;
@@ -51,7 +52,7 @@ abstract class $ConversationCopyWith<$Res> {
   @useResult
   $Res call({
     @JsonKey(name: '_id') String id,
-    List<User> participants,
+    @JsonKey(readValue: _readParticipants) List<User> participants,
     String type,
     String? lastMessage,
     DateTime? lastMessageTime,
@@ -130,7 +131,7 @@ abstract class _$$ConversationImplCopyWith<$Res>
   @useResult
   $Res call({
     @JsonKey(name: '_id') String id,
-    List<User> participants,
+    @JsonKey(readValue: _readParticipants) List<User> participants,
     String type,
     String? lastMessage,
     DateTime? lastMessageTime,
@@ -201,6 +202,7 @@ class __$$ConversationImplCopyWithImpl<$Res>
 class _$ConversationImpl implements _Conversation {
   const _$ConversationImpl({
     @JsonKey(name: '_id') required this.id,
+    @JsonKey(readValue: _readParticipants)
     final List<User> participants = const [],
     this.type = 'direct',
     this.lastMessage,
@@ -217,7 +219,7 @@ class _$ConversationImpl implements _Conversation {
   final String id;
   final List<User> _participants;
   @override
-  @JsonKey()
+  @JsonKey(readValue: _readParticipants)
   List<User> get participants {
     if (_participants is EqualUnmodifiableListView) return _participants;
     // ignore: implicit_dynamic_type
@@ -295,7 +297,7 @@ class _$ConversationImpl implements _Conversation {
 abstract class _Conversation implements Conversation {
   const factory _Conversation({
     @JsonKey(name: '_id') required final String id,
-    final List<User> participants,
+    @JsonKey(readValue: _readParticipants) final List<User> participants,
     final String type,
     final String? lastMessage,
     final DateTime? lastMessageTime,
@@ -310,6 +312,7 @@ abstract class _Conversation implements Conversation {
   @JsonKey(name: '_id')
   String get id;
   @override
+  @JsonKey(readValue: _readParticipants)
   List<User> get participants;
   @override
   String get type; // 'direct', 'group'

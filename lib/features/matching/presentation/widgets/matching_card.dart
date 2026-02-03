@@ -6,8 +6,10 @@ import '../../../../shared/models/recommended_user.dart';
 
 class MatchingCard extends StatelessWidget {
   final RecommendedUser recommended;
+  final VoidCallback? onReport;
+  final VoidCallback? onTap;
 
-  const MatchingCard({super.key, required this.recommended});
+  const MatchingCard({super.key, required this.recommended, this.onReport, this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -16,8 +18,10 @@ class MatchingCard extends StatelessWidget {
     final compatibility = recommended.compatibility;
     final distanceKm = recommended.distanceKm;
 
-    return Container(
-      decoration: BoxDecoration(
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
         color: Colors.white,
         boxShadow: [
@@ -52,7 +56,25 @@ class MatchingCard extends StatelessWidget {
               child: const Icon(Icons.person, size: 100, color: Colors.grey),
             ),
 
-          // 2. Top-right: compatibility badge + distance
+          // 2. Top-left: info/report button
+          if (onReport != null)
+            Positioned(
+              top: 12,
+              left: 12,
+              child: GestureDetector(
+                onTap: onReport,
+                child: Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: const BoxDecoration(
+                    color: Colors.black45,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.info_outline, color: Colors.white, size: 20),
+                ),
+              ),
+            ),
+
+          // 3. Top-right: compatibility badge + distance
           if (compatibility != null || distanceKm != null)
             Positioned(
               top: 16,
@@ -226,6 +248,7 @@ class MatchingCard extends StatelessWidget {
             ),
           ),
         ],
+      ),
       ),
     );
   }

@@ -6,7 +6,6 @@ import '../../../../core/constants/app_dimensions.dart';
 import '../../../../shared/services/toast_service.dart';
 import '../../../auth/providers/auth_provider.dart';
 import '../../providers/profile_provider.dart';
-import '../../../safety/providers/safety_provider.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -77,10 +76,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     style: const TextStyle(fontSize: 12),
                   ),
                   trailing: const Icon(Icons.chevron_right),
-                  onTap: () {
-                    // TODO: verification screen
-                    ToastService.showSuccess('Coming soon');
-                  },
+                  onTap: () => context.push('/verification'),
                 ),
                 ListTile(
                   leading: const Icon(Icons.card_giftcard_outlined),
@@ -90,10 +86,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     style: const TextStyle(fontSize: 12),
                   ),
                   trailing: const Icon(Icons.chevron_right),
-                  onTap: () {
-                    // TODO: invite screen
-                    ToastService.showSuccess('Coming soon');
-                  },
+                  onTap: () => context.push('/invites'),
                 ),
                 SwitchListTile(
                   secondary: const Icon(Icons.lock_outline),
@@ -124,7 +117,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   leading: const Icon(Icons.block, color: Colors.red),
                   title: const Text('Blocked Users'),
                   trailing: const Icon(Icons.chevron_right),
-                  onTap: () => _showBlockedUsers(context),
+                  onTap: () => context.push('/blocked-users'),
                 ),
                 const Divider(),
 
@@ -177,51 +170,4 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 
-  void _showBlockedUsers(BuildContext context) {
-    final safety = ref.read(safetyProvider);
-    final blockedIds = safety.blockedUserIds.toList();
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (ctx) => DraggableScrollableSheet(
-        initialChildSize: 0.5,
-        minChildSize: 0.3,
-        maxChildSize: 0.8,
-        expand: false,
-        builder: (ctx, scrollController) => Column(
-          children: [
-            Container(width: 40, height: 4, margin: const EdgeInsets.only(top: 12, bottom: 8), decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2))),
-            const Padding(
-              padding: EdgeInsets.all(16),
-              child: Text('Blocked Users', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            ),
-            if (blockedIds.isEmpty)
-              const Expanded(child: Center(child: Text('No blocked users')))
-            else
-              Expanded(
-                child: ListView.builder(
-                  controller: scrollController,
-                  itemCount: blockedIds.length,
-                  itemBuilder: (ctx, i) => ListTile(
-                    title: Text(blockedIds[i]),
-                    trailing: TextButton(
-                      child: const Text('Unblock', style: TextStyle(color: Colors.red)),
-                      onPressed: () async {
-                        final ok = await ref.read(safetyProvider.notifier).unblockUser(blockedIds[i]);
-                        if (ok && context.mounted) {
-                          Navigator.pop(ctx);
-                          ToastService.showSuccess('User unblocked');
-                        }
-                      },
-                    ),
-                  ),
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
 }

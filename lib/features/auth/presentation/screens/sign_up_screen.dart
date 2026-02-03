@@ -6,6 +6,7 @@ import '../../../../core/constants/app_strings.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../providers/auth_provider.dart';
 import '../../../../shared/widgets/app_loader.dart';
+import '../../../invite/data/repositories/invite_repository.dart';
 
 class SignUpScreen extends ConsumerStatefulWidget {
   const SignUpScreen({super.key});
@@ -27,6 +28,11 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
 
+  // Invite code validation
+  bool? _inviteCodeValid;
+  bool _validatingCode = false;
+  final _inviteRepo = InviteRepository();
+
   @override
   void dispose() {
     _nameController.dispose();
@@ -37,6 +43,27 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
     _phoneController.dispose();
     _inviteCodeController.dispose();
     super.dispose();
+  }
+
+  void _onInviteCodeChanged(String value) {
+    final code = value.trim().toUpperCase();
+    if (code.length < 10) {
+      // NOMAD-XXXXX = 11 chars minimum
+      setState(() {
+        _inviteCodeValid = null;
+        _validatingCode = false;
+      });
+      return;
+    }
+    setState(() => _validatingCode = true);
+    _inviteRepo.validateCode(code).then((valid) {
+      if (mounted && _inviteCodeController.text.trim().toUpperCase() == code) {
+        setState(() {
+          _inviteCodeValid = valid;
+          _validatingCode = false;
+        });
+      }
+    });
   }
 
   Future<void> _handleSignUp() async {
@@ -99,19 +126,34 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                     ),
                     const SizedBox(height: AppDimensions.paddingXL),
 
-                    // Invite code field
+                    // Invite code field with real-time validation
                     TextFormField(
                       controller: _inviteCodeController,
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         labelText: 'Invite Code',
-                        prefixIcon: Icon(Icons.card_giftcard_outlined),
+                        prefixIcon: const Icon(Icons.card_giftcard_outlined),
                         hintText: 'NOMAD-XXXXX',
+                        suffixIcon: _validatingCode
+                            ? const Padding(
+                                padding: EdgeInsets.all(12),
+                                child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)),
+                              )
+                            : _inviteCodeValid == null
+                                ? null
+                                : Icon(
+                                    _inviteCodeValid! ? Icons.check_circle : Icons.cancel,
+                                    color: _inviteCodeValid! ? Colors.green : Colors.red,
+                                  ),
                       ),
                       textCapitalization: TextCapitalization.characters,
                       textInputAction: TextInputAction.next,
+                      onChanged: _onInviteCodeChanged,
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
                           return 'An invite code is required to join Nomadly';
+                        }
+                        if (_inviteCodeValid == false) {
+                          return 'Invalid invite code';
                         }
                         return null;
                       },

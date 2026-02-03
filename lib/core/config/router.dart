@@ -33,6 +33,9 @@ import '../../shared/models/user.dart';
 import '../../shared/models/activity.dart'; // Import Activity model
 import '../../shared/models/post.dart';
 import '../../features/map/presentation/screens/location_picker_screen.dart';
+import '../../features/safety/presentation/screens/blocked_users_screen.dart';
+import '../../features/invite/presentation/screens/invite_screen.dart';
+import '../../features/verification/presentation/screens/verification_screen.dart';
 
 /// Listenable that notifies GoRouter when auth state changes
 class RouterListenable extends ChangeNotifier {
@@ -256,6 +259,21 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/search',
         builder: (context, state) => const SearchUsersScreen(),
+      ),
+      // Blocked Users
+      GoRoute(
+        path: '/blocked-users',
+        builder: (context, state) => const BlockedUsersScreen(),
+      ),
+      // Invite Codes
+      GoRoute(
+        path: '/invites',
+        builder: (context, state) => const InviteScreen(),
+      ),
+      // Verification
+      GoRoute(
+        path: '/verification',
+        builder: (context, state) => const VerificationScreen(),
       ),
     ],
   );
