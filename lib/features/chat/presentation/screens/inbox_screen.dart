@@ -41,14 +41,22 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
 
     // Filter out blocked users from matches and conversations
     final filteredMatches = matchState.matches
-        .where((m) => !safety.isBlocked(m.matchedUserId ?? ''))
+        .where((m) => 
+            !safety.isBlocked(m.matchedUserId ?? '') && 
+            m.matchedUserId != currentUser?.uid) // Filter self-matches
         .toList();
+
     final filteredConversations = chatState.conversations.where((c) {
+      // Ensure there is at least one OTHER participant (hide self-chats)
+      final hasOther = c.participants.any((u) => u.uid != currentUser?.uid);
+      if (!hasOther) return false;
+
       final other = c.participants.firstWhere(
-        (u) => u.id != currentUser?.id,
+        (u) => u.uid != currentUser?.uid,
         orElse: () => c.participants.first,
+        // Using uid checks handles backend _id vs id inconsistency
       );
-      return !safety.isBlocked(other.id ?? '');
+      return !safety.isBlocked(other.uid);
     }).toList();
 
     return Scaffold(
@@ -133,7 +141,7 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
               delegate: SliverChildBuilderDelegate(
                 (context, index) {
                   final conversation = filteredConversations[index];
-                  return _buildConversationItem(context, conversation, currentUser?.id);
+                  return _buildConversationItem(context, conversation, currentUser?.uid);
                 },
                 childCount: filteredConversations.length,
               ),
@@ -194,7 +202,7 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
   Widget _buildConversationItem(BuildContext context, Conversation conversation, String? currentUserId) {
     // Find other participant
     final otherUser = conversation.participants.firstWhere(
-      (u) => u.id != currentUserId,
+      (u) => u.uid != currentUserId,
       orElse: () => conversation.participants.first, // Fallback
     );
 

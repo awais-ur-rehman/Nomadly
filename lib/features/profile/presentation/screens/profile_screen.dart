@@ -181,7 +181,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             Wrap(
               spacing: 6,
               runSpacing: 6,
-              children: profile.hobbies.map((h) => Chip(
+              children: profile.hobbies.map<Widget>((h) => Chip(
                 label: Text(h, style: const TextStyle(fontSize: 12)),
                 materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 visualDensity: VisualDensity.compact,

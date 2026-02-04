@@ -29,6 +29,11 @@ _$UserImpl _$$UserImplFromJson(Map<String, dynamic> json) => _$UserImpl(
   verification: json['verification'] == null
       ? null
       : Verification.fromJson(json['verification'] as Map<String, dynamic>),
+  matchingProfile: json['matching_profile'] == null
+      ? null
+      : MatchingProfile.fromJson(
+          json['matching_profile'] as Map<String, dynamic>,
+        ),
   invitedBy: json['invited_by'] as String?,
   inviteCount: (json['invite_count'] as num?)?.toInt() ?? 0,
   isActive: json['is_active'] as bool? ?? true,
@@ -59,6 +64,7 @@ Map<String, dynamic> _$$UserImplToJson(_$UserImpl instance) =>
       'is_private': instance.isPrivate,
       'nomad_id': instance.nomadId,
       'verification': instance.verification,
+      'matching_profile': instance.matchingProfile,
       'invited_by': instance.invitedBy,
       'invite_count': instance.inviteCount,
       'is_active': instance.isActive,

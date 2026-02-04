@@ -104,10 +104,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   title: const Text('Matching Preferences'),
                   subtitle: const Text('Distance, age, interests'),
                   trailing: const Icon(Icons.chevron_right),
-                  onTap: () {
-                    // TODO: matching prefs screen
-                    ToastService.showSuccess('Coming soon');
-                  },
+                  onTap: () => context.push('/matching-preferences'),
                 ),
                 const Divider(),
 

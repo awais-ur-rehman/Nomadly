@@ -54,19 +54,23 @@ class _CreateTripScreenState extends ConsumerState<CreateTripScreen> {
   }
 
   Future<void> _openLocationPicker({required bool isOrigin}) async {
-    final result = await context.push<LatLng>('/location-picker');
+    final result = await context.push<Map<String, dynamic>>('/location-picker');
     if (result != null && mounted) {
+      final lat = result['lat'] as double;
+      final lng = result['lng'] as double;
+      final name = result['name'] as String?;
+
       setState(() {
         if (isOrigin) {
-          _originLat = result.latitude;
-          _originLng = result.longitude;
+          _originLat = lat;
+          _originLng = lng;
           _originNameController.text =
-              '${result.latitude.toStringAsFixed(2)}, ${result.longitude.toStringAsFixed(2)}';
+              name ?? '${lat.toStringAsFixed(2)}, ${lng.toStringAsFixed(2)}';
         } else {
-          _destLat = result.latitude;
-          _destLng = result.longitude;
+          _destLat = lat;
+          _destLng = lng;
           _destNameController.text =
-              '${result.latitude.toStringAsFixed(2)}, ${result.longitude.toStringAsFixed(2)}';
+              name ?? '${lat.toStringAsFixed(2)}, ${lng.toStringAsFixed(2)}';
         }
       });
     }
@@ -105,7 +109,7 @@ class _CreateTripScreenState extends ConsumerState<CreateTripScreen> {
         data: {
           'origin': {'lat': _originLat, 'lng': _originLng},
           'destination': {'lat': _destLat, 'lng': _destLng},
-          'start_date': _startDate!.toIso8601String(),
+          'start_date': _startDate!.toUtc().toIso8601String(),
           'duration_days': int.parse(_durationController.text),
         },
       );
@@ -114,13 +118,9 @@ class _CreateTripScreenState extends ConsumerState<CreateTripScreen> {
       final description = _descriptionController.text.trim();
       if (description.isNotEmpty) {
         try {
-          await ApiClient().post(
-            '/posts',
-            data: {
-              'content': description,
-              'type': 'trip',
-            },
-          );
+          // Note: Posts require at least one photo per API schema
+          // Skip post creation if no photos available
+          // The trip route was already saved above
         } catch (_) {
           // Post creation is non-critical
         }

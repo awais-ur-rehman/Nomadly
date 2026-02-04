@@ -23,13 +23,13 @@ class _BlockedUsersScreenState extends ConsumerState<BlockedUsersScreen> {
   @override
   Widget build(BuildContext context) {
     final safety = ref.watch(safetyProvider);
-    final blockedIds = safety.blockedUserIds.toList();
-
+    final blockedUsers = safety.blockedUsers;
+    
     return Scaffold(
       appBar: AppBar(title: const Text('Blocked Users')),
       body: safety.isLoading
           ? const Center(child: CircularProgressIndicator())
-          : blockedIds.isEmpty
+          : blockedUsers.isEmpty
               ? const Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -41,16 +41,24 @@ class _BlockedUsersScreenState extends ConsumerState<BlockedUsersScreen> {
                   ),
                 )
               : ListView.separated(
-                  itemCount: blockedIds.length,
+                  itemCount: blockedUsers.length,
                   separatorBuilder: (_, __) => const Divider(height: 1),
                   itemBuilder: (context, index) {
-                    final userId = blockedIds[index];
+                    final user = blockedUsers[index];
                     return ListTile(
-                      leading: const CircleAvatar(child: Icon(Icons.person)),
-                      title: Text(userId, maxLines: 1, overflow: TextOverflow.ellipsis),
+                      leading: CircleAvatar(
+                        backgroundImage: user.profile?.photoUrl != null 
+                          ? NetworkImage(user.profile!.photoUrl!) 
+                          : null,
+                        child: user.profile?.photoUrl == null 
+                          ? const Icon(Icons.person) 
+                          : null,
+                      ),
+                      title: Text(user.profile?.name ?? user.username ?? 'Unknown'),
+                      subtitle: Text('@${user.username ?? ''}'),
                       trailing: OutlinedButton(
                         onPressed: () async {
-                          final ok = await ref.read(safetyProvider.notifier).unblockUser(userId);
+                          final ok = await ref.read(safetyProvider.notifier).unblockUser(user.uid);
                           if (mounted) {
                             ok
                                 ? ToastService.showSuccess('User unblocked')

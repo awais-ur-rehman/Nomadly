@@ -15,7 +15,7 @@ class AppLoader extends StatelessWidget {
   Widget build(BuildContext context) {
     if (isOverlay) {
       return Container(
-        color: Colors.black.withOpacity(0.5),
+        alignment: Alignment.center,
         child: _buildLoader(),
       );
     }

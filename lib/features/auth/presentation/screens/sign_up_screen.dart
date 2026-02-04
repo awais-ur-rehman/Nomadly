@@ -175,6 +175,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                         return null;
                       },
                     ),
+                    const SizedBox(height: AppDimensions.paddingM),
                     // Username field
                     TextFormField(
                       controller: _usernameController,

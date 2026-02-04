@@ -130,7 +130,7 @@ class _FollowersListScreenState extends ConsumerState<FollowersListScreen> with 
           trailing: const Icon(Icons.chevron_right),
           onTap: () {
             // Navigate to user profile
-            context.push('/profile/${user.id}', extra: user);
+            context.push('/profile/${user.uid}', extra: user);
           },
         );
       },

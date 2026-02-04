@@ -232,7 +232,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
               center: Point(coordinates: Position(-122.4194, 37.7749)), // SF Default
               zoom: 12.0,
             ),
-            styleUri: MapboxStyles.OUTDOORS,
+            styleUri: MapboxStyles.LIGHT,
           ),
           
           // Loading Indicator

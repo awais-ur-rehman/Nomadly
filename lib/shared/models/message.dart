@@ -8,12 +8,12 @@ part 'message.g.dart';
 class Message with _$Message {
   const factory Message({
     @JsonKey(name: '_id') required String id,
-    required String conversationId,
-    required User sender,
+    @JsonKey(name: 'conversation_id') required String conversationId,
+    @JsonKey(name: 'sender_id') required User sender,
     required String message,
-    @Default('text') String messageType, // 'text', 'image', 'location'
-    @Default([]) List<String> readBy,
-    required DateTime timestamp,
+    @JsonKey(name: 'message_type') @Default('text') String messageType,
+    @JsonKey(name: 'read_by') @Default([]) List<String> readBy,
+    @JsonKey(name: 'timestamp') required DateTime timestamp,
   }) = _Message;
 
   factory Message.fromJson(Map<String, dynamic> json) =>

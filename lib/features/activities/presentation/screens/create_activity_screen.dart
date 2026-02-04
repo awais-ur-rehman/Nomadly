@@ -23,6 +23,7 @@ class _CreateActivityScreenState extends ConsumerState<CreateActivityScreen> {
   TimeOfDay _selectedTime = TimeOfDay.now();
   String _selectedType = 'social';
   LatLng? _pickedLocation;
+  String? _pickedLocationName;
   
   final List<String> _types = ['hike', 'surf', 'yoga', 'meal', 'social', 'cowork', 'other'];
 
@@ -81,13 +82,13 @@ class _CreateActivityScreenState extends ConsumerState<CreateActivityScreen> {
     final activityData = {
       'title': _titleController.text.trim(),
       'description': _descriptionController.text.trim(),
-      'type': _selectedType,
+      'activity_type': _selectedType,
       'location': {
-        'latitude': _pickedLocation!.latitude,
-        'longitude': _pickedLocation!.longitude,
+        'lat': _pickedLocation!.latitude,
+        'lng': _pickedLocation!.longitude,
       },
-      'startTime': startTime.toIso8601String(),
-      'maxParticipants': int.tryParse(_maxParticipantsController.text) ?? 10,
+      'event_time': startTime.toUtc().toIso8601String(),
+      'max_participants': int.tryParse(_maxParticipantsController.text) ?? 10,
     };
 
     await ref.read(activityProvider.notifier).createActivity(activityData);
@@ -149,13 +150,14 @@ class _CreateActivityScreenState extends ConsumerState<CreateActivityScreen> {
                 title: Text(_pickedLocation == null ? 'Pick Location on Map' : 'Location Selected'),
                 subtitle: _pickedLocation == null
                     ? const Text('Tap to choose')
-                    : Text('${_pickedLocation!.latitude.toStringAsFixed(4)}, ${_pickedLocation!.longitude.toStringAsFixed(4)}'),
+                    : Text(_pickedLocationName ?? '${_pickedLocation!.latitude.toStringAsFixed(4)}, ${_pickedLocation!.longitude.toStringAsFixed(4)}'),
                 leading: const Icon(Icons.map, color: Colors.blue),
                 onTap: () async {
-                  final result = await context.push<LatLng>('/location-picker');
+                  final result = await context.push<Map<String, dynamic>>('/location-picker');
                   if (result != null) {
                     setState(() {
-                      _pickedLocation = result;
+                      _pickedLocation = LatLng(result['lat'], result['lng']);
+                      _pickedLocationName = result['name'];
                     });
                   }
                 },

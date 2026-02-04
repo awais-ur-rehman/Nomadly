@@ -220,7 +220,7 @@ class MatchingCard extends StatelessWidget {
                   Wrap(
                     spacing: 8,
                     runSpacing: 8,
-                    children: user.profile!.hobbies.take(3).map((hobby) {
+                    children: user.profile!.hobbies.take(3).map<Widget>((hobby) {
                       return Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 10,

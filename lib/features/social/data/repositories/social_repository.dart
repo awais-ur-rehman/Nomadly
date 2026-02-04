@@ -137,10 +137,10 @@ class SocialRepository {
   // Get user's posts (GET /api/v1/feed/user/:userId)
   Future<List<Post>> getUserPosts(String userId) async {
     try {
-      final response = await _apiClient.get('$_feedEndpoint/user/$userId');
+      final response = await _apiClient.get('$_feedEndpoint/users/$userId/posts');
       
       if (response.statusCode == 200) {
-        final List<dynamic> data = response.data['data'] ?? [];
+        final List<dynamic> data = response.data['data']['posts'] ?? [];
         return data.map((json) => Post.fromJson(json)).toList();
       }
       return [];

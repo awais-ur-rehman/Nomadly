@@ -12,6 +12,7 @@ import '../../features/auth/presentation/screens/reset_password_screen.dart';
 import '../../features/profile/presentation/screens/edit_profile_screen.dart';
 import '../../features/profile/presentation/screens/settings_screen.dart';
 import '../../features/profile/presentation/screens/followers_list_screen.dart';
+import '../../features/profile/presentation/screens/matching_preferences_screen.dart';
 import '../../features/discovery/presentation/screens/home_screen.dart';
 import '../../features/discovery/presentation/screens/search_users_screen.dart';
 import '../../features/chat/presentation/screens/chat_screen.dart';
@@ -126,6 +127,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/settings',
         builder: (context, state) => const SettingsScreen(),
+      ),
+      GoRoute(
+        path: '/matching-preferences',
+        builder: (context, state) => const MatchingPreferencesScreen(),
       ),
 
       // Forgot Password

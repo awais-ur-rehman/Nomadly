@@ -709,19 +709,23 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
   // ─── Location Picker ─────────────────────────────────────────
 
   Future<void> _openLocationPicker({required bool isOrigin}) async {
-    final result = await context.push<LatLng>('/location-picker');
+    final result = await context.push<Map<String, dynamic>>('/location-picker');
     if (result != null && mounted) {
+      final lat = result['lat'] as double;
+      final lng = result['lng'] as double;
+      final name = result['name'] as String?;
+
       setState(() {
         if (isOrigin) {
-          _originLat = result.latitude;
-          _originLng = result.longitude;
+          _originLat = lat;
+          _originLng = lng;
           _originNameController.text =
-              '${_originLat!.toStringAsFixed(2)}, ${_originLng!.toStringAsFixed(2)}';
+              name ?? '${_originLat!.toStringAsFixed(2)}, ${_originLng!.toStringAsFixed(2)}';
         } else {
-          _destLat = result.latitude;
-          _destLng = result.longitude;
+          _destLat = lat;
+          _destLng = lng;
           _destNameController.text =
-              '${_destLat!.toStringAsFixed(2)}, ${_destLng!.toStringAsFixed(2)}';
+              name ?? '${_destLat!.toStringAsFixed(2)}, ${_destLng!.toStringAsFixed(2)}';
         }
       });
     }

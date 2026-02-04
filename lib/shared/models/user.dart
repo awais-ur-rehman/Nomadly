@@ -4,6 +4,7 @@ import 'rig.dart';
 import 'travel_route.dart';
 import 'nomad_id.dart';
 import 'verification.dart';
+import 'matching_profile.dart';
 
 part 'user.freezed.dart';
 part 'user.g.dart';
@@ -25,6 +26,7 @@ class User with _$User {
     @JsonKey(name: 'is_private') @Default(false) bool isPrivate,
     @JsonKey(name: 'nomad_id') NomadId? nomadId,
     Verification? verification,
+    @JsonKey(name: 'matching_profile') MatchingProfile? matchingProfile,
     @JsonKey(name: 'invited_by') String? invitedBy,
     @JsonKey(name: 'invite_count') @Default(0) int inviteCount,
     @JsonKey(name: 'is_active') @Default(true) bool isActive,

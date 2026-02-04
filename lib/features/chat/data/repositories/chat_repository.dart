@@ -59,7 +59,7 @@ class ChatRepository {
         '${AppConfig.chatEndpoint}/conversations/$conversationId/messages',
         data: {
           'message': message,
-          'type': type,
+          'message_type': type,
         },
       );
 

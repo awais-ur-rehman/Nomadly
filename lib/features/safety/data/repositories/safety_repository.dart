@@ -1,5 +1,6 @@
 import '../../../../core/config/app_config.dart';
 import '../../../../shared/services/api_client.dart';
+import '../../../../shared/models/user.dart';
 
 class SafetyRepository {
   final _api = ApiClient();
@@ -12,15 +13,16 @@ class SafetyRepository {
     await _api.delete('${AppConfig.safetyEndpoint}/block/$userId');
   }
 
-  Future<List<String>> getBlockedUserIds() async {
+  Future<List<User>> getBlockedUsers() async {
     final response = await _api.get('${AppConfig.safetyEndpoint}/blocked');
     final data = response.data['data'] as List? ?? [];
-    // Backend returns blocked user objects; extract IDs
-    return data.map<String>((e) {
-      if (e is String) return e;
-      if (e is Map) return (e['blocked_user_id'] ?? e['_id'] ?? '').toString();
-      return '';
-    }).where((id) => id.isNotEmpty).toList();
+    
+    return data.map<User>((e) {
+      if (e is Map && e['user'] != null) {
+        return User.fromJson(Map<String, dynamic>.from(e['user']));
+      }
+      return const User();
+    }).where((u) => u.uid.isNotEmpty).toList();
   }
 
   Future<void> reportUser(String userId, String reason, {String? description}) async {

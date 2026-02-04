@@ -151,9 +151,14 @@ class ActiveChatNotifier extends StateNotifier<ActiveChatState> {
        // Allow dynamic data handling, assume it matches Message structure or is JSON
        try {
          final message = Message.fromJson(data);
+         // Deduplicate
+         if (state.messages.any((m) => m.id == message.id)) return;
+         
          // Append to list
          state = state.copyWith(messages: [message, ...state.messages]);
-       } catch (e) {/* log error */}
+       } catch (e) {
+          // log error
+       }
     });
 
     _socketService.onTyping((data) {
