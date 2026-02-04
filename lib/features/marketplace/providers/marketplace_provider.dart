@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../shared/models/builder.dart';
+import '../../../../shared/models/job.dart';
 import '../../../../shared/services/toast_service.dart';
 import '../data/repositories/marketplace_repository.dart';
 
@@ -11,6 +12,7 @@ class MarketplaceState {
   final String? error;
   final String searchQuery;
   final List<String> selectedSpecialties;
+  final List<Job> jobs;
 
   MarketplaceState({
     this.builders = const [],
@@ -18,6 +20,7 @@ class MarketplaceState {
     this.error,
     this.searchQuery = '',
     this.selectedSpecialties = const [],
+    this.jobs = const [],
   });
 
   MarketplaceState copyWith({
@@ -26,6 +29,7 @@ class MarketplaceState {
     String? error,
     String? searchQuery,
     List<String>? selectedSpecialties,
+    List<Job>? jobs,
   }) {
     return MarketplaceState(
       builders: builders ?? this.builders,
@@ -33,6 +37,7 @@ class MarketplaceState {
       error: error,
       searchQuery: searchQuery ?? this.searchQuery,
       selectedSpecialties: selectedSpecialties ?? this.selectedSpecialties,
+      jobs: jobs ?? this.jobs,
     );
   }
 }
@@ -79,6 +84,27 @@ class MarketplaceNotifier extends StateNotifier<MarketplaceState> {
       ToastService.showSuccess('Consultation request sent!');
     } catch (e) {
       ToastService.showError(e.toString());
+    }
+  }
+  // Jobs logic
+  Future<void> fetchJobs() async {
+    state = state.copyWith(isLoading: true, error: null);
+    try {
+      final jobs = await _repository.getJobs();
+      state = state.copyWith(isLoading: false, jobs: jobs);
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: e.toString());
+    }
+  }
+
+  Future<void> createJob(Map<String, dynamic> jobData) async {
+    try {
+      final newJob = await _repository.createJob(jobData);
+      state = state.copyWith(jobs: [newJob, ...state.jobs]);
+      ToastService.showSuccess('Job posted successfully!');
+    } catch (e) {
+      ToastService.showError(e.toString());
+      rethrow;
     }
   }
 }

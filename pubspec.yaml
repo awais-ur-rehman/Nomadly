@@ -66,6 +66,10 @@ dependencies:
   timeago: ^3.7.1
   flutter_map: ^8.2.2
   latlong2: ^0.9.1
+  
+  # Monetization
+  purchases_flutter: ^9.0.0
+  purchases_ui_flutter: ^9.0.0
 
 dev_dependencies:
   flutter_test:

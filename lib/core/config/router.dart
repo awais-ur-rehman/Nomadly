@@ -22,8 +22,11 @@ import '../../features/social/presentation/screens/create_story_screen.dart';
 import '../../features/social/presentation/screens/create_trip_screen.dart';
 import '../../features/marketplace/presentation/screens/marketplace_screen.dart';
 import '../../features/marketplace/presentation/screens/builder_detail_screen.dart';
-import '../../features/social/presentation/screens/notifications_screen.dart';
+import '../../features/marketplace/presentation/screens/create_job_screen.dart';
+import '../../features/marketplace/presentation/screens/job_detail_screen.dart';
 import '../../shared/models/builder.dart';
+import '../../shared/models/job.dart';
+import '../../features/social/presentation/screens/notifications_screen.dart';
 import '../../features/profile/presentation/screens/user_profile_screen.dart' as profile;
 import '../../features/discovery/presentation/screens/user_profile_screen.dart' as discovery;
 import '../../features/auth/providers/auth_provider.dart';
@@ -253,6 +256,19 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) {
           final builder = state.extra as BuilderProfile;
           return BuilderDetailScreen(builder: builder);
+        },
+      ),
+      // Create Job
+      GoRoute(
+        path: '/marketplace/create-job',
+        builder: (context, state) => const CreateJobScreen(),
+      ),
+      // Job Detail
+      GoRoute(
+        path: '/job/:id',
+        builder: (context, state) {
+          final job = state.extra as Job;
+          return JobDetailScreen(job: job);
         },
       ),
       // Location Picker (returns LatLng via pop)

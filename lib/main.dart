@@ -5,6 +5,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'core/theme/app_theme.dart';
 import 'core/config/router.dart';
 import 'shared/services/api_client.dart';
+import 'shared/services/revenue_cat_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -14,6 +15,9 @@ void main() async {
 
   // Initialize API client
   ApiClient().initialize();
+
+  // Initialize RevenueCat
+  await RevenueCatService().init();
 
   // Set system UI overlay style
   SystemChrome.setSystemUIOverlayStyle(
