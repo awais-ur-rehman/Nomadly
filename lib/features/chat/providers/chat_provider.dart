@@ -1,5 +1,7 @@
+import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logger/logger.dart';
+import '../../../../shared/services/image_upload_service.dart';
 import '../../../../shared/models/conversation.dart';
 import '../../../../shared/models/message.dart';
 import '../../../../shared/services/socket_service.dart';
@@ -170,13 +172,13 @@ class ActiveChatNotifier extends StateNotifier<ActiveChatState> {
   Future<void> _loadMessages(String conversationId) async {
     try {
       final messages = await _repository.getMessages(conversationId);
-      state = state.copyWith(isLoading: false, messages: messages);
+      state = state.copyWith(isLoading: false, messages: messages.reversed.toList());
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
     }
   }
 
-  Future<void> sendMessage(String messageContent) async {
+  Future<void> sendMessage(String messageContent, {String type = 'text'}) async {
     if (state.conversationId == null) return;
     
     // Optimistic update skipped due to missing AuthProvider reference for 'me' user.
@@ -187,6 +189,7 @@ class ActiveChatNotifier extends StateNotifier<ActiveChatState> {
       final sentMessage = await _repository.sendMessage(
         conversationId: state.conversationId!,
         message: messageContent,
+        type: type,
       );
       
       // 2. Add to list (if socket hasn't already)
@@ -201,6 +204,23 @@ class ActiveChatNotifier extends StateNotifier<ActiveChatState> {
     } catch (e) {
       // Show error
       state = state.copyWith(error: 'Failed to send: ${e.toString()}');
+    }
+  }
+
+  Future<void> sendImageMessage(String imagePath) async {
+    try {
+      // 1. Upload image to Cloudinary via backend
+      final uploadService = ImageUploadService();
+      final imageUrl = await uploadService.uploadChatImage(File(imagePath));
+      
+      if (imageUrl != null) {
+        // 2. Send the message with the Cloudinary URL
+        await sendMessage(imageUrl, type: 'image');
+      } else {
+        state = state.copyWith(error: 'Failed to upload image. Please try again.');
+      }
+    } catch (e) {
+      state = state.copyWith(error: 'Image send failed: ${e.toString()}');
     }
   }
   

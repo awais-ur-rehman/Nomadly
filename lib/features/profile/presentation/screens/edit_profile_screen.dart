@@ -134,17 +134,17 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   }
 
   Future<void> _openLocationPicker({required bool isOrigin}) async {
-    final result = await context.push<LatLng>('/location-picker');
+    final result = await context.push<Map<String, dynamic>>('/location-picker');
     if (result != null && mounted) {
       setState(() {
         if (isOrigin) {
-          _originLat = result.latitude;
-          _originLng = result.longitude;
+          _originLat = result['lat'] as double;
+          _originLng = result['lng'] as double;
           _originNameController.text =
               '${_originLat!.toStringAsFixed(2)}, ${_originLng!.toStringAsFixed(2)}';
         } else {
-          _destLat = result.latitude;
-          _destLng = result.longitude;
+          _destLat = result['lat'] as double;
+          _destLng = result['lng'] as double;
           _destNameController.text =
               '${_destLat!.toStringAsFixed(2)}, ${_destLng!.toStringAsFixed(2)}';
         }

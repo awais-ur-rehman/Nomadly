@@ -82,7 +82,11 @@ class _CreateJobScreenState extends ConsumerState<CreateJobScreen> {
             TextFormField(
               controller: _titleController,
               decoration: const InputDecoration(labelText: 'Job Title', hintText: 'e.g. Solar Panel Installation Help'),
-              validator: (v) => v == null || v.isEmpty ? 'Required' : null,
+              validator: (v) {
+                if (v == null || v.isEmpty) return 'Required';
+                if (v.length < 5) return 'Min 5 characters';
+                return null;
+              },
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
@@ -99,7 +103,12 @@ class _CreateJobScreenState extends ConsumerState<CreateJobScreen> {
                     controller: _budgetController,
                     decoration: const InputDecoration(labelText: 'Budget', prefixText: '\$'),
                     keyboardType: TextInputType.number,
-                    validator: (v) => v == null || v.isEmpty ? 'Required' : null,
+                    validator: (v) {
+                      if (v == null || v.isEmpty) return 'Required';
+                      final n = double.tryParse(v);
+                      if (n == null || n <= 0) return 'Invalid amount';
+                      return null;
+                    },
                   ),
                 ),
                 const SizedBox(width: 16),

@@ -70,6 +70,8 @@ dependencies:
   # Monetization
   purchases_flutter: ^9.0.0
   purchases_ui_flutter: ^9.0.0
+  geocoding: ^4.0.0
+  share_plus: ^12.0.1
 
 dev_dependencies:
   flutter_test:

@@ -22,49 +22,44 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
   final ImagePicker _picker = ImagePicker();
   bool _isUploading = false;
 
+  final _formKey = GlobalKey<FormState>();
+
   @override
   void dispose() {
     _contentController.dispose();
     super.dispose();
   }
 
-  Future<void> _pickImage() async {
-    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
-    if (image != null) {
-      setState(() {
-        _selectedImages.add(File(image.path));
-      });
-    }
-  }
-
   Future<void> _submit() async {
+    if (!_formKey.currentState!.validate() && _selectedImages.isEmpty) {
+      return;
+    }
+
     final content = _contentController.text.trim();
-    if (content.isEmpty && _selectedImages.isEmpty) return;
+    if (content.isNotEmpty && content.length < 5) {
+      ToastService.showError('Text must be at least 5 characters');
+      return;
+    }
+
+    if (content.isEmpty && _selectedImages.isEmpty) {
+      ToastService.showError('Please add text or an image');
+      return;
+    }
 
     if (_isUploading) return;
     setState(() => _isUploading = true);
 
     try {
       List<String> uploadedUrls = [];
-      
-      // Upload images if any
       if (_selectedImages.isNotEmpty) {
         final uploadService = ImageUploadService();
         for (final file in _selectedImages) {
           final url = await uploadService.uploadImage(file, type: 'post');
-          if (url != null) {
-            uploadedUrls.add(url);
-          }
+          if (url != null) uploadedUrls.add(url);
         }
       }
 
-      // 3. Create Post
-      await ref.read(socialProvider.notifier).createPost(
-        content,
-        photos: uploadedUrls,
-      );
-
-      // 4. Reload feed to show the new post
+      await ref.read(socialProvider.notifier).createPost(content, photos: uploadedUrls);
       await ref.read(socialProvider.notifier).loadFeed(refresh: true);
 
       if (mounted) {
@@ -72,17 +67,15 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
         context.pop();
       }
     } catch (e) {
-      if (mounted) {
-        ToastService.showError('Post error: ${e.toString()}');
-      }
+      if (mounted) ToastService.showError('Error: ${e.toString()}');
     } finally {
       if (mounted) setState(() => _isUploading = false);
     }
   }
 
-  Future<void> _pickCamera() async {
-    final XFile? image = await _picker.pickImage(source: ImageSource.camera);
-     if (image != null) {
+  Future<void> _pickImage(ImageSource source) async {
+    final XFile? image = await _picker.pickImage(source: source);
+    if (image != null) {
       setState(() {
         _selectedImages.add(File(image.path));
       });
@@ -107,77 +100,50 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
             ),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(AppDimensions.paddingL),
-        child: Column(
-          children: [
-            Expanded(
-              child: TextField(
-                controller: _contentController,
-                maxLines: null,
-                decoration: const InputDecoration(
-                  hintText: "What's on your mind, nomad?",
-                  border: InputBorder.none,
-                ),
-                autofocus: true,
-              ),
-            ),
-            
-            // Image Preview
-            if (_selectedImages.isNotEmpty)
-              SizedBox(
-                height: 100,
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: _selectedImages.length,
-                  itemBuilder: (context, index) {
-                    return Stack(
-                      children: [
-                        Container(
-                          margin: const EdgeInsets.only(right: 8),
-                          width: 100,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(8),
-                            image: DecorationImage(
-                              image: FileImage(_selectedImages[index]),
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                        ),
-                        Positioned(
-                          right: 12,
-                          top: 4,
-                          child: GestureDetector(
-                            onTap: () => setState(() => _selectedImages.removeAt(index)),
-                            child: const CircleAvatar(
-                              radius: 10,
-                              backgroundColor: Colors.black54,
-                              child: Icon(Icons.close, size: 12, color: Colors.white),
-                            ),
-                          ),
-                        ),
-                      ],
-                    );
+      body: Form(
+        key: _formKey,
+        child: Padding(
+          padding: const EdgeInsets.all(AppDimensions.paddingL),
+          child: Column(
+            children: [
+              Expanded(
+                child: TextFormField(
+                  controller: _contentController,
+                  maxLines: null,
+                  decoration: const InputDecoration(
+                    hintText: "What's on your mind, nomad?",
+                    border: InputBorder.none,
+                  ),
+                  autofocus: true,
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Please enter some text';
+                    }
+                    if (value.trim().length < 5) {
+                      return 'Post must be at least 5 characters';
+                    }
+                    return null;
                   },
                 ),
               ),
-
-            const Divider(),
-            Row(
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.image_outlined, color: AppColors.primary),
-                  onPressed: _pickImage,
-                ),
-                IconButton(
-                  icon: const Icon(Icons.camera_alt_outlined, color: AppColors.primary),
-                  onPressed: _pickCamera,
-                ),
-                const Spacer(),
-                const Text('Public', style: TextStyle(color: AppColors.textSecondary)),
-              ],
-            ),
-          ],
+              
+              const Divider(),
+              Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.image_outlined, color: AppColors.primary),
+                    onPressed: () => _pickImage(ImageSource.gallery),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.camera_alt_outlined, color: AppColors.primary),
+                    onPressed: () => _pickImage(ImageSource.camera),
+                  ),
+                  const Spacer(),
+                  const Text('Public', style: TextStyle(color: AppColors.textSecondary)),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );

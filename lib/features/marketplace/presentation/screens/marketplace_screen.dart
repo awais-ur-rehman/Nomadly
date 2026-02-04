@@ -191,8 +191,7 @@ class _JobBoardTabState extends ConsumerState<_JobBoardTab> {
               style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primary),
             ),
             onTap: () {
-              // context.push('/marketplace/job/${job.id}', extra: job);
-              ToastService.showInfo("Job details coming soon");
+              context.push('/job/${job.id}', extra: job);
             },
           ),
         );

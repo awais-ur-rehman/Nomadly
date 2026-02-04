@@ -163,6 +163,37 @@ class UserRepository {
     }
   }
 
+  // Get Travelers (GET /api/v1/users/travelers)
+  Future<List<User>> getTravelers({
+    required double lat,
+    required double lng,
+    double radius = 50000,
+    int page = 1,
+    int limit = 20,
+  }) async {
+    try {
+      final response = await _apiClient.get(
+        '$_usersEndpoint/travelers',
+        queryParameters: {
+          'lat': lat,
+          'lng': lng,
+          'radius': radius,
+          'page': page,
+          'limit': limit,
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> usersJson = response.data['data'] ?? [];
+        return usersJson.map((json) => User.fromJson(json)).toList();
+      }
+      return [];
+    } on DioException catch (e) {
+      _logger.e('Get travelers error: ${e.message}');
+      return [];
+    }
+  }
+
   String _handleError(DioException error) {
     if (error.response != null) {
       final data = error.response!.data;

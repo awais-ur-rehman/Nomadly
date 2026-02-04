@@ -111,14 +111,22 @@ class _CreateActivityScreenState extends ConsumerState<CreateActivityScreen> {
               TextFormField(
                 controller: _titleController,
                 decoration: const InputDecoration(labelText: 'Title'),
-                validator: (val) => val == null || val.isEmpty ? 'Title is required' : null,
+                validator: (val) {
+                   if (val == null || val.isEmpty) return 'Title is required';
+                   if (val.length < 5) return 'Title must be at least 5 characters';
+                   return null;
+                },
               ),
               const SizedBox(height: AppDimensions.paddingM),
               TextFormField(
                 controller: _descriptionController,
                 decoration: const InputDecoration(labelText: 'Description'),
                 maxLines: 3,
-                validator: (val) => val == null || val.isEmpty ? 'Description is required' : null,
+                validator: (val) {
+                   if (val == null || val.isEmpty) return 'Description is required';
+                   if (val.length < 20) return 'Description must be at least 20 characters';
+                   return null;
+                },
               ),
               const SizedBox(height: AppDimensions.paddingM),
               DropdownButtonFormField<String>(
@@ -132,6 +140,13 @@ class _CreateActivityScreenState extends ConsumerState<CreateActivityScreen> {
                 controller: _maxParticipantsController,
                 decoration: const InputDecoration(labelText: 'Max Participants (0 for unlimited)'),
                 keyboardType: TextInputType.number,
+                validator: (val) {
+                  if (val != null && val.isNotEmpty) {
+                    final n = int.tryParse(val);
+                    if (n == null || n < 0) return 'Invalid number';
+                  }
+                  return null;
+                },
               ),
               const SizedBox(height: AppDimensions.paddingL),
               ListTile(

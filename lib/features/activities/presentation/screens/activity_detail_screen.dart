@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_dimensions.dart';
+import '../../../../core/utils/address_resolver.dart';
 import '../../../../shared/models/activity.dart';
 import '../../../../shared/models/geo_point.dart';
 import '../../providers/activity_provider.dart';
@@ -116,7 +117,10 @@ class ActivityDetailScreen extends ConsumerWidget {
                   const SizedBox(height: 12),
                   _buildInfoRow(
                     Icons.location_on,
-                    '${activity.location.latitude}, ${activity.location.longitude}', // TODO: Reverse Geocoding
+                    null, 
+                    future: AddressResolver.getAddressFromLatLng(
+                        activity.location.latitude, activity.location.longitude),
+                    fallback: '${activity.location.latitude}, ${activity.location.longitude}',
                   ),
                   
                   const SizedBox(height: 24),
@@ -190,7 +194,7 @@ class ActivityDetailScreen extends ConsumerWidget {
                    backgroundColor: isParticipant ? Colors.green : AppColors.primary,
                  ),
                  child: Text(
-                   isCreator ? 'You satisfy hosting this' : (isParticipant ? 'You are going' : 'Join Activity'),
+                   isCreator ? 'You are hosting this' : (isParticipant ? 'You are going' : 'Join Activity'),
                  ),
                ),
             ),
@@ -200,16 +204,27 @@ class ActivityDetailScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildInfoRow(IconData icon, String text) {
+  Widget _buildInfoRow(IconData icon, String? text, {Future<String>? future, String? fallback}) {
     return Row(
       children: [
         Icon(icon, color: AppColors.grey, size: 20),
         const SizedBox(width: 12),
         Expanded(
-          child: Text(
-            text,
-            style: const TextStyle(fontSize: 16),
-          ),
+          child: future != null
+              ? FutureBuilder<String>(
+                  future: future,
+                  initialData: fallback ?? 'Loading location...',
+                  builder: (context, snapshot) {
+                    return Text(
+                      snapshot.data ?? fallback ?? '',
+                      style: const TextStyle(fontSize: 16),
+                    );
+                  },
+                )
+              : Text(
+                  text ?? '',
+                  style: const TextStyle(fontSize: 16),
+                ),
         ),
       ],
     );

@@ -127,7 +127,7 @@ class _CreateTripScreenState extends ConsumerState<CreateTripScreen> {
       }
 
       if (mounted) {
-        ToastService.showSuccess('Trip announced!');
+        ToastService.showSuccess('Trip announced! Your route is now visible to others on the map.');
         context.pop();
       }
     } catch (e) {

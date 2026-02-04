@@ -45,12 +45,16 @@ class TravelersNotifier extends StateNotifier<TravelersState> {
         radiusKm: 500.0, // Large radius for travelers (Brief: "I'm leaving, they're staying")
       );
       
-      state = state.copyWith(
-        isLoading: false, 
-        travelers: travelers,
-      );
+      if (mounted) {
+        state = state.copyWith(
+          isLoading: false, 
+          travelers: travelers,
+        );
+      }
     } catch (e) {
-      state = state.copyWith(isLoading: false, error: e.toString());
+      if (mounted) {
+        state = state.copyWith(isLoading: false, error: e.toString());
+      }
     }
   }
   Future<String> connectToUser(String userId) async {
