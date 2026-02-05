@@ -78,30 +78,57 @@ class _BuilderSetupScreenState extends ConsumerState<BuilderSetupScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.white,
+      backgroundColor: AppColors.obsidian,
       appBar: AppBar(
-        title: const Text('Marketplace Setup'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new, size: 20),
+          onPressed: () => context.pop(),
+        ),
+        title: Text(
+          'MARKETPLACE',
+          style: TextStyle(
+            fontFamily: 'Outfit',
+            fontSize: 14,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 2,
+            color: AppColors.white.withOpacity(0.5),
+          ),
+        ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(AppDimensions.paddingL),
+        padding: const EdgeInsets.symmetric(horizontal: 30),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            const SizedBox(height: 20),
             const Text(
-              'Join the Marketplace',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              'Join the Convoy',
+              style: TextStyle(
+                fontFamily: 'Outfit',
+                fontSize: 32,
+                fontWeight: FontWeight.w800,
+                color: AppColors.white,
+              ),
             ),
-            const SizedBox(height: 8),
-            const Text(
+            const SizedBox(height: 12),
+            Text(
               'Offer your specialist skills to other nomads and earn while you travel.',
-              style: TextStyle(color: Colors.grey),
+              style: TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 16,
+                color: AppColors.white.withOpacity(0.5),
+                height: 1.5,
+              ),
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: 50),
             
-            const Text('YOUR SPECIALTIES', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.textSecondary)),
+            _buildFieldHeader('YOUR SPECIALTIES'),
             const SizedBox(height: 12),
             Wrap(
-              spacing: 8,
+              spacing: 10,
+              runSpacing: 10,
               children: _specialties.map((s) {
                 final isSelected = _selectedSpecialties.contains(s);
                 return FilterChip(
@@ -113,49 +140,73 @@ class _BuilderSetupScreenState extends ConsumerState<BuilderSetupScreen> {
                       else _selectedSpecialties.remove(s);
                     });
                   },
-                  selectedColor: AppColors.primaryExtraLight,
+                  selectedColor: AppColors.primary,
+                  backgroundColor: AppColors.white.withOpacity(0.05),
                   labelStyle: TextStyle(
-                    color: isSelected ? AppColors.primary : AppColors.textPrimary,
-                    fontSize: 12,
-                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                    fontFamily: 'Outfit',
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                    color: isSelected ? AppColors.white : AppColors.white.withOpacity(0.4),
                   ),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10), side: BorderSide.none),
+                  showCheckmark: false,
                 );
               }).toList(),
             ),
             
-            const SizedBox(height: 24),
+            const SizedBox(height: 40),
+            _buildFieldHeader('HOURLY RATE'),
             TextField(
               controller: _hourlyRateController,
               keyboardType: TextInputType.number,
               decoration: const InputDecoration(
-                labelText: 'What is your hourly rate?',
-                suffixText: 'USD / hr',
-                prefixText: '\$ ',
+                hintText: '50',
+                suffixText: 'USD / HR',
+                prefixIcon: Icon(Icons.attach_money_outlined, size: 20),
               ),
             ),
             
-            const SizedBox(height: 24),
+            const SizedBox(height: 32),
+            _buildFieldHeader('SERVICES BIO'),
             TextField(
               controller: _bioController,
               maxLines: 4,
               decoration: const InputDecoration(
-                labelText: 'About Your Services',
                 hintText: 'Describe your experience with van electrical, solar setups, etc...',
                 alignLabelWithHint: true,
               ),
             ),
             
-            const SizedBox(height: 40),
+            const SizedBox(height: 60),
             SizedBox(
-              height: AppDimensions.buttonHeightL,
+              width: double.infinity,
+              height: 64,
               child: ElevatedButton(
                 onPressed: _isLoading ? null : _saveBuilderProfile,
                 child: _isLoading 
-                  ? const CircularProgressIndicator(color: AppColors.white)
-                  : const Text('Publish Builder Profile'),
+                  ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: AppColors.white, strokeWidth: 2))
+                  : const Text('PUBLISH BUILDER IDENTITY', style: TextStyle(letterSpacing: 2)),
               ),
             ),
+            const SizedBox(height: 40),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFieldHeader(String label) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 4, bottom: 8),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontFamily: 'Outfit',
+          fontSize: 12,
+          fontWeight: FontWeight.w800,
+          letterSpacing: 1.5,
+          color: AppColors.white.withOpacity(0.4),
         ),
       ),
     );
