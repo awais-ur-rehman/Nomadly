@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/constants/app_colors.dart';
-import '../../../../core/constants/app_dimensions.dart';
-import '../../providers/marketplace_provider.dart';
-import '../../../../shared/services/revenue_cat_service.dart';
+import 'package:nomadly/core/constants/app_colors.dart';
+import 'package:nomadly/core/constants/app_dimensions.dart';
+import 'package:nomadly/features/marketplace/providers/marketplace_provider.dart';
+import 'package:nomadly/shared/providers/revenue_cat_provider.dart';
 
 class CreateJobScreen extends ConsumerStatefulWidget {
   const CreateJobScreen({super.key});
@@ -26,6 +26,23 @@ class _CreateJobScreenState extends ConsumerState<CreateJobScreen> {
   final List<String> _categories = [
     'mechanical', 'electrical', 'solar', 'plumbing', 'woodwork', 'general', 'cleaning', 'remote_work'
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _checkProStatus();
+  }
+
+  Future<void> _checkProStatus() async {
+    // Proactive check: If user isn't pro, they might need to see the paywall
+    // This is a "Soft check" to guide the user before they fill a whole form
+    final isPro = await ref.read(revenueCatServiceProvider).isPro();
+    if (!isPro) {
+      // We could show a banner or snackbar here instead of a hard blocking paywall
+      // to allow them to fill the form but know they'll need to upgrade.
+      // For now, let's just log or show a minor hint.
+    }
+  }
 
   @override
   void dispose() {
@@ -60,10 +77,9 @@ class _CreateJobScreenState extends ConsumerState<CreateJobScreen> {
         // Check for 403 or specific message
         if (e.toString().contains("Upgrade to Pro") || e.toString().contains("403")) {
           // Show Paywall
-           await RevenueCatService().showPaywallIfNeeded();
-        } 
-        // Provider already shows error toast, so we might show duplicate if we don't suppress it, 
-        // but showing paywall is main goal.
+          await ref.read(revenueCatServiceProvider).showPaywallIfNeeded();
+        }
+        // Provider already shows error toast
       }
     }
   }

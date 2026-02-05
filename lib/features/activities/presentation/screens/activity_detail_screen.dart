@@ -3,24 +3,70 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:go_router/go_router.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import '../../../../core/constants/app_colors.dart';
-import '../../../../core/constants/app_dimensions.dart';
-import '../../../../core/utils/address_resolver.dart';
-import '../../../../shared/models/activity.dart';
-import '../../../../shared/models/geo_point.dart';
-import '../../providers/activity_provider.dart';
-import '../../../auth/providers/auth_provider.dart';
+import 'package:nomadly/core/constants/app_colors.dart';
+import 'package:nomadly/core/constants/app_dimensions.dart';
+import 'package:nomadly/core/utils/address_resolver.dart';
+import 'package:nomadly/shared/models/activity.dart';
+import 'package:nomadly/shared/models/geo_point.dart';
+import 'package:nomadly/features/activities/providers/activity_provider.dart';
+import 'package:nomadly/features/auth/providers/auth_provider.dart';
 
-class ActivityDetailScreen extends ConsumerWidget {
-  final Activity activity;
+class ActivityDetailScreen extends ConsumerStatefulWidget {
+  final String activityId;
+  final Activity? preloadedActivity;
 
   const ActivityDetailScreen({
     super.key,
-    required this.activity,
+    required this.activityId,
+    this.preloadedActivity,
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ActivityDetailScreen> createState() => _ActivityDetailScreenState();
+}
+
+class _ActivityDetailScreenState extends ConsumerState<ActivityDetailScreen> {
+  Activity? _activity;
+  bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _activity = widget.preloadedActivity;
+    if (_activity == null) {
+      _loadActivity();
+    }
+  }
+
+  Future<void> _loadActivity() async {
+    setState(() => _isLoading = true);
+    try {
+      final activity = await ref.read(activityRepositoryProvider).getActivity(widget.activityId);
+      if (mounted) {
+        setState(() => _activity = activity);
+      }
+    } catch (e) {
+      if (mounted) {
+        // Fallback or error UI
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_isLoading && _activity == null) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
+    final activity = _activity;
+    if (activity == null) {
+      return const Scaffold(body: Center(child: Text('Activity not found')));
+    }
+
     final currentUser = ref.watch(authProvider).user;
     final isParticipant = activity.participants.any((u) => u.id == currentUser?.id);
     final isCreator = activity.creator.id == currentUser?.id;

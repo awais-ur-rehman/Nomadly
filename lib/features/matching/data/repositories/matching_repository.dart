@@ -157,6 +157,38 @@ class MatchingRepository {
     }
   }
 
+  // Caravan Joining
+  Future<void> requestJoinCaravan(String targetUserId) async {
+    try {
+      await _apiClient.post(
+        '$_matchingEndpoint/caravan/request',
+        data: {'targetUserId': targetUserId},
+      );
+    } on DioException catch (e) {
+      _logger.e('❌ [MatchingRepo] Request join caravan error: ${e.message}');
+      throw _handleError(e);
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getCaravanRequests(String type) async {
+    try {
+      final response = await _apiClient.get(
+        '$_matchingEndpoint/caravan/requests',
+        queryParameters: {'type': type},
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data['data'];
+        final List<dynamic> requestsJson = data['requests'] ?? [];
+        return requestsJson.cast<Map<String, dynamic>>();
+      }
+      return [];
+    } on DioException catch (e) {
+      _logger.e('❌ [MatchingRepo] Get caravan requests error: ${e.message}');
+      throw _handleError(e);
+    }
+  }
+
   String _handleError(DioException error) {
     if (error.response != null) {
       final data = error.response!.data;

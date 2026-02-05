@@ -122,6 +122,33 @@ class MarketplaceRepository {
     }
   }
 
+  // Get single job
+  Future<Job?> getJob(String jobId) async {
+    try {
+      final response = await _apiClient.get('${AppConfig.baseUrl}/api/v1/jobs/$jobId');
+      if (response.statusCode == 200) {
+        return Job.fromJson(response.data['data']);
+      }
+      return null;
+    } on DioException catch (e) {
+      _logger.e('Get job error: ${e.message}');
+      return null;
+    }
+  }
+
+  // Apply for job
+  Future<void> applyForJob(String jobId, String coverLetter) async {
+    try {
+      await _apiClient.post(
+        '${AppConfig.baseUrl}/api/v1/jobs/$jobId/apply',
+        data: {'cover_letter': coverLetter},
+      );
+    } on DioException catch (e) {
+      _logger.e('Apply for job error: ${e.message}');
+      throw _handleError(e);
+    }
+  }
+
   String _handleError(DioException error) {
     if (error.response != null) {
       final data = error.response!.data;

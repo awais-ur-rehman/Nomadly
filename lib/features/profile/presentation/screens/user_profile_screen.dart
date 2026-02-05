@@ -12,6 +12,7 @@ import '../../providers/profile_provider.dart';
 import '../../../chat/providers/chat_provider.dart';
 import '../../../social/providers/social_provider.dart';
 import '../../../safety/providers/safety_provider.dart';
+import '../../../matching/providers/matching_provider.dart';
 import '../widgets/verification_badge.dart';
 
 class UserProfileScreen extends ConsumerStatefulWidget {
@@ -214,6 +215,28 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
               ),
             ],
           ),
+          const SizedBox(height: 12),
+
+          // Join Caravan Button (Core Phase 2 Feature)
+          if (route != null && route.destination != null) ...[
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () => ref.read(matchingProvider.notifier).requestJoinCaravan(user.uid),
+                  icon: const Icon(Icons.group_add_outlined),
+                  label: const Text('Request to Join Caravan'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.secondary,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+              ),
+            ),
+          ],
           const SizedBox(height: 8),
         ],
       ),

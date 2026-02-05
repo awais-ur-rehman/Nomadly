@@ -3,23 +3,55 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
-import '../../../../core/constants/app_colors.dart';
-import '../../../../core/constants/app_dimensions.dart';
-import '../../../../shared/models/job.dart';
-import '../../../../shared/services/toast_service.dart';
-import '../../../chat/providers/chat_provider.dart';
+import 'package:nomadly/core/constants/app_colors.dart';
+import 'package:nomadly/core/constants/app_dimensions.dart';
+import 'package:nomadly/shared/models/job.dart';
+import 'package:nomadly/shared/services/toast_service.dart';
+import 'package:nomadly/features/chat/providers/chat_provider.dart';
+import 'package:nomadly/features/marketplace/providers/marketplace_provider.dart';
+import 'package:nomadly/features/marketplace/presentation/widgets/job_application_bottom_sheet.dart';
 
 class JobDetailScreen extends ConsumerStatefulWidget {
-  final Job job;
+  final String jobId;
+  final Job? preloadedJob;
 
-  const JobDetailScreen({super.key, required this.job});
+  const JobDetailScreen({super.key, required this.jobId, this.preloadedJob});
 
   @override
   ConsumerState<JobDetailScreen> createState() => _JobDetailScreenState();
 }
 
 class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
+  Job? _job;
   bool _isLoading = false;
+  bool _hasApplied = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _job = widget.preloadedJob;
+    if (_job == null) {
+      _loadJob();
+    }
+  }
+
+  Future<void> _loadJob() async {
+    setState(() => _isLoading = true);
+    try {
+      final job = await ref.read(marketplaceRepositoryProvider).getJob(widget.jobId);
+      if (mounted) {
+        setState(() => _job = job);
+      }
+    } catch (e) {
+      if (mounted) {
+        ToastService.showError('Failed to load job: $e');
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
 
   String _formatDate(DateTime date) {
     final now = DateTime.now();
@@ -65,7 +97,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
     setState(() => _isLoading = true);
     
     try {
-      final authorId = widget.job.author.id;
+      final authorId = _job?.author.id;
       if (authorId == null) {
         ToastService.showError('Cannot contact: Author ID missing');
         return;
@@ -88,11 +120,35 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
     }
   }
 
+  Future<void> _applyForJob() async {
+    final job = _job;
+    if (job == null) return;
+
+    final result = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => JobApplicationBottomSheet(job: job),
+    );
+
+    if (result == true && mounted) {
+      setState(() => _hasApplied = true);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (_isLoading && _job == null) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
+    final job = _job;
+    if (job == null) {
+      return const Scaffold(body: Center(child: Text('Job not found')));
+    }
+
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final job = widget.job;
 
     return Scaffold(
       backgroundColor: isDark ? Colors.grey[900] : AppColors.background,
@@ -415,13 +471,15 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
                   ],
                 ),
               ),
-              // Contact button
+              // Action button (Apply or Contact)
               Expanded(
                 flex: 2,
                 child: ElevatedButton(
-                  onPressed: _isLoading ? null : _contactAuthor,
+                  onPressed: _isLoading || _hasApplied || job.status != 'open' 
+                    ? null 
+                    : _applyForJob,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
+                    backgroundColor: _hasApplied ? Colors.grey : AppColors.primary,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
@@ -438,14 +496,19 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
                             valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                           ),
                         )
-                      : const Row(
+                      : Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.chat_bubble_outline, size: 20),
-                            SizedBox(width: 8),
+                            Icon(
+                              _hasApplied ? Icons.check_circle : Icons.send, 
+                              size: 20
+                            ),
+                            const SizedBox(width: 8),
                             Text(
-                              'Contact & Apply',
-                              style: TextStyle(
+                              _hasApplied 
+                                ? 'Already Applied' 
+                                : job.status == 'open' ? 'Apply Now' : 'Job Closed',
+                              style: const TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 16,
                               ),

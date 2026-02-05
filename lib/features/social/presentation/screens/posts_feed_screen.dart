@@ -9,6 +9,7 @@ import '../../../profile/providers/travelers_provider.dart';
 import '../../../activities/providers/activity_provider.dart';
 
 import '../widgets/post_card.dart';
+import '../widgets/story_tray.dart';
 import '../../../profile/presentation/widgets/traveler_card.dart';
 import 'story_view_screen.dart';
 
@@ -85,11 +86,25 @@ class _SocialFeedTab extends ConsumerWidget {
       onRefresh: () => ref.read(socialProvider.notifier).loadFeed(refresh: true),
       child: CustomScrollView(
         slivers: [
-          // Stories Section (Horizontal List)
+          // Stories Section
           SliverToBoxAdapter(
-            child: SizedBox(
-               height: 110,
-               child: _StoriesList(state: state, currentUserId: currentUserId),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              child: StoryTray(
+                stories: state.stories,
+                onAddStory: () => context.push('/create-story'),
+                onStoryTap: (bundle) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => StoryViewScreen(
+                        stories: bundle.stories,
+                        user: bundle.user,
+                      ),
+                    ),
+                  );
+                },
+              ),
             ),
           ),
           
@@ -115,103 +130,6 @@ class _SocialFeedTab extends ConsumerWidget {
               ),
             ),
         ],
-      ),
-    );
-  }
-}
-
-class _StoriesList extends StatelessWidget {
-  final dynamic state;
-  final String? currentUserId;
-  const _StoriesList({required this.state, this.currentUserId});
-
-  @override
-  Widget build(BuildContext context) {
-    // Simplified Stories List Logic for brevity
-    // Note: Ideally extract this to a separate widget file
-    return ListView.builder(
-      scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      itemCount: state.stories.length + 1,
-      itemBuilder: (context, index) {
-        if (index == 0) return _AddStoryButton();
-        final bundle = state.stories[index - 1];
-        if (bundle.user.uid == currentUserId) return const SizedBox.shrink(); 
-        return _StoryAvatar(bundle: bundle);
-      },
-    );
-  }
-}
-
-class _AddStoryButton extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => context.push('/create-story'),
-      child: Container(
-        margin: const EdgeInsets.only(right: 12),
-        child: Column(
-          children: [
-            Stack(
-              children: [
-                const CircleAvatar(
-                  radius: 30,
-                  backgroundColor: Color(0xFFF0F0F0),
-                  child: Icon(Icons.person, color: Colors.grey),
-                ),
-                Positioned(
-                  bottom: 0, right: 0,
-                  child: Container(
-                     padding: const EdgeInsets.all(4),
-                     decoration: const BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
-                     child: const Icon(Icons.add, size: 12, color: Colors.white),
-                  ),
-                )
-              ],
-            ),
-            const SizedBox(height: 4),
-            const Text("Your Story", style: TextStyle(fontSize: 10)),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _StoryAvatar extends StatelessWidget {
-  final dynamic bundle;
-  const _StoryAvatar({required this.bundle});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-         Navigator.push(context, MaterialPageRoute(builder: (_) => StoryViewScreen(stories: bundle.stories, user: bundle.user)));
-      },
-      child: Container(
-        margin: const EdgeInsets.only(right: 12),
-        child: Column(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(2),
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: AppColors.primary, width: 2),
-              ),
-              child: CircleAvatar(
-                radius: 28,
-                backgroundImage: NetworkImage(bundle.user.profile?.photoUrl ?? 'https://via.placeholder.com/150'),
-              ),
-            ),
-             const SizedBox(height: 4),
-             Text(
-               bundle.user.profile?.name ?? 'Anon', 
-               style: const TextStyle(fontSize: 10),
-               maxLines: 1, 
-               overflow: TextOverflow.ellipsis
-             ),
-          ],
-        ),
       ),
     );
   }

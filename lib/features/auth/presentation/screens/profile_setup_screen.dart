@@ -23,7 +23,7 @@ class ProfileSetupScreen extends ConsumerStatefulWidget {
 class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
   final PageController _pageController = PageController();
   int _currentStep = 0;
-  final int _totalSteps = 8;
+  int _totalSteps = 10;
 
   // Form State
   File? _profileImage;
@@ -37,6 +37,12 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
   String _selectedRigType = 'sprinter';
   String _selectedCrewType = 'solo';
   bool _isPetFriendly = false;
+
+  // Builder Profile state
+  bool _wantsToBeBuilder = false;
+  final List<String> _selectedSpecialties = [];
+  final _hourlyRateController = TextEditingController();
+  final _builderBioController = TextEditingController();
 
   // Travel Route state
   final _originNameController = TextEditingController();
@@ -63,6 +69,9 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
     'Cooking', 'Reading', 'Gaming', 'Coding', 'Art', 'Travel', 'Vanlife',
     'Fishing', 'Kayaking', 'Biking', 'Running', 'Camping',
   ];
+  final List<String> _specialties = [
+    'van', 'electrical', 'solar', 'plumbing', 'woodwork', 'consultation'
+  ];
 
   @override
   void initState() {
@@ -82,10 +91,18 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
     _originNameController.dispose();
     _destNameController.dispose();
     _durationController.dispose();
+    _hourlyRateController.dispose();
+    _builderBioController.dispose();
     super.dispose();
   }
 
   void _nextStep() {
+    // If it's the builder opt-in step and they say "No", we can finish early
+    if (_currentStep == 8 && !_wantsToBeBuilder) {
+      _completeProfile();
+      return;
+    }
+
     if (_currentStep < _totalSteps - 1) {
       if (!_validateStep(_currentStep)) return;
       _pageController.nextPage(
@@ -140,6 +157,20 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
       case 7: // Bio
         if (_bioController.text.isEmpty) {
           ToastService.showError('Please write a short bio');
+          return false;
+        }
+        return true;
+      case 9: // Builder Details
+        if (_selectedSpecialties.isEmpty) {
+          ToastService.showError('Please select at least one specialty');
+          return false;
+        }
+        if (_hourlyRateController.text.isEmpty) {
+          ToastService.showError('Please enter your hourly rate');
+          return false;
+        }
+        if (_builderBioController.text.isEmpty) {
+          ToastService.showError('Please write a short builder bio');
           return false;
         }
         return true;
@@ -199,6 +230,26 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
     );
 
     if (!success || !mounted) return;
+
+    // 2.5 Update Builder Profile if opted in
+    if (_wantsToBeBuilder) {
+      try {
+        await ApiClient().patch(
+          '${AppConfig.usersEndpoint}/me',
+          data: {
+            'is_builder': true,
+            'builder_profile': {
+              'specialty_tags': _selectedSpecialties,
+              'hourly_rate': int.tryParse(_hourlyRateController.text) ?? 0,
+              'bio': _builderBioController.text.trim(),
+              'availability_status': 'available',
+            },
+          },
+        );
+      } catch (e) {
+        // Non-blocking
+      }
+    }
 
     // 3. Update travel route if user provided origin + destination
     if (_originLat != null && _destLat != null && _startDate != null) {
@@ -275,6 +326,8 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                   _buildDistanceStep(),    // 5 — NEW
                   _buildIntentStep(),      // 6
                   _buildBioStep(),         // 7
+                  _buildBuilderOptInStep(), // 8
+                  _buildBuilderDetailStep(), // 9
                 ],
               ),
             ),
@@ -290,7 +343,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                   child: authState.isLoading && _currentStep == _totalSteps - 1
                       ? const CircularProgressIndicator(color: AppColors.white)
                       : Text(
-                          _currentStep == _totalSteps - 1
+                          (_currentStep == _totalSteps - 1 || (_currentStep == 8 && !_wantsToBeBuilder))
                               ? AppStrings.finish
                               : AppStrings.continue_,
                         ),
@@ -698,6 +751,109 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
             decoration: const InputDecoration(
               labelText: 'Tell us about yourself...',
               hintText: 'I love traveling and meeting new people!',
+              alignLabelWithHint: true,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBuilderOptInStep() {
+    return Padding(
+      padding: const EdgeInsets.all(AppDimensions.paddingL),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Text(
+            'Marketplace',
+            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Would you like to offer your skills as a builder or specialist on the Nomad Marketplace?',
+            style: TextStyle(color: Colors.grey),
+          ),
+          const SizedBox(height: 32),
+          SwitchListTile(
+            title: const Text('I want to register as a builder/specialist'),
+            subtitle: const Text('Only toggle this if you want to provide services to other nomads.'),
+            value: _wantsToBeBuilder,
+            onChanged: (val) => setState(() => _wantsToBeBuilder = val),
+            activeColor: AppColors.primary,
+          ),
+          if (_wantsToBeBuilder)
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Text(
+                'Great! In the next step, we will ask for your service details.',
+                style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w500),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBuilderDetailStep() {
+    return Padding(
+      padding: const EdgeInsets.all(AppDimensions.paddingL),
+      child: ListView(
+        children: [
+          const Text(
+            'Service Details',
+            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            "Tell us what you specialize in and how much you charge.",
+            style: TextStyle(color: Colors.grey),
+          ),
+          const SizedBox(height: 24),
+          
+          const Text('YOUR SPECIALTIES', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.textSecondary)),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            children: _specialties.map((s) {
+              final isSelected = _selectedSpecialties.contains(s);
+              return FilterChip(
+                label: Text(s.toUpperCase()),
+                selected: isSelected,
+                onSelected: (val) {
+                  setState(() {
+                    if (val) _selectedSpecialties.add(s);
+                    else _selectedSpecialties.remove(s);
+                  });
+                },
+                selectedColor: AppColors.primaryExtraLight,
+                labelStyle: TextStyle(
+                  color: isSelected ? AppColors.primary : AppColors.textPrimary,
+                  fontSize: 12,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                ),
+              );
+            }).toList(),
+          ),
+          
+          const SizedBox(height: 24),
+          TextField(
+            controller: _hourlyRateController,
+            keyboardType: TextInputType.number,
+            decoration: const InputDecoration(
+              labelText: 'What is your hourly rate?',
+              suffixText: 'USD / hr',
+              prefixText: '\$ ',
+            ),
+          ),
+          
+          const SizedBox(height: 24),
+          TextField(
+            controller: _builderBioController,
+            maxLines: 4,
+            decoration: const InputDecoration(
+              labelText: 'About Your Services',
+              hintText: 'Describe your experience with van electrical, solar setups, etc...',
               alignLabelWithHint: true,
             ),
           ),

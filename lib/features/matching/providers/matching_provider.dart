@@ -1,7 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logger/logger.dart';
-import '../../../../shared/models/recommended_user.dart';
-import '../data/repositories/matching_repository.dart';
+import 'package:nomadly/shared/models/recommended_user.dart';
+import 'package:nomadly/features/matching/data/repositories/matching_repository.dart';
+import 'package:nomadly/shared/services/toast_service.dart';
 
 // State Class
 class MatchingState {
@@ -135,6 +136,15 @@ class MatchingNotifier extends StateNotifier<MatchingState> {
 
   void clearMatch() {
     state = state.copyWith(newMatch: null);
+  }
+
+  Future<void> requestJoinCaravan(String userId) async {
+    try {
+      await _repository.requestJoinCaravan(userId);
+      ToastService.showSuccess('Join request sent!');
+    } catch (e) {
+      ToastService.showError(e.toString());
+    }
   }
 }
 

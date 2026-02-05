@@ -151,6 +151,23 @@ class ActivityRepository {
     }
   }
 
+  Future<Activity> getActivity(String activityId) async {
+    try {
+      final response = await _apiClient.get(
+        '${AppConfig.baseUrl}/api/v1/activities/$activityId',
+      );
+
+      if (response.statusCode == 200) {
+        return Activity.fromJson(response.data['data']);
+      }
+
+      throw Exception('Failed to load activity');
+    } on DioException catch (e) {
+      _logger.e('Get activity error: ${e.message}');
+      throw _handleError(e);
+    }
+  }
+
   String _handleError(DioException error) {
     if (error.response != null) {
       final data = error.response!.data;

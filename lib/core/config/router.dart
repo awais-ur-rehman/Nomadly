@@ -200,8 +200,9 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/activity/:id',
         builder: (context, state) {
-          final activity = state.extra as Activity;
-          return ActivityDetailScreen(activity: activity);
+          final id = state.pathParameters['id']!;
+          final activity = state.extra as Activity?;
+          return ActivityDetailScreen(activityId: id, preloadedActivity: activity);
         },
       ),
 
@@ -267,8 +268,9 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/job/:id',
         builder: (context, state) {
-          final job = state.extra as Job;
-          return JobDetailScreen(job: job);
+          final id = state.pathParameters['id']!;
+          final job = state.extra as Job?;
+          return JobDetailScreen(jobId: id, preloadedJob: job);
         },
       ),
       // Location Picker (returns LatLng via pop)

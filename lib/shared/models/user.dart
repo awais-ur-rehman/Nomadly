@@ -5,6 +5,15 @@ import 'travel_route.dart';
 import 'nomad_id.dart';
 import 'verification.dart';
 import 'matching_profile.dart';
+import 'post.dart';
+
+export 'profile.dart';
+export 'rig.dart';
+export 'travel_route.dart';
+export 'nomad_id.dart';
+export 'verification.dart';
+export 'matching_profile.dart';
+export 'post.dart';
 
 part 'user.freezed.dart';
 part 'user.g.dart';

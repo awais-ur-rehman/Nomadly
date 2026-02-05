@@ -107,6 +107,16 @@ class MarketplaceNotifier extends StateNotifier<MarketplaceState> {
       rethrow;
     }
   }
+
+  Future<void> applyForJob(String jobId, String coverLetter) async {
+    try {
+      await _repository.applyForJob(jobId, coverLetter);
+      ToastService.showSuccess('Application submitted successfully!');
+    } catch (e) {
+      ToastService.showError(e.toString());
+      rethrow;
+    }
+  }
 }
 
 final marketplaceProvider = StateNotifierProvider<MarketplaceNotifier, MarketplaceState>((ref) {
