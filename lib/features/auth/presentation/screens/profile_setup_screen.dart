@@ -23,7 +23,7 @@ class ProfileSetupScreen extends ConsumerStatefulWidget {
 class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
   final PageController _pageController = PageController();
   int _currentStep = 0;
-  int _totalSteps = 10;
+  final int _totalSteps = 4;
 
   // Form State
   File? _profileImage;
@@ -34,15 +34,9 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
   String _selectedGender = 'male';
   final List<String> _selectedHobbies = [];
   String _selectedIntent = 'friends';
-  String _selectedRigType = 'sprinter';
+  String _selectedRigType = 'van';
   String _selectedCrewType = 'solo';
   bool _isPetFriendly = false;
-
-  // Builder Profile state
-  bool _wantsToBeBuilder = false;
-  final List<String> _selectedSpecialties = [];
-  final _hourlyRateController = TextEditingController();
-  final _builderBioController = TextEditingController();
 
   // Travel Route state
   final _originNameController = TextEditingController();
@@ -60,17 +54,21 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
   // Options
   final List<String> _genders = ['male', 'female', 'non-binary', 'other'];
   final List<String> _intents = ['friends', 'dating', 'both'];
-  final List<String> _rigTypes = [
-    'sprinter', 'skoolie', 'suv', 'truck_camper', 'rv', 'car', 'other'
-  ];
+  
+  final Map<String, IconData> _rigTypeOptions = {
+    'van': Icons.directions_bus_outlined,
+    'bus': Icons.airport_shuttle_outlined,
+    'truck': Icons.local_shipping_outlined,
+    'car': Icons.directions_car_outlined,
+    'rv': Icons.rv_hookup_outlined,
+    'other': Icons.more_horiz_outlined,
+  };
+
   final List<String> _crewTypes = ['solo', 'couple', 'family', 'friends'];
   final List<String> _hobbies = [
     'Hiking', 'Surfing', 'Yoga', 'Climbing', 'Photography', 'Music',
     'Cooking', 'Reading', 'Gaming', 'Coding', 'Art', 'Travel', 'Vanlife',
     'Fishing', 'Kayaking', 'Biking', 'Running', 'Camping',
-  ];
-  final List<String> _specialties = [
-    'van', 'electrical', 'solar', 'plumbing', 'woodwork', 'consultation'
   ];
 
   @override
@@ -91,18 +89,10 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
     _originNameController.dispose();
     _destNameController.dispose();
     _durationController.dispose();
-    _hourlyRateController.dispose();
-    _builderBioController.dispose();
     super.dispose();
   }
 
   void _nextStep() {
-    // If it's the builder opt-in step and they say "No", we can finish early
-    if (_currentStep == 8 && !_wantsToBeBuilder) {
-      _completeProfile();
-      return;
-    }
-
     if (_currentStep < _totalSteps - 1) {
       if (!_validateStep(_currentStep)) return;
       _pageController.nextPage(
@@ -127,52 +117,29 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
 
   bool _validateStep(int step) {
     switch (step) {
-      case 0: // Photo
+      case 0: // Essentials
         if (_profileImage == null) {
           ToastService.showError('Please upload a profile photo');
           return false;
         }
-        return true;
-      case 1: // Basic Info
         if (_ageController.text.isEmpty) {
           ToastService.showError('Please enter your age');
           return false;
         }
         return true;
-      case 2: // Hobbies
-        if (_selectedHobbies.isEmpty) {
-          ToastService.showError('Please select at least one hobby');
-          return false;
-        }
-        return true;
-      case 3: // Rig
-        return true;
-      case 4: // Travel Route
-        // Travel route is optional during setup — users can set it later
-        return true;
-      case 5: // Distance
-        return true;
-      case 6: // Intent
-        return true;
-      case 7: // Bio
+      case 1: // Social Identity
         if (_bioController.text.isEmpty) {
           ToastService.showError('Please write a short bio');
           return false;
         }
+        if (_selectedHobbies.isEmpty) {
+          ToastService.showError('Select at least one hobby');
+          return false;
+        }
         return true;
-      case 9: // Builder Details
-        if (_selectedSpecialties.isEmpty) {
-          ToastService.showError('Please select at least one specialty');
-          return false;
-        }
-        if (_hourlyRateController.text.isEmpty) {
-          ToastService.showError('Please enter your hourly rate');
-          return false;
-        }
-        if (_builderBioController.text.isEmpty) {
-          ToastService.showError('Please write a short builder bio');
-          return false;
-        }
+      case 2: // Nomad Setup
+        return true;
+      case 3: // Discovery
         return true;
       default:
         return true;
@@ -231,26 +198,6 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
 
     if (!success || !mounted) return;
 
-    // 2.5 Update Builder Profile if opted in
-    if (_wantsToBeBuilder) {
-      try {
-        await ApiClient().patch(
-          '${AppConfig.usersEndpoint}/me',
-          data: {
-            'is_builder': true,
-            'builder_profile': {
-              'specialty_tags': _selectedSpecialties,
-              'hourly_rate': int.tryParse(_hourlyRateController.text) ?? 0,
-              'bio': _builderBioController.text.trim(),
-              'availability_status': 'available',
-            },
-          },
-        );
-      } catch (e) {
-        // Non-blocking
-      }
-    }
-
     // 3. Update travel route if user provided origin + destination
     if (_originLat != null && _destLat != null && _startDate != null) {
       final duration = int.tryParse(_durationController.text) ?? 7;
@@ -264,9 +211,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
             'duration_days': duration,
           },
         );
-      } catch (_) {
-        // Non-blocking — travel route can be set later
-      }
+      } catch (_) {}
     }
 
     // 4. Update distance preference
@@ -275,15 +220,13 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
         '${AppConfig.usersEndpoint}/me',
         data: {
           'matching_profile': {
-            'preferences': {
-              'max_distance_km': _maxDistanceKm.round(),
-            },
+              'preferences': {
+                'max_distance_km': _maxDistanceKm.round(),
+              },
           },
         },
       );
-    } catch (_) {
-      // Non-blocking
-    }
+    } catch (_) {}
 
     if (mounted) context.go('/home');
   }
@@ -295,7 +238,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
     return Scaffold(
       backgroundColor: AppColors.white,
       appBar: AppBar(
-        title: const Text(AppStrings.completeProfile),
+        title: const Text('Back'),
         leading: _currentStep > 0
             ? IconButton(
                 icon: const Icon(Icons.arrow_back),
@@ -306,33 +249,24 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // Progress Bar
             LinearProgressIndicator(
               value: (_currentStep + 1) / _totalSteps,
               backgroundColor: AppColors.greyExtraLight,
               valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
             ),
-
             Expanded(
               child: PageView(
                 controller: _pageController,
                 physics: const NeverScrollableScrollPhysics(),
                 children: [
-                  _buildPhotoStep(),       // 0
-                  _buildBasicInfoStep(),   // 1
-                  _buildHobbiesStep(),     // 2
-                  _buildRigStep(),         // 3
-                  _buildTravelRouteStep(), // 4 — NEW
-                  _buildDistanceStep(),    // 5 — NEW
-                  _buildIntentStep(),      // 6
-                  _buildBioStep(),         // 7
-                  _buildBuilderOptInStep(), // 8
-                  _buildBuilderDetailStep(), // 9
+                  _buildEssentialsSection(), // 0
+                  _buildSocialIdentitySection(), // 1
+                  _buildNomadSetupSection(), // 2
+                  _buildDiscoverySection(), // 3
                 ],
               ),
             ),
 
-            // Bottom Button
             Padding(
               padding: const EdgeInsets.all(AppDimensions.paddingL),
               child: SizedBox(
@@ -342,11 +276,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                   onPressed: authState.isLoading ? null : _nextStep,
                   child: authState.isLoading && _currentStep == _totalSteps - 1
                       ? const CircularProgressIndicator(color: AppColors.white)
-                      : Text(
-                          (_currentStep == _totalSteps - 1 || (_currentStep == 8 && !_wantsToBeBuilder))
-                              ? AppStrings.finish
-                              : AppStrings.continue_,
-                        ),
+                      : Text(_currentStep == _totalSteps - 1 ? 'Start Exploring' : 'Continue'),
                 ),
               ),
             ),
@@ -356,513 +286,238 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
     );
   }
 
-  // ─── Step Builders ─────────────────────────────────────────────
+  // ─── Section Builders ──────────────────────────────────────────
 
-  Widget _buildPhotoStep() {
-    return Padding(
-      padding: const EdgeInsets.all(AppDimensions.paddingL),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Text(
-            AppStrings.uploadPhoto,
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: AppDimensions.paddingL),
-          GestureDetector(
-            onTap: _pickImage,
-            child: CircleAvatar(
-              radius: 80,
-              backgroundColor: AppColors.greyExtraLight,
-              backgroundImage:
-                  _profileImage != null ? FileImage(_profileImage!) : null,
-              child: _profileImage == null
-                  ? const Icon(Icons.camera_alt,
-                      size: 50, color: AppColors.grey)
-                  : null,
-            ),
-          ),
-          const SizedBox(height: AppDimensions.paddingM),
-          const Text('Tap to upload a profile photo'),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBasicInfoStep() {
-    return Padding(
-      padding: const EdgeInsets.all(AppDimensions.paddingL),
-      child: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const Text(
-              'Basic Information',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: AppDimensions.paddingL),
-            TextField(
-              controller: _ageController,
-              decoration: const InputDecoration(labelText: 'Age'),
-              keyboardType: TextInputType.number,
-            ),
-            const SizedBox(height: AppDimensions.paddingM),
-            DropdownButtonFormField<String>(
-              value: _selectedGender,
-              items: _genders
-                  .map((g) =>
-                      DropdownMenuItem(value: g, child: Text(g.toUpperCase())))
-                  .toList(),
-              onChanged: (val) => setState(() => _selectedGender = val!),
-              decoration: const InputDecoration(labelText: 'Gender'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHobbiesStep() {
-    return Padding(
+  Widget _buildEssentialsSection() {
+    return SingleChildScrollView(
       padding: const EdgeInsets.all(AppDimensions.paddingL),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text(
-            AppStrings.selectHobbies,
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: AppDimensions.paddingL),
-          Expanded(
-            child: SingleChildScrollView(
-              child: Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: _hobbies.map((hobby) {
-                  final isSelected = _selectedHobbies.contains(hobby);
-                  return FilterChip(
-                    label: Text(hobby),
-                    selected: isSelected,
-                    onSelected: (selected) {
-                      setState(() {
-                        if (selected) {
-                          _selectedHobbies.add(hobby);
-                        } else {
-                          _selectedHobbies.remove(hobby);
-                        }
-                      });
-                    },
-                  );
-                }).toList(),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildRigStep() {
-    return Padding(
-      padding: const EdgeInsets.all(AppDimensions.paddingL),
-      child: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const Text(
-              AppStrings.rigInfo,
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: AppDimensions.paddingL),
-            DropdownButtonFormField<String>(
-              value: _selectedRigType,
-              items: _rigTypes
-                  .map((t) => DropdownMenuItem(
-                      value: t,
-                      child: Text(t.replaceAll('_', ' ').toUpperCase())))
-                  .toList(),
-              onChanged: (val) => setState(() => _selectedRigType = val!),
-              decoration: const InputDecoration(labelText: 'Rig Type'),
-            ),
-            const SizedBox(height: AppDimensions.paddingM),
-            DropdownButtonFormField<String>(
-              value: _selectedCrewType,
-              items: _crewTypes
-                  .map((c) => DropdownMenuItem(
-                      value: c, child: Text(c.toUpperCase())))
-                  .toList(),
-              onChanged: (val) => setState(() => _selectedCrewType = val!),
-              decoration: const InputDecoration(labelText: 'Crew Type'),
-            ),
-            const SizedBox(height: AppDimensions.paddingM),
-            SwitchListTile(
-              title: const Text('Pet Friendly'),
-              value: _isPetFriendly,
-              onChanged: (val) => setState(() => _isPetFriendly = val),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // NEW — Step 5: Travel Route
-  Widget _buildTravelRouteStep() {
-    return Padding(
-      padding: const EdgeInsets.all(AppDimensions.paddingL),
-      child: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const Text(
-              'Your Travel Route',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'This helps us match you with nomads heading the same way',
-              style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-            ),
-            const SizedBox(height: AppDimensions.paddingL),
-
-            // Origin
-            TextField(
-              controller: _originNameController,
-              decoration: InputDecoration(
-                labelText: 'Where are you now?',
-                prefixIcon: const Icon(Icons.my_location),
-                hintText: 'e.g. Denver, CO',
-                suffixIcon: IconButton(
-                  icon: const Icon(Icons.map_outlined),
-                  onPressed: () => _openLocationPicker(isOrigin: true),
-                ),
-              ),
-              readOnly: true,
-              onTap: () => _openLocationPicker(isOrigin: true),
-            ),
-            if (_originLat != null)
-              Padding(
-                padding: const EdgeInsets.only(top: 4, left: 12),
-                child: Text(
-                  '${_originLat!.toStringAsFixed(4)}, ${_originLng!.toStringAsFixed(4)}',
-                  style: TextStyle(fontSize: 12, color: Colors.grey[500]),
-                ),
-              ),
-
-            const SizedBox(height: AppDimensions.paddingM),
-
-            // Destination
-            TextField(
-              controller: _destNameController,
-              decoration: InputDecoration(
-                labelText: 'Where are you heading?',
-                prefixIcon: const Icon(Icons.place),
-                hintText: 'e.g. Moab, UT',
-                suffixIcon: IconButton(
-                  icon: const Icon(Icons.map_outlined),
-                  onPressed: () => _openLocationPicker(isOrigin: false),
-                ),
-              ),
-              readOnly: true,
-              onTap: () => _openLocationPicker(isOrigin: false),
-            ),
-            if (_destLat != null)
-              Padding(
-                padding: const EdgeInsets.only(top: 4, left: 12),
-                child: Text(
-                  '${_destLat!.toStringAsFixed(4)}, ${_destLng!.toStringAsFixed(4)}',
-                  style: TextStyle(fontSize: 12, color: Colors.grey[500]),
-                ),
-              ),
-
-            const SizedBox(height: AppDimensions.paddingM),
-
-            // Start date
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              leading: const Icon(Icons.calendar_today),
-              title: Text(
-                _startDate != null
-                    ? 'Starts ${DateFormat.yMMMd().format(_startDate!)}'
-                    : 'When do you start?',
-              ),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: _pickStartDate,
-            ),
-
-            // Duration
-            TextField(
-              controller: _durationController,
-              decoration: const InputDecoration(
-                labelText: 'Trip duration (days)',
-                prefixIcon: Icon(Icons.timelapse),
-                hintText: '7',
-              ),
-              keyboardType: TextInputType.number,
-            ),
-
-            const SizedBox(height: AppDimensions.paddingL),
-            Text(
-              'You can skip this and set it later from your profile.',
-              style: TextStyle(fontSize: 13, color: Colors.grey[500]),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // NEW — Step 6: Distance Preference
-  Widget _buildDistanceStep() {
-    return Padding(
-      padding: const EdgeInsets.all(AppDimensions.paddingL),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const Text(
-            'Search Distance',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'How far should we look for other nomads?',
-            style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-          ),
-          const Spacer(),
-          Center(
-            child: Text(
-              '${_maxDistanceKm.round()} km',
-              style: const TextStyle(
-                fontSize: 48,
-                fontWeight: FontWeight.bold,
-                color: AppColors.primary,
-              ),
-            ),
-          ),
-          const SizedBox(height: AppDimensions.paddingL),
-          Slider(
-            value: _maxDistanceKm,
-            min: 25,
-            max: 500,
-            divisions: 19,
-            label: '${_maxDistanceKm.round()} km',
-            onChanged: (val) => setState(() => _maxDistanceKm = val),
-          ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text('25 km', style: TextStyle(color: Colors.grey[500])),
-              Text('500 km', style: TextStyle(color: Colors.grey[500])),
-            ],
-          ),
-          const Spacer(),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildIntentStep() {
-    return Padding(
-      padding: const EdgeInsets.all(AppDimensions.paddingL),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const Text(
-            AppStrings.selectIntent,
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: AppDimensions.paddingL),
-          ..._intents.map((intent) {
-            final label = switch (intent) {
-              'friends' => 'Find Friends',
-              'dating' => 'Find a Date',
-              'both' => 'Both',
-              _ => intent,
-            };
-            final icon = switch (intent) {
-              'friends' => Icons.people_outline,
-              'dating' => Icons.favorite_outline,
-              'both' => Icons.explore_outlined,
-              _ => Icons.circle,
-            };
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: Material(
-                borderRadius: BorderRadius.circular(12),
-                color: _selectedIntent == intent
-                    ? AppColors.primary.withOpacity(0.1)
-                    : Colors.grey[100],
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(12),
-                  onTap: () => setState(() => _selectedIntent = intent),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 18),
-                    child: Row(
-                      children: [
-                        Icon(icon,
-                            color: _selectedIntent == intent
-                                ? AppColors.primary
-                                : Colors.grey),
-                        const SizedBox(width: 16),
-                        Text(
-                          label,
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: _selectedIntent == intent
-                                ? FontWeight.w600
-                                : FontWeight.normal,
-                            color: _selectedIntent == intent
-                                ? AppColors.primary
-                                : null,
-                          ),
-                        ),
-                        const Spacer(),
-                        if (_selectedIntent == intent)
-                          const Icon(Icons.check_circle,
-                              color: AppColors.primary),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            );
-          }),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBioStep() {
-    return Padding(
-      padding: const EdgeInsets.all(AppDimensions.paddingL),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const Text(
-            AppStrings.bio,
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: AppDimensions.paddingL),
-          TextField(
-            controller: _bioController,
-            maxLines: 5,
-            decoration: const InputDecoration(
-              labelText: 'Tell us about yourself...',
-              hintText: 'I love traveling and meeting new people!',
-              alignLabelWithHint: true,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBuilderOptInStep() {
-    return Padding(
-      padding: const EdgeInsets.all(AppDimensions.paddingL),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const Text(
-            'Marketplace',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-          ),
+          const Text('The Face', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
-          const Text(
-            'Would you like to offer your skills as a builder or specialist on the Nomad Marketplace?',
-            style: TextStyle(color: Colors.grey),
+          const Text('Let the community see who you are.', style: TextStyle(color: Colors.grey)),
+          const SizedBox(height: 32),
+          Center(
+            child: GestureDetector(
+              onTap: _pickImage,
+              child: CircleAvatar(
+                radius: 80,
+                backgroundColor: AppColors.greyExtraLight,
+                backgroundImage: _profileImage != null ? FileImage(_profileImage!) : null,
+                child: _profileImage == null
+                    ? const Icon(Icons.camera_alt, size: 50, color: AppColors.grey)
+                    : null,
+              ),
+            ),
           ),
           const SizedBox(height: 32),
-          SwitchListTile(
-            title: const Text('I want to register as a builder/specialist'),
-            subtitle: const Text('Only toggle this if you want to provide services to other nomads.'),
-            value: _wantsToBeBuilder,
-            onChanged: (val) => setState(() => _wantsToBeBuilder = val),
-            activeColor: AppColors.primary,
+          TextField(
+            controller: _ageController,
+            decoration: const InputDecoration(labelText: 'How old are you?'),
+            keyboardType: TextInputType.number,
           ),
-          if (_wantsToBeBuilder)
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Text(
-                'Great! In the next step, we will ask for your service details.',
-                style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w500),
-              ),
-            ),
+          const SizedBox(height: 24),
+          const Text('Gender Identity', style: TextStyle(fontWeight: FontWeight.bold)),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 12,
+            children: _genders.map((g) => ChoiceChip(
+              label: Text(g.toUpperCase()),
+              selected: _selectedGender == g,
+              onSelected: (val) => setState(() => _selectedGender = g),
+            )).toList(),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildBuilderDetailStep() {
-    return Padding(
+  Widget _buildSocialIdentitySection() {
+    return SingleChildScrollView(
       padding: const EdgeInsets.all(AppDimensions.paddingL),
-      child: ListView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text(
-            'Service Details',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-          ),
+          const Text('The Vibe', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
-          const Text(
-            "Tell us what you specialize in and how much you charge.",
-            style: TextStyle(color: Colors.grey),
+          const Text('What are you into?', style: TextStyle(color: Colors.grey)),
+          const SizedBox(height: 32),
+          
+          const Text('Short Bio', style: TextStyle(fontWeight: FontWeight.bold)),
+          const SizedBox(height: 8),
+          TextField(
+            controller: _bioController,
+            maxLines: 3,
+            decoration: const InputDecoration(
+              hintText: 'I love vanlife and campfires...',
+            ),
           ),
           const SizedBox(height: 24),
           
-          const Text('YOUR SPECIALTIES', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.textSecondary)),
+          const Text('Hobbies', style: TextStyle(fontWeight: FontWeight.bold)),
           const SizedBox(height: 12),
           Wrap(
             spacing: 8,
-            children: _specialties.map((s) {
-              final isSelected = _selectedSpecialties.contains(s);
+            runSpacing: 8,
+            children: _hobbies.map((hobby) {
+              final isSelected = _selectedHobbies.contains(hobby);
               return FilterChip(
-                label: Text(s.toUpperCase()),
+                label: Text(hobby),
                 selected: isSelected,
-                onSelected: (val) {
+                onSelected: (selected) {
                   setState(() {
-                    if (val) _selectedSpecialties.add(s);
-                    else _selectedSpecialties.remove(s);
+                    if (selected) _selectedHobbies.add(hobby);
+                    else _selectedHobbies.remove(hobby);
                   });
                 },
-                selectedColor: AppColors.primaryExtraLight,
-                labelStyle: TextStyle(
-                  color: isSelected ? AppColors.primary : AppColors.textPrimary,
-                  fontSize: 12,
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 24),
+          
+          const Text('Matching Intent', style: TextStyle(fontWeight: FontWeight.bold)),
+          const SizedBox(height: 12),
+          Row(
+            children: _intents.map((intent) => Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: ChoiceChip(
+                  label: Text(intent.toUpperCase()),
+                  selected: _selectedIntent == intent,
+                  onSelected: (val) => setState(() => _selectedIntent = intent),
+                ),
+              ),
+            )).toList(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNomadSetupSection() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(AppDimensions.paddingL),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Text('The Rig', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 8),
+          const Text('Tell us about your home on wheels.', style: TextStyle(color: Colors.grey)),
+          const SizedBox(height: 32),
+          
+          const Text('Rig Type', style: TextStyle(fontWeight: FontWeight.bold)),
+          const SizedBox(height: 12),
+          GridView.count(
+            crossAxisCount: 3,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            mainAxisSpacing: 12,
+            crossAxisSpacing: 12,
+            children: _rigTypeOptions.entries.map((entry) {
+              final isSelected = _selectedRigType == entry.key;
+              return InkWell(
+                onTap: () => setState(() => _selectedRigType = entry.key),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: isSelected ? AppColors.primary.withOpacity(0.1) : Colors.grey[100],
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: isSelected ? AppColors.primary : Colors.transparent, width: 2),
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(entry.value, color: isSelected ? AppColors.primary : Colors.grey),
+                      const SizedBox(height: 4),
+                      Text(entry.key.toUpperCase(), style: TextStyle(fontSize: 10, fontWeight: isSelected ? FontWeight.bold : FontWeight.normal)),
+                    ],
+                  ),
                 ),
               );
             }).toList(),
           ),
           
-          const SizedBox(height: 24),
-          TextField(
-            controller: _hourlyRateController,
-            keyboardType: TextInputType.number,
-            decoration: const InputDecoration(
-              labelText: 'What is your hourly rate?',
-              suffixText: 'USD / hr',
-              prefixText: '\$ ',
-            ),
+          const SizedBox(height: 32),
+          const Text('Crew Type', style: TextStyle(fontWeight: FontWeight.bold)),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 12,
+            children: _crewTypes.map((c) => ChoiceChip(
+              label: Text(c.toUpperCase()),
+              selected: _selectedCrewType == c,
+              onSelected: (val) => setState(() => _selectedCrewType = c),
+            )).toList(),
           ),
           
           const SizedBox(height: 24),
-          TextField(
-            controller: _builderBioController,
-            maxLines: 4,
-            decoration: const InputDecoration(
-              labelText: 'About Your Services',
-              hintText: 'Describe your experience with van electrical, solar setups, etc...',
-              alignLabelWithHint: true,
-            ),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Pet Friendly'),
+            subtitle: const Text('Do you travel with furry friends?'),
+            value: _isPetFriendly,
+            onChanged: (val) => setState(() => _isPetFriendly = val),
           ),
         ],
       ),
     );
   }
 
-  // ─── Location Picker ─────────────────────────────────────────
+  Widget _buildDiscoverySection() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(AppDimensions.paddingL),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Text('The Journey', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 8),
+          const Text('Where are you headed?', style: TextStyle(color: Colors.grey)),
+          const SizedBox(height: 32),
+          
+          TextField(
+            controller: _originNameController,
+            decoration: InputDecoration(
+              labelText: 'Where are you now?',
+              prefixIcon: const Icon(Icons.my_location),
+              suffixIcon: IconButton(icon: const Icon(Icons.map_outlined), onPressed: () => _openLocationPicker(isOrigin: true)),
+            ),
+            readOnly: true,
+            onTap: () => _openLocationPicker(isOrigin: true),
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: _destNameController,
+            decoration: InputDecoration(
+              labelText: 'Where are you heading?',
+              prefixIcon: const Icon(Icons.place),
+              suffixIcon: IconButton(icon: const Icon(Icons.map_outlined), onPressed: () => _openLocationPicker(isOrigin: false)),
+            ),
+            readOnly: true,
+            onTap: () => _openLocationPicker(isOrigin: false),
+          ),
+          const SizedBox(height: 16),
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: const Icon(Icons.calendar_today),
+            title: Text(_startDate != null ? DateFormat.yMMMd().format(_startDate!) : 'Departure Date'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: _pickStartDate,
+          ),
+          
+          const SizedBox(height: 48),
+          const Text('Search Distance', style: TextStyle(fontWeight: FontWeight.bold)),
+          const SizedBox(height: 4),
+          Text('${_maxDistanceKm.round()} km radius', style: const TextStyle(color: AppColors.primary)),
+          Slider(
+            value: _maxDistanceKm,
+            min: 25,
+            max: 500,
+            divisions: 19,
+            onChanged: (val) => setState(() => _maxDistanceKm = val),
+          ),
+        ],
+      ),
+    );
+  }
 
   Future<void> _openLocationPicker({required bool isOrigin}) async {
     final result = await context.push<Map<String, dynamic>>('/location-picker');
@@ -870,18 +525,15 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
       final lat = result['lat'] as double;
       final lng = result['lng'] as double;
       final name = result['name'] as String?;
-
       setState(() {
         if (isOrigin) {
           _originLat = lat;
           _originLng = lng;
-          _originNameController.text =
-              name ?? '${_originLat!.toStringAsFixed(2)}, ${_originLng!.toStringAsFixed(2)}';
+          _originNameController.text = name ?? '${lat.toStringAsFixed(2)}, ${lng.toStringAsFixed(2)}';
         } else {
           _destLat = lat;
           _destLng = lng;
-          _destNameController.text =
-              name ?? '${_destLat!.toStringAsFixed(2)}, ${_destLng!.toStringAsFixed(2)}';
+          _destNameController.text = name ?? '${lat.toStringAsFixed(2)}, ${lng.toStringAsFixed(2)}';
         }
       });
     }

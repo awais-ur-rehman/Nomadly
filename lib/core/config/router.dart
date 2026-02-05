@@ -33,6 +33,7 @@ import '../../features/auth/providers/auth_provider.dart';
 import '../../features/activities/presentation/screens/activity_detail_screen.dart';
 import '../../features/activities/presentation/screens/create_activity_screen.dart';
 import '../../features/activities/presentation/screens/activities_list_screen.dart';
+import '../../features/profile/presentation/screens/builder_setup_screen.dart';
 import '../../shared/models/user.dart';
 import '../../shared/models/activity.dart'; // Import Activity model
 import '../../shared/models/post.dart';
@@ -134,6 +135,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/matching-preferences',
         builder: (context, state) => const MatchingPreferencesScreen(),
+      ),
+      GoRoute(
+        path: '/builder-setup',
+        builder: (context, state) => const BuilderSetupScreen(),
       ),
 
       // Forgot Password

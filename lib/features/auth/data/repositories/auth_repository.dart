@@ -28,7 +28,7 @@ class AuthRepository {
         data: {
           'email': email,
           'password': password,
-          'username': username,
+          if (username.isNotEmpty) 'username': username,
           'name': name,
           'invite_code': inviteCode,
           if (phone != null) 'phone': phone,

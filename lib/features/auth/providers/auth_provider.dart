@@ -265,6 +265,16 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
+  // Refresh user data
+  Future<void> refreshUser() async {
+    try {
+      final user = await _repository.getMe();
+      state = state.copyWith(user: user);
+    } catch (e) {
+      _logger.e('Failed to refresh user: $e');
+    }
+  }
+
   // Update user
   void updateUser(User user) {
     state = state.copyWith(user: user);

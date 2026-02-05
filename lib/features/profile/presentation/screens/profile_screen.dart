@@ -73,6 +73,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       onFollowingTap: () {
         context.push('/profile/${user.uid}/connections?tab=1');
       },
+      banner: !user.isBuilder ? _buildMarketplaceBanner() : null,
       headerButtons: SizedBox(
         width: double.infinity,
         child: OutlinedButton(
@@ -82,6 +83,68 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           ),
           child: const Text('Edit Profile'),
         ),
+      ),
+    );
+  }
+
+  Widget _buildMarketplaceBanner() {
+    return Container(
+      padding: const EdgeInsets.all(AppDimensions.paddingL),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [AppColors.primary, AppColors.primary.withOpacity(0.8)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withOpacity(0.3),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.storefront_outlined, color: Colors.white, size: 28),
+              SizedBox(width: 12),
+              Text(
+                'Join the Marketplace',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Offer your skills to the community and earn while you travel.',
+            style: TextStyle(color: Colors.white, fontSize: 13),
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () => context.push('/builder-setup'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white,
+                foregroundColor: AppColors.primary,
+                elevation: 0,
+                minimumSize: const Size(0, 40),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text('Get Started'),
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -15,6 +15,7 @@ class ProfileViewBase extends StatelessWidget {
   final bool isOwnProfile;
   final bool canViewContent;
   final Widget? headerButtons;
+  final Widget? banner;
   final Future<void> Function()? onRefresh;
   final VoidCallback? onFollowersTap;
   final VoidCallback? onFollowingTap;
@@ -27,6 +28,7 @@ class ProfileViewBase extends StatelessWidget {
     this.isOwnProfile = false,
     this.canViewContent = true,
     this.headerButtons,
+    this.banner,
     this.onRefresh,
     this.onFollowersTap,
     this.onFollowingTap,
@@ -106,6 +108,12 @@ class ProfileViewBase extends StatelessWidget {
                   ),
 
                   const SizedBox(height: 12),
+
+                  // Banner
+                  if (banner != null) ...[
+                    banner!,
+                    const SizedBox(height: 12),
+                  ],
 
                   // Action Buttons
                   if (headerButtons != null) headerButtons!,
