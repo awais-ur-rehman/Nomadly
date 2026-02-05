@@ -47,128 +47,148 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
     final authState = ref.watch(authProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.white,
+      backgroundColor: AppColors.obsidian,
       appBar: AppBar(
-        title: const Text(AppStrings.signIn),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new, size: 20),
+          onPressed: () => context.pop(),
+        ),
+        title: const Text(
+          'LOGIN',
+          style: TextStyle(
+            fontFamily: 'Outfit',
+            fontSize: 16,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 2,
+          ),
+        ),
       ),
       body: SafeArea(
         child: Stack(
           children: [
             SingleChildScrollView(
-              padding: const EdgeInsets.all(AppDimensions.paddingL),
+              padding: const EdgeInsets.symmetric(horizontal: 30),
               child: Form(
                 key: _formKey,
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const SizedBox(height: AppDimensions.paddingXL),
-
-                    // Title
+                    const SizedBox(height: 40),
                     const Text(
                       'Welcome Back',
                       style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.textPrimary,
+                        fontFamily: 'Outfit',
+                        fontSize: 32,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.white,
                       ),
                     ),
-                    const SizedBox(height: AppDimensions.paddingS),
-                    const Text(
-                      'Sign in to continue',
+                    const SizedBox(height: 8),
+                    Text(
+                      'Enter your credentials to access the convoy.',
                       style: TextStyle(
+                        fontFamily: 'Inter',
                         fontSize: 16,
-                        color: AppColors.textSecondary,
+                        color: AppColors.white.withOpacity(0.5),
                       ),
                     ),
-                    const SizedBox(height: AppDimensions.paddingXXL),
+                    const SizedBox(height: 50),
 
-                    // Email field
+                    _buildFieldHeader('EMAIL ADDRESS'),
                     TextFormField(
                       controller: _emailController,
-                      decoration: const InputDecoration(
-                        labelText: AppStrings.email,
-                        prefixIcon: Icon(Icons.email_outlined),
+                      decoration: InputDecoration(
+                        hintText: 'nomad@voyage.com',
+                        prefixIcon: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Icon(Icons.email_outlined, color: AppColors.white.withOpacity(0.3)),
+                        ),
                       ),
                       keyboardType: TextInputType.emailAddress,
                       textInputAction: TextInputAction.next,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return AppStrings.errorFieldRequired;
-                        }
-                        if (!value.contains('@')) {
-                          return AppStrings.errorInvalidEmail;
-                        }
-                        return null;
-                      },
+                      validator: (value) => (value?.contains('@') ?? false) ? null : 'Invalid email',
                     ),
-                    const SizedBox(height: AppDimensions.paddingM),
+                    const SizedBox(height: 24),
 
-                    // Password field
+                    _buildFieldHeader('PASSWORD'),
                     TextFormField(
                       controller: _passwordController,
+                      obscureText: _obscurePassword,
                       decoration: InputDecoration(
-                        labelText: AppStrings.password,
-                        prefixIcon: const Icon(Icons.lock_outline),
+                        hintText: '••••••••',
+                        prefixIcon: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Icon(Icons.lock_outline, color: AppColors.white.withOpacity(0.3)),
+                        ),
                         suffixIcon: IconButton(
                           icon: Icon(
-                            _obscurePassword
-                                ? Icons.visibility_outlined
-                                : Icons.visibility_off_outlined,
+                            _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                            color: AppColors.white.withOpacity(0.3),
                           ),
-                          onPressed: () {
-                            setState(() {
-                              _obscurePassword = !_obscurePassword;
-                            });
-                          },
+                          onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                         ),
                       ),
-                      obscureText: _obscurePassword,
                       textInputAction: TextInputAction.done,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return AppStrings.errorFieldRequired;
-                        }
-                        return null;
-                      },
                       onFieldSubmitted: (_) => _handleSignIn(),
+                      validator: (value) => (value?.isEmpty ?? true) ? 'Required' : null,
                     ),
-                    const SizedBox(height: AppDimensions.paddingM),
-
-                    // Forgot password
+                    
+                    const SizedBox(height: 12),
                     Align(
                       alignment: Alignment.centerRight,
                       child: TextButton(
-                        onPressed: () {
-                          context.push('/forgot-password');
-                        },
-                        child: const Text(AppStrings.forgotPassword),
+                        onPressed: () => context.push('/forgot-password'),
+                        child: Text(
+                          'FORGOT PASSWORD?',
+                          style: TextStyle(
+                            fontFamily: 'Outfit',
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 1,
+                            color: AppColors.primary.withOpacity(0.8),
+                          ),
+                        ),
                       ),
                     ),
-                    const SizedBox(height: AppDimensions.paddingL),
+                    
+                    const SizedBox(height: 40),
 
-                    // Sign In button
                     SizedBox(
-                      height: AppDimensions.buttonHeightL,
+                      width: double.infinity,
+                      height: 64,
                       child: ElevatedButton(
                         onPressed: authState.isLoading ? null : _handleSignIn,
-                        child: const Text(AppStrings.signIn),
+                        child: const Text('SIGN IN', style: TextStyle(letterSpacing: 2)),
                       ),
                     ),
-                    const SizedBox(height: AppDimensions.paddingXL),
+                    const SizedBox(height: 40),
 
-                    // Don't have account
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Text(
-                          AppStrings.dontHaveAccount,
-                          style: TextStyle(color: AppColors.textSecondary),
+                        Text(
+                          "NO ACCOUNT? ",
+                          style: TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            color: AppColors.white.withOpacity(0.4),
+                          ),
                         ),
-                        TextButton(
-                          onPressed: () {
-                            context.go('/sign-up');
-                          },
-                          child: const Text(AppStrings.signUp),
+                        GestureDetector(
+                          onTap: () => context.go('/sign-up'),
+                          child: const Text(
+                            'SIGN UP',
+                            style: TextStyle(
+                              fontFamily: 'Outfit',
+                              fontSize: 12,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.primary,
+                              letterSpacing: 1,
+                            ),
+                          ),
                         ),
                       ],
                     ),
@@ -177,8 +197,24 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
               ),
             ),
             if (authState.isLoading)
-              const AppLoader(isOverlay: true, message: 'Signing in...'),
+              const AppLoader(isOverlay: true, message: 'SIGNING IN...'),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFieldHeader(String label) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 4, bottom: 8),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontFamily: 'Outfit',
+          fontSize: 12,
+          fontWeight: FontWeight.w800,
+          letterSpacing: 1.5,
+          color: AppColors.white.withOpacity(0.4),
         ),
       ),
     );

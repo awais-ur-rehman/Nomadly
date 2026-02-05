@@ -105,4 +105,29 @@ flutter:
     - assets/images/
     - assets/icons/
     - assets/icons/nav/
+    - assets/icons/auth/
+    - assets/icons/rigs/
+
+  fonts:
+    - family: Outfit
+      fonts:
+        - asset: assets/fonts/Outfit/static/Outfit-Regular.ttf
+        - asset: assets/fonts/Outfit/static/Outfit-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/Outfit/static/Outfit-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Outfit/static/Outfit-ExtraBold.ttf
+          weight: 800
+        - asset: assets/fonts/Outfit/static/Outfit-Light.ttf
+          weight: 300
+
+    - family: Inter
+      fonts:
+        - asset: assets/fonts/Inter/static/Inter_18pt-Regular.ttf
+        - asset: assets/fonts/Inter/static/Inter_18pt-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/Inter/static/Inter_18pt-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Inter/static/Inter_18pt-Light.ttf
+          weight: 300
 

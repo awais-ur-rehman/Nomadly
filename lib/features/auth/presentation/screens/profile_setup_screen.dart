@@ -198,18 +198,25 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
 
     if (!success || !mounted) return;
 
-    // 3. Update travel route if user provided origin + destination
-    if (_originLat != null && _destLat != null && _startDate != null) {
+    // 3. Update travel route if user provided at least an origin
+    if (_originLat != null) {
       final duration = int.tryParse(_durationController.text) ?? 7;
       try {
+        final Map<String, dynamic> routeData = {
+          'origin': {'lat': _originLat, 'lng': _originLng},
+        };
+
+        if (_destLat != null) {
+          routeData['destination'] = {'lat': _destLat, 'lng': _destLng};
+        }
+        if (_startDate != null) {
+          routeData['start_date'] = _startDate!.toIso8601String();
+          routeData['duration_days'] = duration;
+        }
+
         await ApiClient().patch(
           '${AppConfig.usersEndpoint}/route',
-          data: {
-            'origin': {'lat': _originLat, 'lng': _originLng},
-            'destination': {'lat': _destLat, 'lng': _destLng},
-            'start_date': _startDate!.toIso8601String(),
-            'duration_days': duration,
-          },
+          data: routeData,
         );
       } catch (_) {}
     }
@@ -236,23 +243,44 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
     final authState = ref.watch(authProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.white,
+      backgroundColor: AppColors.obsidian,
       appBar: AppBar(
-        title: const Text('Back'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
         leading: _currentStep > 0
             ? IconButton(
-                icon: const Icon(Icons.arrow_back),
+                icon: const Icon(Icons.arrow_back_ios_new, size: 20),
                 onPressed: _previousStep,
               )
-            : null,
+            : IconButton(
+                icon: const Icon(Icons.close, size: 24),
+                onPressed: () => context.pop(),
+              ),
+        title: Text(
+          'PROFILE SETUP',
+          style: TextStyle(
+            fontFamily: 'Outfit',
+            fontSize: 14,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 2,
+            color: AppColors.white.withOpacity(0.5),
+          ),
+        ),
       ),
       body: SafeArea(
         child: Column(
           children: [
-            LinearProgressIndicator(
-              value: (_currentStep + 1) / _totalSteps,
-              backgroundColor: AppColors.greyExtraLight,
-              valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: LinearProgressIndicator(
+                  value: (_currentStep + 1) / _totalSteps,
+                  backgroundColor: AppColors.white.withOpacity(0.05),
+                  valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
+                  minHeight: 6,
+                ),
+              ),
             ),
             Expanded(
               child: PageView(
@@ -268,15 +296,18 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
             ),
 
             Padding(
-              padding: const EdgeInsets.all(AppDimensions.paddingL),
+              padding: const EdgeInsets.all(30),
               child: SizedBox(
                 width: double.infinity,
-                height: AppDimensions.buttonHeightL,
+                height: 64,
                 child: ElevatedButton(
                   onPressed: authState.isLoading ? null : _nextStep,
                   child: authState.isLoading && _currentStep == _totalSteps - 1
-                      ? const CircularProgressIndicator(color: AppColors.white)
-                      : Text(_currentStep == _totalSteps - 1 ? 'Start Exploring' : 'Continue'),
+                      ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: AppColors.white, strokeWidth: 2))
+                      : Text(
+                          _currentStep == _totalSteps - 1 ? 'GET STARTED' : 'CONTINUE',
+                          style: const TextStyle(letterSpacing: 2),
+                        ),
                 ),
               ),
             ),
@@ -290,43 +321,100 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
 
   Widget _buildEssentialsSection() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(AppDimensions.paddingL),
+      padding: const EdgeInsets.symmetric(horizontal: 30),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('The Face', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 8),
-          const Text('Let the community see who you are.', style: TextStyle(color: Colors.grey)),
-          const SizedBox(height: 32),
+          const SizedBox(height: 20),
+          const Text(
+            'Essentials',
+            style: TextStyle(
+              fontFamily: 'Outfit',
+              fontSize: 32,
+              fontWeight: FontWeight.w800,
+              color: AppColors.white,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Let the community see who you are.',
+            style: TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 16,
+              color: AppColors.white.withOpacity(0.5),
+              height: 1.5,
+            ),
+          ),
+          const SizedBox(height: 40),
           Center(
             child: GestureDetector(
               onTap: _pickImage,
-              child: CircleAvatar(
-                radius: 80,
-                backgroundColor: AppColors.greyExtraLight,
-                backgroundImage: _profileImage != null ? FileImage(_profileImage!) : null,
-                child: _profileImage == null
-                    ? const Icon(Icons.camera_alt, size: 50, color: AppColors.grey)
-                    : null,
+              child: Stack(
+                children: [
+                   Container(
+                    width: 160,
+                    height: 160,
+                    decoration: BoxDecoration(
+                      color: AppColors.white.withOpacity(0.05),
+                      shape: BoxShape.circle,
+                      border: Border.all(color: AppColors.white.withOpacity(0.1), width: 2),
+                      image: _profileImage != null 
+                        ? DecorationImage(image: FileImage(_profileImage!), fit: BoxFit.cover)
+                        : null,
+                    ),
+                    child: _profileImage == null
+                        ? Icon(Icons.add_a_photo_outlined, size: 40, color: AppColors.white.withOpacity(0.3))
+                        : null,
+                  ),
+                  if (_profileImage != null)
+                    Positioned(
+                      bottom: 0,
+                      right: 0,
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: const BoxDecoration(
+                          color: AppColors.primary,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.edit, size: 20, color: AppColors.white),
+                      ),
+                    ),
+                ],
               ),
             ),
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: 50),
+          _buildFieldHeader('AGE'),
           TextField(
             controller: _ageController,
-            decoration: const InputDecoration(labelText: 'How old are you?'),
             keyboardType: TextInputType.number,
+            decoration: const InputDecoration(hintText: '25'),
           ),
-          const SizedBox(height: 24),
-          const Text('Gender Identity', style: TextStyle(fontWeight: FontWeight.bold)),
-          const SizedBox(height: 12),
+          const SizedBox(height: 32),
+          _buildFieldHeader('GENDER IDENTITY'),
+          const SizedBox(height: 8),
           Wrap(
             spacing: 12,
-            children: _genders.map((g) => ChoiceChip(
-              label: Text(g.toUpperCase()),
-              selected: _selectedGender == g,
-              onSelected: (val) => setState(() => _selectedGender = g),
-            )).toList(),
+            runSpacing: 12,
+            children: _genders.map((g) {
+              final isSelected = _selectedGender == g;
+              return ChoiceChip(
+                label: Text(g.toUpperCase()),
+                selected: isSelected,
+                onSelected: (val) => setState(() => _selectedGender = g),
+                selectedColor: AppColors.primary,
+                backgroundColor: AppColors.white.withOpacity(0.05),
+                labelStyle: TextStyle(
+                  fontFamily: 'Outfit',
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
+                  color: isSelected ? AppColors.white : AppColors.white.withOpacity(0.4),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide.none),
+                showCheckmark: false,
+              );
+            }).toList(),
           ),
         ],
       ),
@@ -335,35 +423,52 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
 
   Widget _buildSocialIdentitySection() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(AppDimensions.paddingL),
+      padding: const EdgeInsets.symmetric(horizontal: 30),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('The Vibe', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 8),
-          const Text('What are you into?', style: TextStyle(color: Colors.grey)),
-          const SizedBox(height: 32),
+          const SizedBox(height: 20),
+          const Text(
+            'Social Identity',
+            style: TextStyle(
+              fontFamily: 'Outfit',
+              fontSize: 32,
+              fontWeight: FontWeight.w800,
+              color: AppColors.white,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'What defines your journey?',
+            style: TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 16,
+              color: AppColors.white.withOpacity(0.5),
+              height: 1.5,
+            ),
+          ),
+          const SizedBox(height: 40),
           
-          const Text('Short Bio', style: TextStyle(fontWeight: FontWeight.bold)),
+          _buildFieldHeader('SHORT BIO'),
           const SizedBox(height: 8),
           TextField(
             controller: _bioController,
-            maxLines: 3,
+            maxLines: 4,
             decoration: const InputDecoration(
-              hintText: 'I love vanlife and campfires...',
+              hintText: 'Describe your spirit, your rig, and your next horizon...',
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 40),
           
-          const Text('Hobbies', style: TextStyle(fontWeight: FontWeight.bold)),
+          _buildFieldHeader('HOBBIES & INTERESTS'),
           const SizedBox(height: 12),
           Wrap(
-            spacing: 8,
-            runSpacing: 8,
+            spacing: 10,
+            runSpacing: 10,
             children: _hobbies.map((hobby) {
               final isSelected = _selectedHobbies.contains(hobby);
               return FilterChip(
-                label: Text(hobby),
+                label: Text(hobby.toUpperCase()),
                 selected: isSelected,
                 onSelected: (selected) {
                   setState(() {
@@ -371,25 +476,51 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                     else _selectedHobbies.remove(hobby);
                   });
                 },
+                selectedColor: AppColors.primary,
+                backgroundColor: AppColors.white.withOpacity(0.05),
+                labelStyle: TextStyle(
+                  fontFamily: 'Outfit',
+                  fontSize: 10,
+                  fontWeight: FontWeight.w800,
+                  color: isSelected ? AppColors.white : AppColors.white.withOpacity(0.4),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10), side: BorderSide.none),
+                showCheckmark: false,
               );
             }).toList(),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 40),
           
-          const Text('Matching Intent', style: TextStyle(fontWeight: FontWeight.bold)),
+          _buildFieldHeader('MATCHING INTENT'),
           const SizedBox(height: 12),
           Row(
-            children: _intents.map((intent) => Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4),
-                child: ChoiceChip(
-                  label: Text(intent.toUpperCase()),
-                  selected: _selectedIntent == intent,
-                  onSelected: (val) => setState(() => _selectedIntent = intent),
+            children: _intents.map((intent) {
+               final isSelected = _selectedIntent == intent;
+               return Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: ChoiceChip(
+                    label: Center(child: Text(intent.toUpperCase())),
+                    selected: isSelected,
+                    onSelected: (val) => setState(() => _selectedIntent = intent),
+                    selectedColor: AppColors.primary,
+                    backgroundColor: AppColors.white.withOpacity(0.05),
+                    labelStyle: TextStyle(
+                      fontFamily: 'Outfit',
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                      color: isSelected ? AppColors.white : AppColors.white.withOpacity(0.4),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: BorderSide.none),
+                    showCheckmark: false,
+                  ),
                 ),
-              ),
-            )).toList(),
+              );
+            }).toList(),
           ),
+          const SizedBox(height: 30),
         ],
       ),
     );
@@ -397,16 +528,33 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
 
   Widget _buildNomadSetupSection() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(AppDimensions.paddingL),
+      padding: const EdgeInsets.symmetric(horizontal: 30),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('The Rig', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 8),
-          const Text('Tell us about your home on wheels.', style: TextStyle(color: Colors.grey)),
-          const SizedBox(height: 32),
+          const SizedBox(height: 20),
+          const Text(
+            'Nomad Setup',
+            style: TextStyle(
+              fontFamily: 'Outfit',
+              fontSize: 32,
+              fontWeight: FontWeight.w800,
+              color: AppColors.white,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Tell us about your home on wheels.',
+            style: TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 16,
+              color: AppColors.white.withOpacity(0.5),
+              height: 1.5,
+            ),
+          ),
+          const SizedBox(height: 40),
           
-          const Text('Rig Type', style: TextStyle(fontWeight: FontWeight.bold)),
+          _buildFieldHeader('RIG TYPE'),
           const SizedBox(height: 12),
           GridView.count(
             crossAxisCount: 3,
@@ -418,18 +566,28 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
               final isSelected = _selectedRigType == entry.key;
               return InkWell(
                 onTap: () => setState(() => _selectedRigType = entry.key),
+                borderRadius: BorderRadius.circular(16),
                 child: Container(
                   decoration: BoxDecoration(
-                    color: isSelected ? AppColors.primary.withOpacity(0.1) : Colors.grey[100],
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: isSelected ? AppColors.primary : Colors.transparent, width: 2),
+                    color: isSelected ? AppColors.primary.withOpacity(0.1) : AppColors.white.withOpacity(0.05),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: isSelected ? AppColors.primary : AppColors.white.withOpacity(0.1), width: 1.5),
                   ),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(entry.value, color: isSelected ? AppColors.primary : Colors.grey),
-                      const SizedBox(height: 4),
-                      Text(entry.key.toUpperCase(), style: TextStyle(fontSize: 10, fontWeight: isSelected ? FontWeight.bold : FontWeight.normal)),
+                      Icon(entry.value, color: isSelected ? AppColors.primary : AppColors.white.withOpacity(0.3), size: 32),
+                      const SizedBox(height: 8),
+                      Text(
+                        entry.key.toUpperCase(), 
+                        style: TextStyle(
+                          fontFamily: 'Outfit',
+                          fontSize: 10, 
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 1,
+                          color: isSelected ? AppColors.primary : AppColors.white.withOpacity(0.4)
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -437,26 +595,57 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
             }).toList(),
           ),
           
-          const SizedBox(height: 32),
-          const Text('Crew Type', style: TextStyle(fontWeight: FontWeight.bold)),
+          const SizedBox(height: 40),
+          _buildFieldHeader('CREW TYPE'),
           const SizedBox(height: 12),
           Wrap(
             spacing: 12,
-            children: _crewTypes.map((c) => ChoiceChip(
-              label: Text(c.toUpperCase()),
-              selected: _selectedCrewType == c,
-              onSelected: (val) => setState(() => _selectedCrewType = c),
-            )).toList(),
+            runSpacing: 12,
+            children: _crewTypes.map((c) {
+              final isSelected = _selectedCrewType == c;
+              return ChoiceChip(
+                label: Text(c.toUpperCase()),
+                selected: isSelected,
+                onSelected: (val) => setState(() => _selectedCrewType = c),
+                selectedColor: AppColors.primary,
+                backgroundColor: AppColors.white.withOpacity(0.05),
+                labelStyle: TextStyle(
+                  fontFamily: 'Outfit',
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
+                  color: isSelected ? AppColors.white : AppColors.white.withOpacity(0.4),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide.none),
+                showCheckmark: false,
+              );
+            }).toList(),
           ),
           
-          const SizedBox(height: 24),
-          SwitchListTile(
-            contentPadding: EdgeInsets.zero,
-            title: const Text('Pet Friendly'),
-            subtitle: const Text('Do you travel with furry friends?'),
-            value: _isPetFriendly,
-            onChanged: (val) => setState(() => _isPetFriendly = val),
+          const SizedBox(height: 40),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppColors.white.withOpacity(0.05),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: AppColors.white.withOpacity(0.1)),
+            ),
+            child: SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text(
+                'PET FRIENDLY',
+                style: TextStyle(fontFamily: 'Outfit', fontWeight: FontWeight.w800, fontSize: 12, letterSpacing: 1),
+              ),
+              subtitle: Text(
+                'Are furry friends joining the journey?',
+                style: TextStyle(color: AppColors.white.withOpacity(0.4), fontSize: 13),
+              ),
+              value: _isPetFriendly,
+              activeColor: AppColors.primary,
+              onChanged: (val) => setState(() => _isPetFriendly = val),
+            ),
           ),
+          const SizedBox(height: 30),
         ],
       ),
     );
@@ -464,57 +653,145 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
 
   Widget _buildDiscoverySection() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(AppDimensions.paddingL),
+      padding: const EdgeInsets.symmetric(horizontal: 30),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('The Journey', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 8),
-          const Text('Where are you headed?', style: TextStyle(color: Colors.grey)),
-          const SizedBox(height: 32),
+          const SizedBox(height: 20),
+          const Text(
+            'Travel Route',
+            style: TextStyle(
+              fontFamily: 'Outfit',
+              fontSize: 32,
+              fontWeight: FontWeight.w800,
+              color: AppColors.white,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Where are you headed?',
+            style: TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 16,
+              color: AppColors.white.withOpacity(0.5),
+              height: 1.5,
+            ),
+          ),
+          const SizedBox(height: 40),
           
+          _buildFieldHeader('ORIGIN'),
           TextField(
             controller: _originNameController,
             decoration: InputDecoration(
-              labelText: 'Where are you now?',
-              prefixIcon: const Icon(Icons.my_location),
-              suffixIcon: IconButton(icon: const Icon(Icons.map_outlined), onPressed: () => _openLocationPicker(isOrigin: true)),
+              hintText: 'Present Location',
+              prefixIcon: Icon(Icons.my_location, color: AppColors.white.withOpacity(0.3)),
             ),
             readOnly: true,
             onTap: () => _openLocationPicker(isOrigin: true),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 24),
+          _buildFieldHeader('DESTINATION'),
           TextField(
             controller: _destNameController,
             decoration: InputDecoration(
-              labelText: 'Where are you heading?',
-              prefixIcon: const Icon(Icons.place),
-              suffixIcon: IconButton(icon: const Icon(Icons.map_outlined), onPressed: () => _openLocationPicker(isOrigin: false)),
+              hintText: 'Future Horizon',
+              prefixIcon: Icon(Icons.place_outlined, color: AppColors.white.withOpacity(0.3)),
             ),
             readOnly: true,
             onTap: () => _openLocationPicker(isOrigin: false),
           ),
-          const SizedBox(height: 16),
-          ListTile(
-            contentPadding: EdgeInsets.zero,
-            leading: const Icon(Icons.calendar_today),
-            title: Text(_startDate != null ? DateFormat.yMMMd().format(_startDate!) : 'Departure Date'),
-            trailing: const Icon(Icons.chevron_right),
+          const SizedBox(height: 24),
+          _buildFieldHeader('DEPARTURE'),
+          InkWell(
             onTap: _pickStartDate,
+            borderRadius: BorderRadius.circular(16),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+              decoration: BoxDecoration(
+                color: AppColors.white.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: AppColors.white.withOpacity(0.1)),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.calendar_today_outlined, color: AppColors.white.withOpacity(0.3), size: 20),
+                  const SizedBox(width: 12),
+                  Text(
+                    _startDate != null ? DateFormat('MMMM dd, yyyy').format(_startDate!) : 'Select Date',
+                    style: TextStyle(
+                      color: _startDate != null ? AppColors.white : AppColors.white.withOpacity(0.4),
+                      fontSize: 16,
+                    ),
+                  ),
+                  const Spacer(),
+                  Icon(Icons.chevron_right, color: AppColors.white.withOpacity(0.2)),
+                ],
+              ),
+            ),
           ),
           
-          const SizedBox(height: 48),
-          const Text('Search Distance', style: TextStyle(fontWeight: FontWeight.bold)),
-          const SizedBox(height: 4),
-          Text('${_maxDistanceKm.round()} km radius', style: const TextStyle(color: AppColors.primary)),
-          Slider(
-            value: _maxDistanceKm,
-            min: 25,
-            max: 500,
-            divisions: 19,
-            onChanged: (val) => setState(() => _maxDistanceKm = val),
+          const SizedBox(height: 50),
+          _buildFieldHeader('SEARCH RADIUS'),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'MAX DISTANCE',
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.white.withOpacity(0.4),
+                ),
+              ),
+              Text(
+                '${_maxDistanceKm.round()} KM',
+                style: const TextStyle(
+                  fontFamily: 'Outfit',
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.primary,
+                ),
+              ),
+            ],
           ),
+          const SizedBox(height: 16),
+          SliderTheme(
+            data: SliderTheme.of(context).copyWith(
+              trackHeight: 4,
+              thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 10),
+              overlayShape: const RoundSliderOverlayShape(overlayRadius: 20),
+              activeTrackColor: AppColors.primary,
+              inactiveTrackColor: AppColors.white.withOpacity(0.1),
+              thumbColor: AppColors.primary,
+              overlayColor: AppColors.primary.withOpacity(0.2),
+            ),
+            child: Slider(
+              value: _maxDistanceKm,
+              min: 25,
+              max: 500,
+              divisions: 19,
+              onChanged: (val) => setState(() => _maxDistanceKm = val),
+            ),
+          ),
+          const SizedBox(height: 30),
         ],
+      ),
+    );
+  }
+
+  Widget _buildFieldHeader(String label) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 4, bottom: 8),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontFamily: 'Outfit',
+          fontSize: 12,
+          fontWeight: FontWeight.w800,
+          letterSpacing: 1.5,
+          color: AppColors.white.withOpacity(0.4),
+        ),
       ),
     );
   }

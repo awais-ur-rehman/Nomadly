@@ -61,11 +61,12 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
     final authState = ref.watch(authProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.white,
+      backgroundColor: AppColors.obsidian,
       appBar: AppBar(
-        title: const Text('Reset Password'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back_ios_new, size: 20),
           onPressed: () => context.pop(),
         ),
       ),
@@ -73,39 +74,57 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
         child: Stack(
           children: [
             SingleChildScrollView(
-              padding: const EdgeInsets.all(AppDimensions.paddingL),
+              padding: const EdgeInsets.symmetric(horizontal: 30),
               child: Form(
                 key: _formKey,
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const SizedBox(height: AppDimensions.paddingL),
+                    const SizedBox(height: 20),
+                    
+                    // Icon Detail
+                    Container(
+                      width: 80,
+                      height: 80,
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withOpacity(0.05),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: AppColors.primary.withOpacity(0.1)),
+                      ),
+                      child: const Icon(
+                        Icons.security_rounded,
+                        size: 32,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                    const SizedBox(height: 40),
 
-                    // Title
                     const Text(
-                      'Create New Password',
+                      'Reset Password',
                       style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.textPrimary,
+                        fontFamily: 'Outfit',
+                        fontSize: 32,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.white,
                       ),
                     ),
-                    const SizedBox(height: AppDimensions.paddingS),
+                    const SizedBox(height: 12),
                     Text(
-                      'Enter the code sent to ${widget.email} and create a new password.',
-                      style: const TextStyle(
+                      'Initialize your new access credentials to secure your passport.',
+                      style: TextStyle(
+                        fontFamily: 'Inter',
                         fontSize: 16,
-                        color: AppColors.textSecondary,
+                        color: AppColors.white.withOpacity(0.5),
+                        height: 1.5,
                       ),
                     ),
-                    const SizedBox(height: AppDimensions.paddingXL),
+                    const SizedBox(height: 50),
 
-                    // OTP field
+                    _buildFieldHeader('RESET CODE'),
                     TextFormField(
                       controller: _otpController,
                       decoration: const InputDecoration(
-                        labelText: 'Reset Code',
-                        hintText: 'Enter 6-digit code',
+                        hintText: 'CODE-XXXXXX',
                         prefixIcon: Icon(Icons.pin_outlined),
                       ),
                       keyboardType: TextInputType.number,
@@ -115,32 +134,35 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
                         FilteringTextInputFormatter.digitsOnly,
                       ],
                       validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return AppStrings.errorFieldRequired;
-                        }
-                        if (value.length != 6) {
-                          return 'Please enter a valid 6-digit code';
-                        }
+                        if (value == null || value.isEmpty) return 'Code required';
+                        if (value.length != 6) return 'Invalid code';
                         return null;
                       },
                     ),
-                    const SizedBox(height: AppDimensions.paddingM),
-
-                    // Resend code
+                    const SizedBox(height: 10),
                     Align(
                       alignment: Alignment.centerRight,
                       child: TextButton(
                         onPressed: authState.isLoading ? null : _handleResendCode,
-                        child: const Text('Resend Code'),
+                        child: Text(
+                          'RESEND CODE',
+                          style: TextStyle(
+                            fontFamily: 'Outfit',
+                            fontSize: 12,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 1,
+                            color: AppColors.white.withOpacity(0.3),
+                          ),
+                        ),
                       ),
                     ),
-                    const SizedBox(height: AppDimensions.paddingM),
+                    const SizedBox(height: 24),
 
-                    // New password field
+                    _buildFieldHeader('NEW PASSWORD'),
                     TextFormField(
                       controller: _passwordController,
                       decoration: InputDecoration(
-                        labelText: 'New Password',
+                        hintText: '••••••••',
                         prefixIcon: const Icon(Icons.lock_outline),
                         suffixIcon: IconButton(
                           icon: Icon(
@@ -148,36 +170,24 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
                                 ? Icons.visibility_outlined
                                 : Icons.visibility_off_outlined,
                           ),
-                          onPressed: () {
-                            setState(() {
-                              _obscurePassword = !_obscurePassword;
-                            });
-                          },
+                          onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                         ),
                       ),
                       obscureText: _obscurePassword,
                       textInputAction: TextInputAction.next,
                       validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return AppStrings.errorFieldRequired;
-                        }
-                        if (value.length < 8) {
-                          return 'Password must be at least 8 characters';
-                        }
-                        // Check for uppercase, lowercase, and number
-                        if (!RegExp(r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)').hasMatch(value)) {
-                          return 'Must contain uppercase, lowercase, and number';
-                        }
+                        if (value == null || value.isEmpty) return 'Password required';
+                        if (value.length < 8) return 'Min 8 characters';
                         return null;
                       },
                     ),
-                    const SizedBox(height: AppDimensions.paddingM),
+                    const SizedBox(height: 24),
 
-                    // Confirm password field
+                    _buildFieldHeader('CONFIRM PASSWORD'),
                     TextFormField(
                       controller: _confirmPasswordController,
                       decoration: InputDecoration(
-                        labelText: AppStrings.confirmPassword,
+                        hintText: '••••••••',
                         prefixIcon: const Icon(Icons.lock_outline),
                         suffixIcon: IconButton(
                           icon: Icon(
@@ -185,43 +195,52 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
                                 ? Icons.visibility_outlined
                                 : Icons.visibility_off_outlined,
                           ),
-                          onPressed: () {
-                            setState(() {
-                              _obscureConfirmPassword = !_obscureConfirmPassword;
-                            });
-                          },
+                          onPressed: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
                         ),
                       ),
                       obscureText: _obscureConfirmPassword,
                       textInputAction: TextInputAction.done,
                       validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return AppStrings.errorFieldRequired;
-                        }
-                        if (value != _passwordController.text) {
-                          return AppStrings.errorPasswordMismatch;
-                        }
+                        if (value == null || value.isEmpty) return 'Confirmation required';
+                        if (value != _passwordController.text) return 'Passwords mismatch';
                         return null;
                       },
                       onFieldSubmitted: (_) => _handleSubmit(),
                     ),
-                    const SizedBox(height: AppDimensions.paddingXL),
+                    const SizedBox(height: 50),
 
-                    // Submit button
                     SizedBox(
-                      height: AppDimensions.buttonHeightL,
+                      width: double.infinity,
+                      height: 64,
                       child: ElevatedButton(
                         onPressed: authState.isLoading ? null : _handleSubmit,
-                        child: const Text('Reset Password'),
+                        child: const Text('RESET PASSWORD', style: TextStyle(letterSpacing: 2)),
                       ),
                     ),
+                    const SizedBox(height: 40),
                   ],
                 ),
               ),
             ),
             if (authState.isLoading)
-              const AppLoader(isOverlay: true, message: 'Resetting password...'),
+              const AppLoader(isOverlay: true, message: 'RESETTING...'),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFieldHeader(String label) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 4, bottom: 8),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontFamily: 'Outfit',
+          fontSize: 12,
+          fontWeight: FontWeight.w800,
+          letterSpacing: 1.5,
+          color: AppColors.white.withOpacity(0.4),
         ),
       ),
     );

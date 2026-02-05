@@ -41,11 +41,12 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
     final authState = ref.watch(authProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.white,
+      backgroundColor: AppColors.obsidian,
       appBar: AppBar(
-        title: const Text('Forgot Password'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back_ios_new, size: 20),
           onPressed: () => context.pop(),
         ),
       ),
@@ -53,94 +54,111 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
         child: Stack(
           children: [
             SingleChildScrollView(
-              padding: const EdgeInsets.all(AppDimensions.paddingL),
+              padding: const EdgeInsets.symmetric(horizontal: 30),
               child: Form(
                 key: _formKey,
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const SizedBox(height: AppDimensions.paddingXL),
-
-                    // Icon
+                    const SizedBox(height: 20),
+                    
+                    // Icon Pulse
                     Container(
-                      width: 80,
-                      height: 80,
+                      width: 100,
+                      height: 100,
                       decoration: BoxDecoration(
-                        color: AppColors.primary.withOpacity(0.1),
+                        color: AppColors.primary.withOpacity(0.05),
                         shape: BoxShape.circle,
+                        border: Border.all(color: AppColors.primary.withOpacity(0.1)),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.primary.withOpacity(0.1),
+                            blurRadius: 30,
+                            spreadRadius: 5,
+                          ),
+                        ],
                       ),
                       child: const Icon(
-                        Icons.lock_reset,
-                        size: 40,
+                        Icons.lock_reset_rounded,
+                        size: 48,
                         color: AppColors.primary,
                       ),
                     ),
-                    const SizedBox(height: AppDimensions.paddingL),
+                    const SizedBox(height: 40),
 
-                    // Title
                     const Text(
-                      'Reset Your Password',
+                      'Forgot Password',
                       style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.textPrimary,
+                        fontFamily: 'Outfit',
+                        fontSize: 32,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.white,
                       ),
                       textAlign: TextAlign.center,
                     ),
-                    const SizedBox(height: AppDimensions.paddingS),
-                    const Text(
-                      'Enter your email address and we\'ll send you a code to reset your password.',
+                    const SizedBox(height: 12),
+                    Text(
+                      'Enter your registered email address and we\'ll transmit a recovery code.',
                       style: TextStyle(
+                        fontFamily: 'Inter',
                         fontSize: 16,
-                        color: AppColors.textSecondary,
+                        color: AppColors.white.withOpacity(0.5),
+                        height: 1.5,
                       ),
                       textAlign: TextAlign.center,
                     ),
-                    const SizedBox(height: AppDimensions.paddingXXL),
+                    const SizedBox(height: 50),
 
-                    // Email field
+                    _buildFieldHeader('EMAIL ADDRESS'),
                     TextFormField(
                       controller: _emailController,
-                      decoration: const InputDecoration(
-                        labelText: AppStrings.email,
-                        prefixIcon: Icon(Icons.email_outlined),
+                      decoration: InputDecoration(
+                        hintText: 'nomad@voyage.com',
+                        prefixIcon: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Icon(Icons.email_outlined, color: AppColors.white.withOpacity(0.3)),
+                        ),
                       ),
                       keyboardType: TextInputType.emailAddress,
                       textInputAction: TextInputAction.done,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return AppStrings.errorFieldRequired;
-                        }
-                        if (!value.contains('@')) {
-                          return AppStrings.errorInvalidEmail;
-                        }
-                        return null;
-                      },
+                      validator: (value) => (value?.contains('@') ?? false) ? null : 'Invalid email',
                       onFieldSubmitted: (_) => _handleSubmit(),
                     ),
-                    const SizedBox(height: AppDimensions.paddingXL),
+                    const SizedBox(height: 50),
 
-                    // Submit button
                     SizedBox(
-                      height: AppDimensions.buttonHeightL,
+                      width: double.infinity,
+                      height: 64,
                       child: ElevatedButton(
                         onPressed: authState.isLoading ? null : _handleSubmit,
-                        child: const Text('Send Reset Code'),
+                        child: const Text('SEND RESET CODE', style: TextStyle(letterSpacing: 2)),
                       ),
                     ),
-                    const SizedBox(height: AppDimensions.paddingL),
+                    const SizedBox(height: 30),
 
-                    // Back to sign in
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Text(
-                          'Remember your password?',
-                          style: TextStyle(color: AppColors.textSecondary),
+                        Text(
+                          'REMEMBER YOUR KEY? ',
+                          style: TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            color: AppColors.white.withOpacity(0.4),
+                          ),
                         ),
-                        TextButton(
-                          onPressed: () => context.go('/sign-in'),
-                          child: const Text(AppStrings.signIn),
+                        GestureDetector(
+                          onTap: () => context.go('/sign-in'),
+                          child: const Text(
+                            'LOG IN',
+                            style: TextStyle(
+                              fontFamily: 'Outfit',
+                              fontSize: 12,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.primary,
+                              letterSpacing: 1,
+                            ),
+                          ),
                         ),
                       ],
                     ),
@@ -149,8 +167,27 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
               ),
             ),
             if (authState.isLoading)
-              const AppLoader(isOverlay: true, message: 'Sending code...'),
+              const AppLoader(isOverlay: true, message: 'SENDING...'),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFieldHeader(String label) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Padding(
+        padding: const EdgeInsets.only(left: 4, bottom: 8),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontFamily: 'Outfit',
+            fontSize: 12,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 1.5,
+            color: AppColors.white.withOpacity(0.4),
+          ),
         ),
       ),
     );

@@ -33,78 +33,42 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
     }
 
     return Scaffold(
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        color: AppColors.white, // White background
+      backgroundColor: AppColors.obsidian,
+      body: Center(
         child: TweenAnimationBuilder<double>(
           tween: Tween(begin: 0.0, end: 1.0),
-          duration: const Duration(milliseconds: 1500),
-          curve: Curves.easeOutCubic,
+          duration: const Duration(milliseconds: 2000),
+          curve: Curves.easeInOutSine,
           builder: (context, value, child) {
+            // Breathing pulse effect: scale 1.0 to 1.05
+            final scale = 1.0 + (0.05 * (1.0 - (1.0 - value).abs()));
+            final opacity = 0.8 + (0.2 * value);
+            
             return Opacity(
-              opacity: value,
+              opacity: opacity,
               child: Transform.scale(
-                scale: 0.8 + (0.2 * value),
+                scale: scale,
                 child: child,
               ),
             );
           },
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // Premium Logo Presentation
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 40), // Requested horizontal padding check? "should have white background... and horizontall padding". I'll add padding.
-                child: SvgPicture.asset(
-                  'assets/images/logo_nomadly.svg', 
-                  width: 140,
-                  height: 140,
-                   placeholderBuilder: (context) => const Icon(
-                    Icons.explore,
-                    size: 140,
-                    color: AppColors.primary, // Changed from white to primary
-                  ),
+          child: Container(
+            width: 120,
+            height: 120,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.primary.withOpacity(0.2),
+                  blurRadius: 40,
+                  spreadRadius: 10,
                 ),
-              ),
-              const SizedBox(height: 32),
-              
-              // Polished App Name
-              const Text(
-                AppStrings.appName,
-                style: TextStyle(
-                  color: AppColors.primary, // Changed from White
-                  fontSize: 44,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 2,
-                ),
-              ),
-              const SizedBox(height: 12),
-              
-              // Premium Tagline
-              Text(
-                AppStrings.appTagline.toUpperCase(),
-                style: TextStyle(
-                  color: AppColors.textSecondary, // Changed from White
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 4,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              
-              const SizedBox(height: 80),
-              
-              // Minimal Loading Indicator
-              const SizedBox(
-                width: 24,
-                height: 24,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2.5,
-                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary), // Changed from White
-                ),
-              ),
-            ],
+              ],
+            ),
+            child: Image.asset(
+              'assets/images/logo_mark_white.png',
+              fit: BoxFit.contain,
+            ),
           ),
         ),
       ),

@@ -7,6 +7,7 @@ import '../../../../core/constants/app_dimensions.dart';
 import '../../providers/auth_provider.dart';
 import '../../../../shared/widgets/app_loader.dart';
 import '../../../invite/data/repositories/invite_repository.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class SignUpScreen extends ConsumerStatefulWidget {
   const SignUpScreen({super.key});
@@ -99,21 +100,34 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
     final authState = ref.watch(authProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.white,
+      backgroundColor: AppColors.obsidian,
       appBar: AppBar(
-        title: Text(_currentStep == 0 ? 'The Gate' : 'The Passport'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
         leading: _currentStep > 0
             ? IconButton(
-                icon: const Icon(Icons.arrow_back),
+                icon: const Icon(Icons.arrow_back_ios_new, size: 20),
                 onPressed: () {
                   _pageController.previousPage(
-                    duration: const Duration(milliseconds: 300),
-                    curve: Curves.easeInOut,
+                    duration: const Duration(milliseconds: 600),
+                    curve: Curves.easeInOutCubic,
                   );
                   setState(() => _currentStep = 0);
                 },
               )
-            : null,
+            : IconButton(
+                icon: const Icon(Icons.close, size: 24),
+                onPressed: () => context.pop(),
+              ),
+        title: Text(
+          _currentStep == 0 ? 'INVITE CODE' : 'REGISTRATION',
+          style: const TextStyle(
+            fontFamily: 'Outfit',
+            fontSize: 16,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 2,
+          ),
+        ),
       ),
       body: SafeArea(
         child: Stack(
@@ -127,7 +141,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
               ],
             ),
             if (authState.isLoading)
-              const AppLoader(isOverlay: true, message: 'Creating Account...'),
+              const AppLoader(isOverlay: true, message: 'CREATING ACCOUNT...'),
           ],
         ),
       ),
@@ -136,75 +150,175 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
 
   Widget _buildInviteStep() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(AppDimensions.paddingL),
+      padding: const EdgeInsets.symmetric(horizontal: 30),
       child: Form(
         key: _inviteFormKey,
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const SizedBox(height: AppDimensions.paddingXXL),
-            const Icon(Icons.key, size: 80, color: AppColors.primary),
-            const SizedBox(height: AppDimensions.paddingXL),
-            const Text(
-              'Do you have the key?',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-                color: AppColors.textPrimary,
+            const SizedBox(height: 40),
+            
+            // Lock Animation Area
+            Container(
+              height: 120,
+              width: 120,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: (_inviteCodeValid ?? false) 
+                        ? AppColors.accent.withOpacity(0.2)
+                        : AppColors.primary.withOpacity(0.1),
+                    blurRadius: 40,
+                    spreadRadius: 10,
+                  ),
+                ],
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: SvgPicture.asset(
+                  (_inviteCodeValid ?? false)
+                      ? 'assets/icons/auth/icon_lock_open_glowing.svg'
+                      : 'assets/icons/auth/icon_lock_closed.svg',
+                  colorFilter: ColorFilter.mode(
+                    (_inviteCodeValid ?? false) ? AppColors.accent : AppColors.primary,
+                    BlendMode.srcIn,
+                  ),
+                ),
               ),
             ),
-            const SizedBox(height: AppDimensions.paddingS),
+            
+            const SizedBox(height: 40),
+            
             const Text(
-              'Nomadly is a private community. Enter your invite code to enter.',
+              'Join the Journey',
+              style: TextStyle(
+                fontFamily: 'Outfit',
+                fontSize: 32,
+                fontWeight: FontWeight.w800,
+                color: AppColors.white,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Nomadly is a private community.\nPlease enter your unique invitation code.',
               textAlign: TextAlign.center,
               style: TextStyle(
+                fontFamily: 'Inter',
                 fontSize: 16,
-                color: AppColors.textSecondary,
+                color: AppColors.white.withOpacity(0.5),
+                height: 1.5,
               ),
             ),
-            const SizedBox(height: 48),
-            TextFormField(
-              controller: _inviteCodeController,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 2,
+            
+            const SizedBox(height: 50),
+            
+            // Invite Input
+            Container(
+              decoration: BoxDecoration(
+                color: AppColors.white.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(
+                  color: AppColors.white.withOpacity(0.1),
+                  width: 1,
+                ),
               ),
-              decoration: InputDecoration(
-                hintText: 'NOMAD-XXXXX',
-                suffixIcon: _validatingCode
-                    ? const Padding(
-                        padding: EdgeInsets.all(12),
-                        child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)),
-                      )
-                    : _inviteCodeValid == null
-                        ? null
-                        : Icon(
-                            _inviteCodeValid! ? Icons.check_circle : Icons.cancel,
-                            color: _inviteCodeValid! ? Colors.green : Colors.red,
-                          ),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              child: TextFormField(
+                controller: _inviteCodeController,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontFamily: 'Outfit',
+                  fontSize: 24,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 4,
+                  color: AppColors.primary,
+                ),
+                decoration: InputDecoration(
+                  hintText: 'CODE-XXXXX',
+                  hintStyle: TextStyle(
+                    color: AppColors.white.withOpacity(0.1),
+                    letterSpacing: 4,
+                  ),
+                  fillColor: Colors.transparent,
+                  enabledBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                  suffixIcon: _validatingCode
+                      ? const Padding(
+                          padding: EdgeInsets.all(12),
+                          child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)),
+                        )
+                      : _inviteCodeValid == null
+                          ? null
+                          : Padding(
+                              padding: const EdgeInsets.all(12),
+                              child: SvgPicture.asset(
+                                _inviteCodeValid! 
+                                    ? 'assets/icons/auth/icon_check_circle.svg'
+                                    : 'assets/icons/auth/icon_warning_circle.svg',
+                                colorFilter: ColorFilter.mode(
+                                  _inviteCodeValid! ? AppColors.accent : AppColors.error,
+                                  BlendMode.srcIn,
+                                ),
+                                height: 24,
+                              ),
+                            ),
+                ),
+                textCapitalization: TextCapitalization.characters,
+                onChanged: _onInviteCodeChanged,
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) return '';
+                  if (_inviteCodeValid == false) return '';
+                  return null;
+                },
               ),
-              textCapitalization: TextCapitalization.characters,
-              onChanged: _onInviteCodeChanged,
-              validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return 'Enter your invite code';
-                }
-                if (_inviteCodeValid == false) {
-                  return 'Invalid invite code';
-                }
-                return null;
-              },
             ),
-            const SizedBox(height: 48),
+            
+            const SizedBox(height: 60),
+            
             SizedBox(
-              height: AppDimensions.buttonHeightL,
+              width: double.infinity,
+              height: 64,
               child: ElevatedButton(
                 onPressed: _inviteCodeValid == true ? _nextStep : null,
-                child: const Text('Unlock Access'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  disabledBackgroundColor: AppColors.primary.withOpacity(0.2),
+                ),
+                child: const Text(
+                  'CONTINUE',
+                  style: TextStyle(letterSpacing: 2),
+                ),
               ),
+            ),
+            
+            const SizedBox(height: 32),
+            
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  "ALREADY HAVE AN ACCOUNT? ",
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.white.withOpacity(0.4),
+                  ),
+                ),
+                GestureDetector(
+                  onTap: () => context.go('/sign-in'),
+                  child: const Text(
+                    'LOG IN',
+                    style: TextStyle(
+                      fontFamily: 'Outfit',
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.primary,
+                      letterSpacing: 1,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -214,134 +328,118 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
 
   Widget _buildIdentityStep() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(AppDimensions.paddingL),
+      padding: const EdgeInsets.symmetric(horizontal: 30),
       child: Form(
         key: _identityFormKey,
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            const SizedBox(height: 20),
             const Text(
-              'Complete your Passport',
+              'Registration',
               style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: AppColors.textPrimary,
+                fontFamily: 'Outfit',
+                fontSize: 32,
+                fontWeight: FontWeight.w800,
+                color: AppColors.white,
               ),
             ),
-            const SizedBox(height: AppDimensions.paddingS),
-            const Text(
-              'Tell us who you are',
+            const SizedBox(height: 8),
+            Text(
+              'Tell us how you should be known in the field.',
               style: TextStyle(
+                fontFamily: 'Inter',
                 fontSize: 16,
-                color: AppColors.textSecondary,
+                color: AppColors.white.withOpacity(0.5),
               ),
             ),
-            const SizedBox(height: AppDimensions.paddingXL),
+            const SizedBox(height: 40),
+            
+            _buildFieldHeader('FULL NAME'),
             TextFormField(
               controller: _nameController,
-              decoration: const InputDecoration(
-                labelText: AppStrings.name,
-                prefixIcon: Icon(Icons.person_outline),
+              decoration: InputDecoration(
+                hintText: 'Awais Ur Rehman',
+                prefixIcon: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Icon(Icons.person_outline, color: AppColors.white.withOpacity(0.3)),
+                ),
               ),
               textInputAction: TextInputAction.next,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return AppStrings.errorFieldRequired;
-                }
-                return null;
-              },
+              validator: (value) => value?.isEmpty ?? true ? 'Name is required' : null,
             ),
-            const SizedBox(height: AppDimensions.paddingM),
+            
+            const SizedBox(height: 24),
+            
+            _buildFieldHeader('EMAIL ADDRESS'),
             TextFormField(
               controller: _emailController,
-              decoration: const InputDecoration(
-                labelText: AppStrings.email,
-                prefixIcon: Icon(Icons.email_outlined),
+              decoration: InputDecoration(
+                hintText: 'nomad@voyage.com',
+                prefixIcon: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Icon(Icons.email_outlined, color: AppColors.white.withOpacity(0.3)),
+                ),
               ),
               keyboardType: TextInputType.emailAddress,
               textInputAction: TextInputAction.next,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return AppStrings.errorFieldRequired;
-                }
-                if (!value.contains('@')) {
-                  return AppStrings.errorInvalidEmail;
-                }
-                return null;
-              },
+              validator: (value) => (value?.contains('@') ?? false) ? null : 'Invalid email',
             ),
-            const SizedBox(height: AppDimensions.paddingM),
+            
+            const SizedBox(height: 24),
+            
+            _buildFieldHeader('PASSWORD'),
             TextFormField(
               controller: _passwordController,
-              decoration: InputDecoration(
-                labelText: AppStrings.password,
-                prefixIcon: const Icon(Icons.lock_outline),
-                suffixIcon: IconButton(
-                  icon: Icon(
-                    _obscurePassword
-                        ? Icons.visibility_outlined
-                        : Icons.visibility_off_outlined,
-                  ),
-                  onPressed: () {
-                    setState(() {
-                      _obscurePassword = !_obscurePassword;
-                    });
-                  },
-                ),
-              ),
               obscureText: _obscurePassword,
-              textInputAction: TextInputAction.next,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return AppStrings.errorFieldRequired;
-                }
-                if (value.length < 6) {
-                  return AppStrings.errorInvalidPassword;
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: AppDimensions.paddingM),
-            TextFormField(
-              controller: _confirmPasswordController,
               decoration: InputDecoration(
-                labelText: AppStrings.confirmPassword,
-                prefixIcon: const Icon(Icons.lock_outline),
-                suffixIcon: IconButton(
-                  icon: Icon(
-                    _obscureConfirmPassword
-                        ? Icons.visibility_outlined
-                        : Icons.visibility_off_outlined,
+                hintText: '••••••••',
+                prefixIcon: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: SvgPicture.asset(
+                    'assets/icons/auth/icon_lock_closed.svg',
+                    colorFilter: ColorFilter.mode(AppColors.white.withOpacity(0.3), BlendMode.srcIn),
                   ),
-                  onPressed: () {
-                    setState(() {
-                      _obscureConfirmPassword = !_obscureConfirmPassword;
-                    });
-                  },
+                ),
+                suffixIcon: IconButton(
+                  icon: SvgPicture.asset(
+                    _obscurePassword ? 'assets/icons/auth/icon_eye.svg' : 'assets/icons/auth/icon_eye_slash.svg',
+                    colorFilter: ColorFilter.mode(AppColors.white.withOpacity(0.3), BlendMode.srcIn),
+                  ),
+                  onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                 ),
               ),
-              obscureText: _obscureConfirmPassword,
-              textInputAction: TextInputAction.done,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return AppStrings.errorFieldRequired;
-                }
-                if (value != _passwordController.text) {
-                  return AppStrings.errorPasswordMismatch;
-                }
-                return null;
-              },
-              onFieldSubmitted: (_) => _handleSignUp(),
+              validator: (value) => (value?.length ?? 0) < 6 ? 'Min 6 characters' : null,
             ),
-            const SizedBox(height: AppDimensions.paddingXL),
+            
+            const SizedBox(height: 40),
+            
             SizedBox(
-              height: AppDimensions.buttonHeightL,
+              width: double.infinity,
+              height: 64,
               child: ElevatedButton(
                 onPressed: _handleSignUp,
-                child: const Text('Join the Community'),
+                child: const Text('CREATE ACCOUNT', style: TextStyle(letterSpacing: 2)),
               ),
             ),
+            const SizedBox(height: 20),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFieldHeader(String label) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 4, bottom: 8),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontFamily: 'Outfit',
+          fontSize: 12,
+          fontWeight: FontWeight.w800,
+          letterSpacing: 1.5,
+          color: AppColors.white.withOpacity(0.4),
         ),
       ),
     );

@@ -135,14 +135,40 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.obsidian,
       appBar: AppBar(
-        title: const Text('Pick Location'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        title: const Text(
+          'PICK LOCATION',
+          style: TextStyle(
+            fontFamily: 'Outfit',
+            fontSize: 14,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 2,
+          ),
+        ),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new, size: 20),
+          onPressed: () => Navigator.pop(context),
+        ),
         actions: [
-          TextButton(
-            onPressed: _isLoading ? null : _confirmSelection,
-            child: _isLoading 
-              ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator()) 
-              : const Text('Confirm'),
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: TextButton(
+              onPressed: _isLoading ? null : _confirmSelection,
+              child: _isLoading 
+                ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)) 
+                : const Text(
+                    'CONFIRM',
+                    style: TextStyle(
+                      fontFamily: 'Outfit',
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.primary,
+                      letterSpacing: 1,
+                    ),
+                  ),
+            ),
           ),
         ],
       ),
@@ -155,7 +181,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
               center: Point(coordinates: Position(_lng, _lat)),
               zoom: 13.0,
             ),
-            styleUri: MapboxStyles.LIGHT, // Minimal styling
+            styleUri: MapboxStyles.DARK, // Vantage Theme
           ),
           
           // Center Marker (Fixed)
@@ -172,7 +198,12 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
             right: 20,
             child: FloatingActionButton(
               onPressed: _determinePosition,
-              backgroundColor: AppColors.white,
+              backgroundColor: AppColors.obsidian,
+              elevation: 4,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+                side: BorderSide(color: AppColors.white.withOpacity(0.1)),
+              ),
               child: const Icon(Icons.my_location, color: AppColors.primary),
             ),
           ),

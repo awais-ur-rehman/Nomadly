@@ -3,17 +3,17 @@ class AppStrings {
 
   // App
   static const String appName = 'Nomadly';
-  static const String appTagline = 'Connect with digital nomads on the road';
+  static const String appTagline = 'Unlock the Convoy';
 
   // Onboarding
-  static const String onboardingTitle1 = 'Welcome to Nomadly';
-  static const String onboardingDesc1 = 'Connect with like-minded nomads on your journey';
-  static const String onboardingTitle2 = 'Find Your Tribe';
-  static const String onboardingDesc2 = 'Match with nomads based on your travel route';
-  static const String onboardingTitle3 = 'Meet Awesome People';
-  static const String onboardingDesc3 = 'Join activities and build lasting connections';
-  static const String onboardingTitle4 = 'Hangout with Friends';
-  static const String onboardingDesc4 = 'Create memories and share experiences';
+  static const String onboardingTitle1 = 'Welcome to the Inner Circle';
+  static const String onboardingDesc1 = 'A high-trust community built for those who call the road home.';
+  static const String onboardingTitle2 = 'High-Trust, Invite-Only';
+  static const String onboardingDesc2 = 'Safe, verified, and exclusive. You are among the elite travelers.';
+  static const String onboardingTitle3 = 'Find Your Convoy';
+  static const String onboardingDesc3 = 'Scale your adventures by matching with nomads on your exact route.';
+  static const String onboardingTitle4 = 'Build. Repair. Explore.';
+  static const String onboardingDesc4 = 'Access the nomad marketplace for expert rig setups and repairs.';
   static const String skip = 'Skip';
   static const String next = 'Next';
   static const String getStarted = 'Get Started';
