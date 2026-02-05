@@ -12,25 +12,35 @@ import '../../features/auth/presentation/screens/reset_password_screen.dart';
 import '../../features/profile/presentation/screens/edit_profile_screen.dart';
 import '../../features/profile/presentation/screens/settings_screen.dart';
 import '../../features/profile/presentation/screens/followers_list_screen.dart';
+import '../../features/profile/presentation/screens/matching_preferences_screen.dart';
 import '../../features/discovery/presentation/screens/home_screen.dart';
 import '../../features/discovery/presentation/screens/search_users_screen.dart';
 import '../../features/chat/presentation/screens/chat_screen.dart';
 import '../../features/social/presentation/screens/create_post_screen.dart';
 import '../../features/social/presentation/screens/post_detail_screen.dart';
 import '../../features/social/presentation/screens/create_story_screen.dart';
+import '../../features/social/presentation/screens/create_trip_screen.dart';
 import '../../features/marketplace/presentation/screens/marketplace_screen.dart';
 import '../../features/marketplace/presentation/screens/builder_detail_screen.dart';
-import '../../features/social/presentation/screens/notifications_screen.dart';
+import '../../features/marketplace/presentation/screens/create_job_screen.dart';
+import '../../features/marketplace/presentation/screens/job_detail_screen.dart';
 import '../../shared/models/builder.dart';
+import '../../shared/models/job.dart';
+import '../../features/social/presentation/screens/notifications_screen.dart';
 import '../../features/profile/presentation/screens/user_profile_screen.dart' as profile;
 import '../../features/discovery/presentation/screens/user_profile_screen.dart' as discovery;
 import '../../features/auth/providers/auth_provider.dart';
 import '../../features/activities/presentation/screens/activity_detail_screen.dart';
 import '../../features/activities/presentation/screens/create_activity_screen.dart';
 import '../../features/activities/presentation/screens/activities_list_screen.dart';
+import '../../features/profile/presentation/screens/builder_setup_screen.dart';
 import '../../shared/models/user.dart';
 import '../../shared/models/activity.dart'; // Import Activity model
 import '../../shared/models/post.dart';
+import '../../features/map/presentation/screens/location_picker_screen.dart';
+import '../../features/safety/presentation/screens/blocked_users_screen.dart';
+import '../../features/invite/presentation/screens/invite_screen.dart';
+import '../../features/verification/presentation/screens/verification_screen.dart';
 
 /// Listenable that notifies GoRouter when auth state changes
 class RouterListenable extends ChangeNotifier {
@@ -122,6 +132,14 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/settings',
         builder: (context, state) => const SettingsScreen(),
       ),
+      GoRoute(
+        path: '/matching-preferences',
+        builder: (context, state) => const MatchingPreferencesScreen(),
+      ),
+      GoRoute(
+        path: '/builder-setup',
+        builder: (context, state) => const BuilderSetupScreen(),
+      ),
 
       // Forgot Password
       GoRoute(
@@ -178,7 +196,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/chat/:id',
         builder: (context, state) {
           final conversationId = state.pathParameters['id']!;
-          final otherUser = state.extra as User;
+          final otherUser = state.extra as User?;
           return ChatScreen(conversationId: conversationId, otherUser: otherUser);
         },
       ),
@@ -187,8 +205,9 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/activity/:id',
         builder: (context, state) {
-          final activity = state.extra as Activity;
-          return ActivityDetailScreen(activity: activity);
+          final id = state.pathParameters['id']!;
+          final activity = state.extra as Activity?;
+          return ActivityDetailScreen(activityId: id, preloadedActivity: activity);
         },
       ),
 
@@ -208,6 +227,11 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/create-post',
         builder: (context, state) => const CreatePostScreen(),
+      ),
+      // Create Trip
+      GoRoute(
+        path: '/create-trip',
+        builder: (context, state) => const CreateTripScreen(),
       ),
       GoRoute(
         path: '/post/:id',
@@ -240,10 +264,44 @@ final routerProvider = Provider<GoRouter>((ref) {
           return BuilderDetailScreen(builder: builder);
         },
       ),
+      // Create Job
+      GoRoute(
+        path: '/marketplace/create-job',
+        builder: (context, state) => const CreateJobScreen(),
+      ),
+      // Job Detail
+      GoRoute(
+        path: '/job/:id',
+        builder: (context, state) {
+          final id = state.pathParameters['id']!;
+          final job = state.extra as Job?;
+          return JobDetailScreen(jobId: id, preloadedJob: job);
+        },
+      ),
+      // Location Picker (returns LatLng via pop)
+      GoRoute(
+        path: '/location-picker',
+        builder: (context, state) => const LocationPickerScreen(),
+      ),
       // Search Users
       GoRoute(
         path: '/search',
         builder: (context, state) => const SearchUsersScreen(),
+      ),
+      // Blocked Users
+      GoRoute(
+        path: '/blocked-users',
+        builder: (context, state) => const BlockedUsersScreen(),
+      ),
+      // Invite Codes
+      GoRoute(
+        path: '/invites',
+        builder: (context, state) => const InviteScreen(),
+      ),
+      // Verification
+      GoRoute(
+        path: '/verification',
+        builder: (context, state) => const VerificationScreen(),
       ),
     ],
   );

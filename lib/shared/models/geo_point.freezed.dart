@@ -116,11 +116,12 @@ class __$$GeoPointImplCopyWithImpl<$Res>
 
 /// @nodoc
 @JsonSerializable()
-class _$GeoPointImpl implements _GeoPoint {
+class _$GeoPointImpl extends _GeoPoint {
   const _$GeoPointImpl({
     required this.type,
     required final List<double> coordinates,
-  }) : _coordinates = coordinates;
+  }) : _coordinates = coordinates,
+       super._();
 
   factory _$GeoPointImpl.fromJson(Map<String, dynamic> json) =>
       _$$GeoPointImplFromJson(json);
@@ -176,11 +177,12 @@ class _$GeoPointImpl implements _GeoPoint {
   }
 }
 
-abstract class _GeoPoint implements GeoPoint {
+abstract class _GeoPoint extends GeoPoint {
   const factory _GeoPoint({
     required final String type,
     required final List<double> coordinates,
   }) = _$GeoPointImpl;
+  const _GeoPoint._() : super._();
 
   factory _GeoPoint.fromJson(Map<String, dynamic> json) =
       _$GeoPointImpl.fromJson;

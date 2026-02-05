@@ -36,16 +36,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
       body: Container(
         width: double.infinity,
         height: double.infinity,
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              AppColors.primary,
-              Color(0xFF2E7D32), // Custom darker shade for depth
-            ],
-          ),
-        ),
+        color: AppColors.white, // White background
         child: TweenAnimationBuilder<double>(
           tween: Tween(begin: 0.0, end: 1.0),
           duration: const Duration(milliseconds: 1500),
@@ -64,19 +55,15 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
             children: [
               // Premium Logo Presentation
               Container(
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.15),
-                  shape: BoxShape.circle,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 40), // Requested horizontal padding check? "should have white background... and horizontall padding". I'll add padding.
                 child: SvgPicture.asset(
-                  'assets/images/splash.svg',
+                  'assets/images/logo_nomadly.svg', 
                   width: 140,
                   height: 140,
-                  placeholderBuilder: (context) => const Icon(
+                   placeholderBuilder: (context) => const Icon(
                     Icons.explore,
                     size: 140,
-                    color: Colors.white,
+                    color: AppColors.primary, // Changed from white to primary
                   ),
                 ),
               ),
@@ -86,7 +73,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
               const Text(
                 AppStrings.appName,
                 style: TextStyle(
-                  color: AppColors.white,
+                  color: AppColors.primary, // Changed from White
                   fontSize: 44,
                   fontWeight: FontWeight.w900,
                   letterSpacing: 2,
@@ -98,7 +85,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
               Text(
                 AppStrings.appTagline.toUpperCase(),
                 style: TextStyle(
-                  color: AppColors.white.withValues(alpha: 0.8),
+                  color: AppColors.textSecondary, // Changed from White
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
                   letterSpacing: 4,
@@ -114,7 +101,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
                 height: 24,
                 child: CircularProgressIndicator(
                   strokeWidth: 2.5,
-                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.white),
+                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary), // Changed from White
                 ),
               ),
             ],

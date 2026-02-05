@@ -30,6 +30,7 @@ mixin _$User {
   String? get phone => throw _privateConstructorUsedError;
   Profile? get profile => throw _privateConstructorUsedError;
   Rig? get rig => throw _privateConstructorUsedError;
+  @JsonKey(name: 'travel_route')
   TravelRoute? get travelRoute => throw _privateConstructorUsedError;
   @JsonKey(name: 'is_builder')
   bool get isBuilder => throw _privateConstructorUsedError;
@@ -37,6 +38,13 @@ mixin _$User {
   bool get isPrivate => throw _privateConstructorUsedError;
   @JsonKey(name: 'nomad_id')
   NomadId? get nomadId => throw _privateConstructorUsedError;
+  Verification? get verification => throw _privateConstructorUsedError;
+  @JsonKey(name: 'matching_profile')
+  MatchingProfile? get matchingProfile => throw _privateConstructorUsedError;
+  @JsonKey(name: 'invited_by')
+  String? get invitedBy => throw _privateConstructorUsedError;
+  @JsonKey(name: 'invite_count')
+  int get inviteCount => throw _privateConstructorUsedError;
   @JsonKey(name: 'is_active')
   bool get isActive => throw _privateConstructorUsedError;
   int get followerCount => throw _privateConstructorUsedError;
@@ -71,10 +79,14 @@ abstract class $UserCopyWith<$Res> {
     String? phone,
     Profile? profile,
     Rig? rig,
-    TravelRoute? travelRoute,
+    @JsonKey(name: 'travel_route') TravelRoute? travelRoute,
     @JsonKey(name: 'is_builder') bool isBuilder,
     @JsonKey(name: 'is_private') bool isPrivate,
     @JsonKey(name: 'nomad_id') NomadId? nomadId,
+    Verification? verification,
+    @JsonKey(name: 'matching_profile') MatchingProfile? matchingProfile,
+    @JsonKey(name: 'invited_by') String? invitedBy,
+    @JsonKey(name: 'invite_count') int inviteCount,
     @JsonKey(name: 'is_active') bool isActive,
     int followerCount,
     int followingCount,
@@ -89,6 +101,8 @@ abstract class $UserCopyWith<$Res> {
   $RigCopyWith<$Res>? get rig;
   $TravelRouteCopyWith<$Res>? get travelRoute;
   $NomadIdCopyWith<$Res>? get nomadId;
+  $VerificationCopyWith<$Res>? get verification;
+  $MatchingProfileCopyWith<$Res>? get matchingProfile;
 }
 
 /// @nodoc
@@ -117,6 +131,10 @@ class _$UserCopyWithImpl<$Res, $Val extends User>
     Object? isBuilder = null,
     Object? isPrivate = null,
     Object? nomadId = freezed,
+    Object? verification = freezed,
+    Object? matchingProfile = freezed,
+    Object? invitedBy = freezed,
+    Object? inviteCount = null,
     Object? isActive = null,
     Object? followerCount = null,
     Object? followingCount = null,
@@ -172,6 +190,22 @@ class _$UserCopyWithImpl<$Res, $Val extends User>
                 ? _value.nomadId
                 : nomadId // ignore: cast_nullable_to_non_nullable
                       as NomadId?,
+            verification: freezed == verification
+                ? _value.verification
+                : verification // ignore: cast_nullable_to_non_nullable
+                      as Verification?,
+            matchingProfile: freezed == matchingProfile
+                ? _value.matchingProfile
+                : matchingProfile // ignore: cast_nullable_to_non_nullable
+                      as MatchingProfile?,
+            invitedBy: freezed == invitedBy
+                ? _value.invitedBy
+                : invitedBy // ignore: cast_nullable_to_non_nullable
+                      as String?,
+            inviteCount: null == inviteCount
+                ? _value.inviteCount
+                : inviteCount // ignore: cast_nullable_to_non_nullable
+                      as int,
             isActive: null == isActive
                 ? _value.isActive
                 : isActive // ignore: cast_nullable_to_non_nullable
@@ -264,6 +298,34 @@ class _$UserCopyWithImpl<$Res, $Val extends User>
       return _then(_value.copyWith(nomadId: value) as $Val);
     });
   }
+
+  /// Create a copy of User
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $VerificationCopyWith<$Res>? get verification {
+    if (_value.verification == null) {
+      return null;
+    }
+
+    return $VerificationCopyWith<$Res>(_value.verification!, (value) {
+      return _then(_value.copyWith(verification: value) as $Val);
+    });
+  }
+
+  /// Create a copy of User
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $MatchingProfileCopyWith<$Res>? get matchingProfile {
+    if (_value.matchingProfile == null) {
+      return null;
+    }
+
+    return $MatchingProfileCopyWith<$Res>(_value.matchingProfile!, (value) {
+      return _then(_value.copyWith(matchingProfile: value) as $Val);
+    });
+  }
 }
 
 /// @nodoc
@@ -282,10 +344,14 @@ abstract class _$$UserImplCopyWith<$Res> implements $UserCopyWith<$Res> {
     String? phone,
     Profile? profile,
     Rig? rig,
-    TravelRoute? travelRoute,
+    @JsonKey(name: 'travel_route') TravelRoute? travelRoute,
     @JsonKey(name: 'is_builder') bool isBuilder,
     @JsonKey(name: 'is_private') bool isPrivate,
     @JsonKey(name: 'nomad_id') NomadId? nomadId,
+    Verification? verification,
+    @JsonKey(name: 'matching_profile') MatchingProfile? matchingProfile,
+    @JsonKey(name: 'invited_by') String? invitedBy,
+    @JsonKey(name: 'invite_count') int inviteCount,
     @JsonKey(name: 'is_active') bool isActive,
     int followerCount,
     int followingCount,
@@ -304,6 +370,10 @@ abstract class _$$UserImplCopyWith<$Res> implements $UserCopyWith<$Res> {
   $TravelRouteCopyWith<$Res>? get travelRoute;
   @override
   $NomadIdCopyWith<$Res>? get nomadId;
+  @override
+  $VerificationCopyWith<$Res>? get verification;
+  @override
+  $MatchingProfileCopyWith<$Res>? get matchingProfile;
 }
 
 /// @nodoc
@@ -329,6 +399,10 @@ class __$$UserImplCopyWithImpl<$Res>
     Object? isBuilder = null,
     Object? isPrivate = null,
     Object? nomadId = freezed,
+    Object? verification = freezed,
+    Object? matchingProfile = freezed,
+    Object? invitedBy = freezed,
+    Object? inviteCount = null,
     Object? isActive = null,
     Object? followerCount = null,
     Object? followingCount = null,
@@ -384,6 +458,22 @@ class __$$UserImplCopyWithImpl<$Res>
             ? _value.nomadId
             : nomadId // ignore: cast_nullable_to_non_nullable
                   as NomadId?,
+        verification: freezed == verification
+            ? _value.verification
+            : verification // ignore: cast_nullable_to_non_nullable
+                  as Verification?,
+        matchingProfile: freezed == matchingProfile
+            ? _value.matchingProfile
+            : matchingProfile // ignore: cast_nullable_to_non_nullable
+                  as MatchingProfile?,
+        invitedBy: freezed == invitedBy
+            ? _value.invitedBy
+            : invitedBy // ignore: cast_nullable_to_non_nullable
+                  as String?,
+        inviteCount: null == inviteCount
+            ? _value.inviteCount
+            : inviteCount // ignore: cast_nullable_to_non_nullable
+                  as int,
         isActive: null == isActive
             ? _value.isActive
             : isActive // ignore: cast_nullable_to_non_nullable
@@ -432,10 +522,14 @@ class _$UserImpl extends _User {
     this.phone,
     this.profile,
     this.rig,
-    this.travelRoute,
+    @JsonKey(name: 'travel_route') this.travelRoute,
     @JsonKey(name: 'is_builder') this.isBuilder = false,
     @JsonKey(name: 'is_private') this.isPrivate = false,
     @JsonKey(name: 'nomad_id') this.nomadId,
+    this.verification,
+    @JsonKey(name: 'matching_profile') this.matchingProfile,
+    @JsonKey(name: 'invited_by') this.invitedBy,
+    @JsonKey(name: 'invite_count') this.inviteCount = 0,
     @JsonKey(name: 'is_active') this.isActive = true,
     this.followerCount = 0,
     this.followingCount = 0,
@@ -466,6 +560,7 @@ class _$UserImpl extends _User {
   @override
   final Rig? rig;
   @override
+  @JsonKey(name: 'travel_route')
   final TravelRoute? travelRoute;
   @override
   @JsonKey(name: 'is_builder')
@@ -476,6 +571,17 @@ class _$UserImpl extends _User {
   @override
   @JsonKey(name: 'nomad_id')
   final NomadId? nomadId;
+  @override
+  final Verification? verification;
+  @override
+  @JsonKey(name: 'matching_profile')
+  final MatchingProfile? matchingProfile;
+  @override
+  @JsonKey(name: 'invited_by')
+  final String? invitedBy;
+  @override
+  @JsonKey(name: 'invite_count')
+  final int inviteCount;
   @override
   @JsonKey(name: 'is_active')
   final bool isActive;
@@ -503,7 +609,7 @@ class _$UserImpl extends _User {
 
   @override
   String toString() {
-    return 'User(idSecondary: $idSecondary, id: $id, email: $email, username: $username, phone: $phone, profile: $profile, rig: $rig, travelRoute: $travelRoute, isBuilder: $isBuilder, isPrivate: $isPrivate, nomadId: $nomadId, isActive: $isActive, followerCount: $followerCount, followingCount: $followingCount, isFollowing: $isFollowing, followsMe: $followsMe, isFollowingPending: $isFollowingPending, createdAt: $createdAt, updatedAt: $updatedAt)';
+    return 'User(idSecondary: $idSecondary, id: $id, email: $email, username: $username, phone: $phone, profile: $profile, rig: $rig, travelRoute: $travelRoute, isBuilder: $isBuilder, isPrivate: $isPrivate, nomadId: $nomadId, verification: $verification, matchingProfile: $matchingProfile, invitedBy: $invitedBy, inviteCount: $inviteCount, isActive: $isActive, followerCount: $followerCount, followingCount: $followingCount, isFollowing: $isFollowing, followsMe: $followsMe, isFollowingPending: $isFollowingPending, createdAt: $createdAt, updatedAt: $updatedAt)';
   }
 
   @override
@@ -527,6 +633,14 @@ class _$UserImpl extends _User {
             (identical(other.isPrivate, isPrivate) ||
                 other.isPrivate == isPrivate) &&
             (identical(other.nomadId, nomadId) || other.nomadId == nomadId) &&
+            (identical(other.verification, verification) ||
+                other.verification == verification) &&
+            (identical(other.matchingProfile, matchingProfile) ||
+                other.matchingProfile == matchingProfile) &&
+            (identical(other.invitedBy, invitedBy) ||
+                other.invitedBy == invitedBy) &&
+            (identical(other.inviteCount, inviteCount) ||
+                other.inviteCount == inviteCount) &&
             (identical(other.isActive, isActive) ||
                 other.isActive == isActive) &&
             (identical(other.followerCount, followerCount) ||
@@ -560,6 +674,10 @@ class _$UserImpl extends _User {
     isBuilder,
     isPrivate,
     nomadId,
+    verification,
+    matchingProfile,
+    invitedBy,
+    inviteCount,
     isActive,
     followerCount,
     followingCount,
@@ -593,10 +711,14 @@ abstract class _User extends User {
     final String? phone,
     final Profile? profile,
     final Rig? rig,
-    final TravelRoute? travelRoute,
+    @JsonKey(name: 'travel_route') final TravelRoute? travelRoute,
     @JsonKey(name: 'is_builder') final bool isBuilder,
     @JsonKey(name: 'is_private') final bool isPrivate,
     @JsonKey(name: 'nomad_id') final NomadId? nomadId,
+    final Verification? verification,
+    @JsonKey(name: 'matching_profile') final MatchingProfile? matchingProfile,
+    @JsonKey(name: 'invited_by') final String? invitedBy,
+    @JsonKey(name: 'invite_count') final int inviteCount,
     @JsonKey(name: 'is_active') final bool isActive,
     final int followerCount,
     final int followingCount,
@@ -627,6 +749,7 @@ abstract class _User extends User {
   @override
   Rig? get rig;
   @override
+  @JsonKey(name: 'travel_route')
   TravelRoute? get travelRoute;
   @override
   @JsonKey(name: 'is_builder')
@@ -637,6 +760,17 @@ abstract class _User extends User {
   @override
   @JsonKey(name: 'nomad_id')
   NomadId? get nomadId;
+  @override
+  Verification? get verification;
+  @override
+  @JsonKey(name: 'matching_profile')
+  MatchingProfile? get matchingProfile;
+  @override
+  @JsonKey(name: 'invited_by')
+  String? get invitedBy;
+  @override
+  @JsonKey(name: 'invite_count')
+  int get inviteCount;
   @override
   @JsonKey(name: 'is_active')
   bool get isActive;

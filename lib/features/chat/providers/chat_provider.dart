@@ -1,4 +1,7 @@
+import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:logger/logger.dart';
+import '../../../../shared/services/image_upload_service.dart';
 import '../../../../shared/models/conversation.dart';
 import '../../../../shared/models/message.dart';
 import '../../../../shared/services/socket_service.dart';
@@ -38,6 +41,7 @@ class ChatListState {
 class ChatListNotifier extends StateNotifier<ChatListState> {
   final ChatRepository _repository;
   final SocketService _socketService;
+  final _logger = Logger();
 
   ChatListNotifier(this._repository)
       : _socketService = SocketService(),
@@ -63,6 +67,7 @@ class ChatListNotifier extends StateNotifier<ChatListState> {
     }
   }
 
+// ...
   Future<Conversation?> createConversation(String targetUserId) async {
     try {
       final conversation = await _repository.createConversation(targetUserId);
@@ -71,6 +76,7 @@ class ChatListNotifier extends StateNotifier<ChatListState> {
       await loadConversations();
       return conversation;
     } catch (e) {
+      _logger.e('Failed to create/parse conversation: $e');
       return null;
     }
   }
@@ -147,9 +153,14 @@ class ActiveChatNotifier extends StateNotifier<ActiveChatState> {
        // Allow dynamic data handling, assume it matches Message structure or is JSON
        try {
          final message = Message.fromJson(data);
+         // Deduplicate
+         if (state.messages.any((m) => m.id == message.id)) return;
+         
          // Append to list
          state = state.copyWith(messages: [message, ...state.messages]);
-       } catch (e) {/* log error */}
+       } catch (e) {
+          // log error
+       }
     });
 
     _socketService.onTyping((data) {
@@ -161,13 +172,13 @@ class ActiveChatNotifier extends StateNotifier<ActiveChatState> {
   Future<void> _loadMessages(String conversationId) async {
     try {
       final messages = await _repository.getMessages(conversationId);
-      state = state.copyWith(isLoading: false, messages: messages);
+      state = state.copyWith(isLoading: false, messages: messages.reversed.toList());
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
     }
   }
 
-  Future<void> sendMessage(String messageContent) async {
+  Future<void> sendMessage(String messageContent, {String type = 'text'}) async {
     if (state.conversationId == null) return;
     
     // Optimistic update skipped due to missing AuthProvider reference for 'me' user.
@@ -178,6 +189,7 @@ class ActiveChatNotifier extends StateNotifier<ActiveChatState> {
       final sentMessage = await _repository.sendMessage(
         conversationId: state.conversationId!,
         message: messageContent,
+        type: type,
       );
       
       // 2. Add to list (if socket hasn't already)
@@ -192,6 +204,23 @@ class ActiveChatNotifier extends StateNotifier<ActiveChatState> {
     } catch (e) {
       // Show error
       state = state.copyWith(error: 'Failed to send: ${e.toString()}');
+    }
+  }
+
+  Future<void> sendImageMessage(String imagePath) async {
+    try {
+      // 1. Upload image to Cloudinary via backend
+      final uploadService = ImageUploadService();
+      final imageUrl = await uploadService.uploadChatImage(File(imagePath));
+      
+      if (imageUrl != null) {
+        // 2. Send the message with the Cloudinary URL
+        await sendMessage(imageUrl, type: 'image');
+      } else {
+        state = state.copyWith(error: 'Failed to upload image. Please try again.');
+      }
+    } catch (e) {
+      state = state.copyWith(error: 'Image send failed: ${e.toString()}');
     }
   }
   

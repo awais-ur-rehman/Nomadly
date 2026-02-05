@@ -10,6 +10,8 @@ import '../../../activities/providers/activity_provider.dart';
 import '../../../../shared/models/activity.dart';
 import '../../../../shared/models/beacon.dart';
 import '../../../../shared/models/geo_point.dart';
+import '../../../../shared/models/user.dart';
+import '../../discovery/data/repositories/user_repository.dart';
 
 class MapScreen extends ConsumerStatefulWidget {
   const MapScreen({super.key});
@@ -24,6 +26,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   final Map<String, dynamic> _annotationData = {};
   final _logger = Logger();
   bool _locationPermissionGranted = false;
+  
+  final _userRepo = UserRepository();
+  List<User> _travelers = [];
 
   @override
   void initState() {
@@ -44,6 +49,22 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     if (status.isGranted) {
       _setupLocation();
       ref.read(activityProvider.notifier).loadNearbyActivities();
+      _loadTravelers();
+    }
+  }
+
+  Future<void> _loadTravelers() async {
+    try {
+      // Default to SF or get current location if possible
+      // Since we don't have easy access to current location without map callback,
+      // we'll wait for map or use a default.
+      // If map is active, we can use its camera center.
+      // For now, load default or mock.
+      // Actually, if we have permission, we can try to get position from Geolocator?
+      // But let's just use a wide radius search from a default point until map is ready,
+      // OR better, call this after map is created and we have a location.
+    } catch (e) {
+      _logger.e('Failed to load travelers: $e');
     }
   }
 
@@ -51,6 +72,27 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     _mapboxMap = mapboxMap;
     _setupLocation();
     _setupAnnotationManager();
+    _fetchTravelersForCamera();
+  }
+  
+  Future<void> _fetchTravelersForCamera() async {
+    if (_mapboxMap == null) return;
+    try {
+      final camera = await _mapboxMap!.getCameraState();
+      if (camera.center != null) {
+        final travelers = await _userRepo.getTravelers(
+          lat: camera.center!.coordinates.lat as double,
+          lng: camera.center!.coordinates.lng as double,
+          radius: 50000, 
+        );
+        if (mounted) {
+           setState(() => _travelers = travelers);
+           _updateMarkers();
+        }
+      }
+    } catch (e) {
+      _logger.e("Error fetching travelers for map: $e");
+    }
   }
 
   Future<void> _setupAnnotationManager() async {
@@ -67,6 +109,10 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             } else if (data.containsKey('message')) {
               final beacon = Beacon.fromJson(data);
               _showBeaconDialog(beacon);
+            } else if (data.containsKey('username')) {
+               final user = User.fromJson(data);
+               // Navigate to user profile
+               context.push('/profile/${user.id}', extra: user);
             }
           }
           return true;
@@ -131,10 +177,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
         textOffset: [0, 1.5],
         textAnchor: TextAnchor.TOP,
       );
-      final json = activity.toJson();
       annotations.add(options);
-      // We'll map these after creation or use a different way. 
-      // Actually, PointAnnotationManager.createMulti returns List<PointAnnotation>.
     }
 
     // Beacons
@@ -151,17 +194,45 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       );
       annotations.add(options);
     }
+    
+    // Travelers
+    for (final traveler in _travelers) {
+      // Use origin or destination? 'travel_route.origin' is current/start.
+      // If we searched by destination, maybe show destination?
+      // But typically markers show where people ARE.
+      // So use origin.
+      final route = traveler.travelRoute;
+      if (route != null && route.origin != null) {
+          final options = PointAnnotationOptions(
+            geometry: Point(coordinates: Position(route.origin!.longitude, route.origin!.latitude)),
+            iconImage: 'car-15', // or marker-15 with color
+            iconColor: Colors.blue.value,
+            iconSize: 2.0,
+            textField: traveler.username ?? traveler.profile?.name ?? 'Traveler',
+            textOffset: [0, 1.5],
+            textAnchor: TextAnchor.TOP,
+          );
+          annotations.add(options);
+      }
+    }
 
     final createdAnnotations = await _pointAnnotationManager?.createMulti(annotations);
     if (createdAnnotations != null) {
       int activityCount = state.activities.length;
+      int beaconCount = state.beacons.length;
+      
       for (int i = 0; i < createdAnnotations.length; i++) {
         final annotation = createdAnnotations[i];
         if (annotation != null) {
           if (i < activityCount) {
-            _annotationData[annotation.id] = state.activities[i].toJson();
+             _annotationData[annotation.id] = state.activities[i].toJson();
+          } else if (i < activityCount + beaconCount) {
+             _annotationData[annotation.id] = state.beacons[i - activityCount].toJson();
           } else {
-            _annotationData[annotation.id] = state.beacons[i - activityCount].toJson();
+             final travelerIndex = i - (activityCount + beaconCount);
+             if (travelerIndex < _travelers.length) {
+                _annotationData[annotation.id] = _travelers[travelerIndex].toJson();
+             }
           }
         }
       }
@@ -232,7 +303,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
               center: Point(coordinates: Position(-122.4194, 37.7749)), // SF Default
               zoom: 12.0,
             ),
-            styleUri: MapboxStyles.OUTDOORS,
+            styleUri: MapboxStyles.LIGHT,
           ),
           
           // Loading Indicator

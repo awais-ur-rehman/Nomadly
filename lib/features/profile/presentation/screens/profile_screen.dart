@@ -1,261 +1,150 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:cached_network_image/cached_network_image.dart';
-import '../../../../core/constants/app_colors.dart';
-import '../../../../core/constants/app_dimensions.dart';
-import '../../../../core/constants/app_strings.dart';
-import '../../../auth/providers/auth_provider.dart';
+import 'package:nomadly/features/auth/providers/auth_provider.dart';
+import 'package:nomadly/features/social/providers/social_provider.dart';
+import 'package:nomadly/shared/models/user.dart';
+import 'package:nomadly/features/profile/presentation/widgets/profile_view_base.dart';
+import 'package:nomadly/core/constants/app_dimensions.dart';
+import 'package:nomadly/core/constants/app_colors.dart';
 
-class ProfileScreen extends ConsumerWidget {
+class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final authState = ref.watch(authProvider);
-    final user = authState.user;
+  ConsumerState<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends ConsumerState<ProfileScreen> {
+  List<Post> _posts = [];
+  bool _loadingPosts = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadPosts());
+  }
+
+  Future<void> _loadPosts() async {
+    final user = ref.read(authProvider).user;
+    if (user == null) return;
+    setState(() => _loadingPosts = true);
+    try {
+      final posts = await ref.read(socialRepositoryProvider).getUserPosts(user.uid);
+      if (mounted) setState(() => _posts = posts);
+    } catch (_) {}
+    if (mounted) setState(() => _loadingPosts = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final user = ref.watch(authProvider).user;
 
     if (user == null) {
       return const Center(child: CircularProgressIndicator());
     }
 
     final profile = user.profile;
-    final rig = user.rig;
-
     if (profile == null) {
-      return Scaffold(
-        appBar: AppBar(title: const Text(AppStrings.profile)),
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Text('Profile not completed'),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () => context.push('/profile-setup'),
-                child: const Text('Complete Profile'),
-              ),
-            ],
-          ),
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text('Profile not completed'),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () => context.push('/profile-setup'),
+              child: const Text('Complete Profile'),
+            ),
+          ],
         ),
       );
     }
 
-    return SingleChildScrollView(
-      child: Column(
-        children: [
-            const SizedBox(height: AppDimensions.paddingL),
-            // Avatar
-            Center(
-              child: Stack(
-                children: [
-                   Container(
-                    width: 120,
-                    height: 120,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(color: AppColors.primary.withOpacity(0.2), width: 2),
-                    ),
-                    child: ClipOval(
-                      child: profile.photoUrl != null && profile.photoUrl!.isNotEmpty
-                          ? CachedNetworkImage(
-                              imageUrl: profile.photoUrl!,
-                              fit: BoxFit.cover,
-                              placeholder: (context, url) => const CircularProgressIndicator(strokeWidth: 2),
-                              errorWidget: (context, url, error) => const Icon(Icons.person, size: 60),
-                            )
-                          : const Icon(Icons.person, size: 60, color: AppColors.grey),
-                    ),
-                  ),
-                  Positioned(
-                    bottom: 0,
-                    right: 0,
-                    child: Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(
-                        color: AppColors.primary,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: AppColors.white, width: 2),
-                      ),
-                      child: const Icon(
-                        Icons.edit,
-                        color: AppColors.white,
-                        size: 20,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: AppDimensions.paddingM),
-
-            // Name & Age
-            Text(
-              profile.name ?? 'User',
-              style: const TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            if (profile.age != null)
-              Text(
-                '${profile.age} years old',
-                style: const TextStyle(
-                  fontSize: 16,
-                  color: AppColors.textSecondary,
-                ),
-              ),
-            if (user.username != null)
-              Text(
-                '@${user.username}',
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: AppColors.textSecondary,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            if (user.nomadId?.verified == true) ...[
-              const SizedBox(height: 4),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.verified, color: AppColors.primary, size: 16),
-                  const SizedBox(width: 4),
-                  Text(
-                    'Verified Nomad',
-                    style: TextStyle(
-                      color: AppColors.primary,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-            
-            const SizedBox(height: AppDimensions.paddingL),
-
-            // Stats Row
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                _buildStatItem(context, 'Vouches', '${user.nomadId?.vouchCount ?? 0}', onTap: () {
-                   // TODO: Navigate to vouches list if needed
-                }),
-                _buildStatItem(context, 'Followers', '0', onTap: () {
-                  context.push('/profile/${user.uid}/connections?tab=0');
-                }),
-                _buildStatItem(context, 'Following', '0', onTap: () {
-                  context.push('/profile/${user.uid}/connections?tab=1');
-                }),
-              ],
-            ),
-
-            const SizedBox(height: AppDimensions.paddingL),
-            const Divider(),
-
-            // Rig Info
-            ListTile(
-              leading: const Icon(Icons.directions_car), // Use custom rig icon
-              title: const Text('My Rig'),
-              subtitle: Text(rig != null 
-                  ? '${rig.type?.toUpperCase() ?? 'NONE'} • ${rig.crewType?.toUpperCase() ?? 'NONE'}'
-                  : 'Add rig info'),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () {
-                context.push('/edit-profile');
-              },
-            ),
-            
-            // Bio
-            Padding(
-              padding: const EdgeInsets.all(AppDimensions.paddingL),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                   const Text(
-                    'About Me',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    profile.bio ?? 'No bio yet',
-                    style: const TextStyle(
-                      color: AppColors.textSecondary,
-                      fontSize: 16,
-                      height: 1.5,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            // Hobbies
-            if (profile.hobbies.isNotEmpty) ...[
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingL),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                     const Text(
-                      'Hobbies',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 12),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: profile.hobbies.map((hobby) {
-                        return Chip(label: Text(hobby));
-                      }).toList(),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: AppDimensions.paddingL),
-            ],
-            
-            // Edit Profile Button
-            Padding(
-              padding: const EdgeInsets.all(AppDimensions.paddingL),
-              child: SizedBox(
-                width: double.infinity,
-                child: OutlinedButton(
-                  onPressed: () {
-                    context.push('/edit-profile');
-                  },
-                  child: const Text('Edit Profile'),
-                ),
-              ),
-            ),
-          ],
+    return ProfileViewBase(
+      user: user,
+      posts: _posts,
+      isPostsLoading: _loadingPosts,
+      isOwnProfile: true,
+      onRefresh: _loadPosts,
+      onFollowersTap: () {
+        context.push('/profile/${user.uid}/connections?tab=0');
+      },
+      onFollowingTap: () {
+        context.push('/profile/${user.uid}/connections?tab=1');
+      },
+      banner: !user.isBuilder ? _buildMarketplaceBanner() : null,
+      headerButtons: SizedBox(
+        width: double.infinity,
+        child: OutlinedButton(
+          onPressed: () => context.push('/edit-profile'),
+          style: OutlinedButton.styleFrom(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+          ),
+          child: const Text('Edit Profile'),
         ),
+      ),
     );
   }
 
-  Widget _buildStatItem(BuildContext context, String label, String value, {VoidCallback? onTap}) {
-    return InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        child: Column(
-          children: [
-            Text(
-              value,
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: const TextStyle(
-                color: AppColors.textSecondary,
-                fontSize: 14,
-              ),
-            ),
-          ],
+  Widget _buildMarketplaceBanner() {
+    return Container(
+      padding: const EdgeInsets.all(AppDimensions.paddingL),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [AppColors.primary, AppColors.primary.withOpacity(0.8)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withOpacity(0.3),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.storefront_outlined, color: Colors.white, size: 28),
+              SizedBox(width: 12),
+              Text(
+                'Join the Marketplace',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Offer your skills to the community and earn while you travel.',
+            style: TextStyle(color: Colors.white, fontSize: 13),
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () => context.push('/builder-setup'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white,
+                foregroundColor: AppColors.primary,
+                elevation: 0,
+                minimumSize: const Size(0, 40),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text('Get Started'),
+            ),
+          ),
+        ],
       ),
     );
   }

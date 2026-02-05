@@ -5,7 +5,6 @@ import 'package:intl/intl.dart';
 import 'package:latlong2/latlong.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../providers/activity_provider.dart';
-import '../../../map/presentation/screens/location_picker_screen.dart';
 
 class CreateActivityScreen extends ConsumerStatefulWidget {
   const CreateActivityScreen({super.key});
@@ -24,6 +23,7 @@ class _CreateActivityScreenState extends ConsumerState<CreateActivityScreen> {
   TimeOfDay _selectedTime = TimeOfDay.now();
   String _selectedType = 'social';
   LatLng? _pickedLocation;
+  String? _pickedLocationName;
   
   final List<String> _types = ['hike', 'surf', 'yoga', 'meal', 'social', 'cowork', 'other'];
 
@@ -82,13 +82,13 @@ class _CreateActivityScreenState extends ConsumerState<CreateActivityScreen> {
     final activityData = {
       'title': _titleController.text.trim(),
       'description': _descriptionController.text.trim(),
-      'type': _selectedType,
+      'activity_type': _selectedType,
       'location': {
-        'latitude': _pickedLocation!.latitude,
-        'longitude': _pickedLocation!.longitude,
+        'lat': _pickedLocation!.latitude,
+        'lng': _pickedLocation!.longitude,
       },
-      'startTime': startTime.toIso8601String(),
-      'maxParticipants': int.tryParse(_maxParticipantsController.text) ?? 10,
+      'event_time': startTime.toUtc().toIso8601String(),
+      'max_participants': int.tryParse(_maxParticipantsController.text) ?? 10,
     };
 
     await ref.read(activityProvider.notifier).createActivity(activityData);
@@ -111,18 +111,26 @@ class _CreateActivityScreenState extends ConsumerState<CreateActivityScreen> {
               TextFormField(
                 controller: _titleController,
                 decoration: const InputDecoration(labelText: 'Title'),
-                validator: (val) => val == null || val.isEmpty ? 'Title is required' : null,
+                validator: (val) {
+                   if (val == null || val.isEmpty) return 'Title is required';
+                   if (val.length < 5) return 'Title must be at least 5 characters';
+                   return null;
+                },
               ),
               const SizedBox(height: AppDimensions.paddingM),
               TextFormField(
                 controller: _descriptionController,
                 decoration: const InputDecoration(labelText: 'Description'),
                 maxLines: 3,
-                validator: (val) => val == null || val.isEmpty ? 'Description is required' : null,
+                validator: (val) {
+                   if (val == null || val.isEmpty) return 'Description is required';
+                   if (val.length < 20) return 'Description must be at least 20 characters';
+                   return null;
+                },
               ),
               const SizedBox(height: AppDimensions.paddingM),
               DropdownButtonFormField<String>(
-                initialValue: _selectedType,
+                value: _selectedType,
                 items: _types.map((t) => DropdownMenuItem(value: t, child: Text(t.toUpperCase()))).toList(),
                 onChanged: (val) => setState(() => _selectedType = val!),
                 decoration: const InputDecoration(labelText: 'Activity Type'),
@@ -132,6 +140,13 @@ class _CreateActivityScreenState extends ConsumerState<CreateActivityScreen> {
                 controller: _maxParticipantsController,
                 decoration: const InputDecoration(labelText: 'Max Participants (0 for unlimited)'),
                 keyboardType: TextInputType.number,
+                validator: (val) {
+                  if (val != null && val.isNotEmpty) {
+                    final n = int.tryParse(val);
+                    if (n == null || n < 0) return 'Invalid number';
+                  }
+                  return null;
+                },
               ),
               const SizedBox(height: AppDimensions.paddingL),
               ListTile(
@@ -148,18 +163,16 @@ class _CreateActivityScreenState extends ConsumerState<CreateActivityScreen> {
               ),
               ListTile(
                 title: Text(_pickedLocation == null ? 'Pick Location on Map' : 'Location Selected'),
-                subtitle: _pickedLocation == null 
+                subtitle: _pickedLocation == null
                     ? const Text('Tap to choose')
-                    : Text('${_pickedLocation!.latitude.toStringAsFixed(4)}, ${_pickedLocation!.longitude.toStringAsFixed(4)}'),
+                    : Text(_pickedLocationName ?? '${_pickedLocation!.latitude.toStringAsFixed(4)}, ${_pickedLocation!.longitude.toStringAsFixed(4)}'),
                 leading: const Icon(Icons.map, color: Colors.blue),
                 onTap: () async {
-                  final result = await Navigator.push<LatLng>(
-                    context,
-                    MaterialPageRoute(builder: (context) => const LocationPickerScreen()),
-                  );
+                  final result = await context.push<Map<String, dynamic>>('/location-picker');
                   if (result != null) {
                     setState(() {
-                      _pickedLocation = result;
+                      _pickedLocation = LatLng(result['lat'], result['lng']);
+                      _pickedLocationName = result['name'];
                     });
                   }
                 },

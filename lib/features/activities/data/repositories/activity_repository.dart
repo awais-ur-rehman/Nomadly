@@ -16,7 +16,7 @@ class ActivityRepository {
   }) async {
     try {
       final response = await _apiClient.get(
-        '/api/v1/beacons/nearby',
+        '/v1/beacons/nearby',
         queryParameters: {
           'lat': latitude,
           'lng': longitude,
@@ -43,7 +43,7 @@ class ActivityRepository {
   }) async {
     try {
       final response = await _apiClient.get(
-        '/api/v1/beacons/nearby',
+        '/v1/beacons/nearby',
         queryParameters: {
           'lat': latitude,
           'lng': longitude,
@@ -92,21 +92,44 @@ class ActivityRepository {
   }
 
   // Create activity (legacy/compatibility, mapping to beacon)
-  Future<Activity> createActivity(Map<String, dynamic> activityData) async {
+  Future<Activity> createActivity(Map<String, dynamic> data) async {
     try {
+      _logger.i('Creating activity with data: $data');
       final response = await _apiClient.post(
         '/beacons',
-        data: activityData,
+        data: data,
       );
 
-      if (response.statusCode == 201) {
-        return Activity.fromJson(response.data['data']);
-      }
+      _logger.i('Create activity response: ${response.statusCode} - ${response.data}');
 
+      if (response.statusCode == 201) {
+        final data = response.data['data'];
+        final mappedData = Map<String, dynamic>.from(data);
+        
+        // Map backend fields to frontend model expectations
+        mappedData['id'] = data['_id'];
+        mappedData['type'] = data['activity_type'];
+        mappedData['startTime'] = data['event_time'];
+        
+        // Handle creator/host_id mismatch
+        if (data['host_id'] is String) {
+          mappedData['creator'] = {'id': data['host_id'], 'username': 'Me'}; 
+        } else {
+          mappedData['creator'] = data['host_id'];
+        }
+
+        return Activity.fromJson(mappedData);
+      }
       throw Exception('Failed to create activity');
     } on DioException catch (e) {
-      _logger.e('Create activity error: ${e.message}');
+      _logger.e('Create activity error: ${e.message}', error: e, stackTrace: e.stackTrace);
+      if (e.response != null) {
+         _logger.e('Error response data: ${e.response?.data}');
+      }
       throw _handleError(e);
+    } catch (e, stack) {
+      _logger.e('Unexpected error creating activity', error: e, stackTrace: stack);
+      rethrow;
     }
   }
 
@@ -124,6 +147,23 @@ class ActivityRepository {
       throw Exception('Failed to join activity');
     } on DioException catch (e) {
       _logger.e('Join activity error: ${e.message}');
+      throw _handleError(e);
+    }
+  }
+
+  Future<Activity> getActivity(String activityId) async {
+    try {
+      final response = await _apiClient.get(
+        '${AppConfig.baseUrl}/api/v1/activities/$activityId',
+      );
+
+      if (response.statusCode == 200) {
+        return Activity.fromJson(response.data['data']);
+      }
+
+      throw Exception('Failed to load activity');
+    } on DioException catch (e) {
+      _logger.e('Get activity error: ${e.message}');
       throw _handleError(e);
     }
   }

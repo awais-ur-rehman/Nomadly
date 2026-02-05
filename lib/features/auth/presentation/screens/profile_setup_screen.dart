@@ -2,11 +2,15 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../shared/services/image_upload_service.dart';
 import '../../../../shared/services/toast_service.dart';
+import '../../../../shared/services/api_client.dart';
+import '../../../../core/config/app_config.dart';
+import 'package:latlong2/latlong.dart';
 import '../../providers/auth_provider.dart';
 
 class ProfileSetupScreen extends ConsumerStatefulWidget {
@@ -19,7 +23,7 @@ class ProfileSetupScreen extends ConsumerStatefulWidget {
 class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
   final PageController _pageController = PageController();
   int _currentStep = 0;
-  final int _totalSteps = 6;
+  final int _totalSteps = 4;
 
   // Form State
   File? _profileImage;
@@ -30,24 +34,46 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
   String _selectedGender = 'male';
   final List<String> _selectedHobbies = [];
   String _selectedIntent = 'friends';
-  String _selectedRigType = 'sprinter';
+  String _selectedRigType = 'van';
   String _selectedCrewType = 'solo';
   bool _isPetFriendly = false;
+
+  // Travel Route state
+  final _originNameController = TextEditingController();
+  double? _originLat;
+  double? _originLng;
+  final _destNameController = TextEditingController();
+  double? _destLat;
+  double? _destLng;
+  DateTime? _startDate;
+  final _durationController = TextEditingController();
+
+  // Distance preference
+  double _maxDistanceKm = 150;
 
   // Options
   final List<String> _genders = ['male', 'female', 'non-binary', 'other'];
   final List<String> _intents = ['friends', 'dating', 'both'];
-  final List<String> _rigTypes = ['sprinter', 'skoolie', 'suv', 'truck_camper', 'rv', 'car', 'other'];
+  
+  final Map<String, IconData> _rigTypeOptions = {
+    'van': Icons.directions_bus_outlined,
+    'bus': Icons.airport_shuttle_outlined,
+    'truck': Icons.local_shipping_outlined,
+    'car': Icons.directions_car_outlined,
+    'rv': Icons.rv_hookup_outlined,
+    'other': Icons.more_horiz_outlined,
+  };
+
   final List<String> _crewTypes = ['solo', 'couple', 'family', 'friends'];
   final List<String> _hobbies = [
-    'Hiking', 'Surfing', 'Yoga', 'Climbing', 'Photography', 'Music', 
-    'Cooking', 'Reading', 'Gaming', 'Coding', 'Art', 'Travel', 'Vanlife'
+    'Hiking', 'Surfing', 'Yoga', 'Climbing', 'Photography', 'Music',
+    'Cooking', 'Reading', 'Gaming', 'Coding', 'Art', 'Travel', 'Vanlife',
+    'Fishing', 'Kayaking', 'Biking', 'Running', 'Camping',
   ];
 
   @override
   void initState() {
     super.initState();
-    // Pre-fill name if available via auth provider (if user just registered)
     final user = ref.read(authProvider).user;
     if (user != null) {
       _nameController.text = user.profile?.name ?? '';
@@ -60,21 +86,20 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
     _nameController.dispose();
     _ageController.dispose();
     _bioController.dispose();
+    _originNameController.dispose();
+    _destNameController.dispose();
+    _durationController.dispose();
     super.dispose();
   }
 
   void _nextStep() {
     if (_currentStep < _totalSteps - 1) {
-      // Validate current step
       if (!_validateStep(_currentStep)) return;
-
       _pageController.nextPage(
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
       );
-      setState(() {
-        _currentStep++;
-      });
+      setState(() => _currentStep++);
     } else {
       _completeProfile();
     }
@@ -86,41 +111,35 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
       );
-      setState(() {
-        _currentStep--;
-      });
+      setState(() => _currentStep--);
     }
   }
 
   bool _validateStep(int step) {
     switch (step) {
-      case 0: // Photo
+      case 0: // Essentials
         if (_profileImage == null) {
           ToastService.showError('Please upload a profile photo');
           return false;
         }
-        return true;
-      case 1: // Basic Info
         if (_ageController.text.isEmpty) {
           ToastService.showError('Please enter your age');
           return false;
         }
         return true;
-      case 2: // Hobbies
-        if (_selectedHobbies.isEmpty) {
-          ToastService.showError('Please select at least one hobby');
-          return false;
-        }
-        return true;
-      case 3: // Intent
-        return true;
-      case 4: // Rig
-        return true;
-      case 5: // Bio
+      case 1: // Social Identity
         if (_bioController.text.isEmpty) {
           ToastService.showError('Please write a short bio');
           return false;
         }
+        if (_selectedHobbies.isEmpty) {
+          ToastService.showError('Select at least one hobby');
+          return false;
+        }
+        return true;
+      case 2: // Nomad Setup
+        return true;
+      case 3: // Discovery
         return true;
       default:
         return true;
@@ -130,23 +149,32 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
   Future<void> _pickImage() async {
     final image = await ImageUploadService().pickFromGallery(crop: true);
     if (image != null) {
-      setState(() {
-        _profileImage = image;
-      });
+      setState(() => _profileImage = image);
+    }
+  }
+
+  Future<void> _pickStartDate() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _startDate ?? DateTime.now().add(const Duration(days: 1)),
+      firstDate: DateTime.now(),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
+    );
+    if (picked != null) {
+      setState(() => _startDate = picked);
     }
   }
 
   Future<void> _completeProfile() async {
-    // 1. Upload Image
+    // 1. Upload image
     if (_profileImage != null && _uploadedImageUrl == null) {
-        // Show loading or toast
-        ToastService.showInfo('Uploading profile photo...');
-        final url = await ImageUploadService().uploadProfilePhoto(_profileImage!);
-        if (url == null) return; // Error handled in service
-        _uploadedImageUrl = url;
+      ToastService.showInfo('Uploading profile photo...');
+      final url = await ImageUploadService().uploadProfilePhoto(_profileImage!);
+      if (url == null) return;
+      _uploadedImageUrl = url;
     }
 
-    // 2. Prepare Data
+    // 2. Complete profile (profile + rig)
     final profileData = {
       'name': _nameController.text.trim(),
       'age': int.tryParse(_ageController.text) ?? 18,
@@ -163,15 +191,44 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
       'pet_friendly': _isPetFriendly,
     };
 
-    // 3. Call API
     final success = await ref.read(authProvider.notifier).completeProfile(
       profileData: profileData,
       rigData: rigData,
     );
 
-    if (success && mounted) {
-      context.go('/home');
+    if (!success || !mounted) return;
+
+    // 3. Update travel route if user provided origin + destination
+    if (_originLat != null && _destLat != null && _startDate != null) {
+      final duration = int.tryParse(_durationController.text) ?? 7;
+      try {
+        await ApiClient().patch(
+          '${AppConfig.usersEndpoint}/route',
+          data: {
+            'origin': {'lat': _originLat, 'lng': _originLng},
+            'destination': {'lat': _destLat, 'lng': _destLng},
+            'start_date': _startDate!.toIso8601String(),
+            'duration_days': duration,
+          },
+        );
+      } catch (_) {}
     }
+
+    // 4. Update distance preference
+    try {
+      await ApiClient().patch(
+        '${AppConfig.usersEndpoint}/me',
+        data: {
+          'matching_profile': {
+              'preferences': {
+                'max_distance_km': _maxDistanceKm.round(),
+              },
+          },
+        },
+      );
+    } catch (_) {}
+
+    if (mounted) context.go('/home');
   }
 
   @override
@@ -181,7 +238,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
     return Scaffold(
       backgroundColor: AppColors.white,
       appBar: AppBar(
-        title: const Text(AppStrings.completeProfile),
+        title: const Text('Back'),
         leading: _currentStep > 0
             ? IconButton(
                 icon: const Icon(Icons.arrow_back),
@@ -192,29 +249,24 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // Progress Bar
             LinearProgressIndicator(
               value: (_currentStep + 1) / _totalSteps,
               backgroundColor: AppColors.greyExtraLight,
               valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
             ),
-            
             Expanded(
               child: PageView(
                 controller: _pageController,
-                physics: const NeverScrollableScrollPhysics(), // Disable swipe
+                physics: const NeverScrollableScrollPhysics(),
                 children: [
-                  _buildPhotoStep(),
-                  _buildBasicInfoStep(),
-                  _buildHobbiesStep(),
-                  _buildIntentStep(),
-                  _buildRigStep(),
-                  _buildBioStep(),
+                  _buildEssentialsSection(), // 0
+                  _buildSocialIdentitySection(), // 1
+                  _buildNomadSetupSection(), // 2
+                  _buildDiscoverySection(), // 3
                 ],
               ),
             ),
-            
-            // Bottom Button
+
             Padding(
               padding: const EdgeInsets.all(AppDimensions.paddingL),
               child: SizedBox(
@@ -224,7 +276,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                   onPressed: authState.isLoading ? null : _nextStep,
                   child: authState.isLoading && _currentStep == _totalSteps - 1
                       ? const CircularProgressIndicator(color: AppColors.white)
-                      : Text(_currentStep == _totalSteps - 1 ? AppStrings.finish : AppStrings.continue_),
+                      : Text(_currentStep == _totalSteps - 1 ? 'Start Exploring' : 'Continue'),
                 ),
               ),
             ),
@@ -234,193 +286,256 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
     );
   }
 
-  // Step 1: Photo
-  Widget _buildPhotoStep() {
-    return Padding(
-      padding: const EdgeInsets.all(AppDimensions.paddingL),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Text(
-            AppStrings.uploadPhoto,
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: AppDimensions.paddingL),
-          GestureDetector(
-            onTap: _pickImage,
-            child: CircleAvatar(
-              radius: 80,
-              backgroundColor: AppColors.greyExtraLight,
-              backgroundImage: _profileImage != null ? FileImage(_profileImage!) : null,
-              child: _profileImage == null
-                  ? const Icon(Icons.camera_alt, size: 50, color: AppColors.grey)
-                  : null,
-            ),
-          ),
-          const SizedBox(height: AppDimensions.paddingM),
-          const Text('Tap to upload a profile photo'),
-        ],
-      ),
-    );
-  }
+  // ─── Section Builders ──────────────────────────────────────────
 
-  // Step 2: Basic Info
-  Widget _buildBasicInfoStep() {
-    return Padding(
-      padding: const EdgeInsets.all(AppDimensions.paddingL),
-      child: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const Text(
-              'Basic Information',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: AppDimensions.paddingL),
-            // Name is already set during registration
-            TextField(
-              controller: _ageController,
-              decoration: const InputDecoration(labelText: 'Age'),
-              keyboardType: TextInputType.number,
-            ),
-            const SizedBox(height: AppDimensions.paddingM),
-            DropdownButtonFormField<String>(
-              initialValue: _selectedGender,
-              items: _genders.map((g) => DropdownMenuItem(value: g, child: Text(g.toUpperCase()))).toList(),
-              onChanged: (val) => setState(() => _selectedGender = val!),
-              decoration: const InputDecoration(labelText: 'Gender'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // Step 3: Hobbies
-  Widget _buildHobbiesStep() {
-    return Padding(
+  Widget _buildEssentialsSection() {
+    return SingleChildScrollView(
       padding: const EdgeInsets.all(AppDimensions.paddingL),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text(
-            AppStrings.selectHobbies,
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: AppDimensions.paddingL),
-          Expanded(
-            child: SingleChildScrollView(
-              child: Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: _hobbies.map((hobby) {
-                  final isSelected = _selectedHobbies.contains(hobby);
-                  return FilterChip(
-                    label: Text(hobby),
-                    selected: isSelected,
-                    onSelected: (selected) {
-                      setState(() {
-                        if (selected) {
-                          _selectedHobbies.add(hobby);
-                        } else {
-                          _selectedHobbies.remove(hobby);
-                        }
-                      });
-                    },
-                  );
-                }).toList(),
+          const Text('The Face', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 8),
+          const Text('Let the community see who you are.', style: TextStyle(color: Colors.grey)),
+          const SizedBox(height: 32),
+          Center(
+            child: GestureDetector(
+              onTap: _pickImage,
+              child: CircleAvatar(
+                radius: 80,
+                backgroundColor: AppColors.greyExtraLight,
+                backgroundImage: _profileImage != null ? FileImage(_profileImage!) : null,
+                child: _profileImage == null
+                    ? const Icon(Icons.camera_alt, size: 50, color: AppColors.grey)
+                    : null,
               ),
             ),
           ),
+          const SizedBox(height: 32),
+          TextField(
+            controller: _ageController,
+            decoration: const InputDecoration(labelText: 'How old are you?'),
+            keyboardType: TextInputType.number,
+          ),
+          const SizedBox(height: 24),
+          const Text('Gender Identity', style: TextStyle(fontWeight: FontWeight.bold)),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 12,
+            children: _genders.map((g) => ChoiceChip(
+              label: Text(g.toUpperCase()),
+              selected: _selectedGender == g,
+              onSelected: (val) => setState(() => _selectedGender = g),
+            )).toList(),
+          ),
         ],
       ),
     );
   }
 
-  // Step 4: Intent
-  Widget _buildIntentStep() {
-    return Padding(
+  Widget _buildSocialIdentitySection() {
+    return SingleChildScrollView(
       padding: const EdgeInsets.all(AppDimensions.paddingL),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text(
-            AppStrings.selectIntent,
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: AppDimensions.paddingL),
-          ..._intents.map((intent) => RadioListTile<String>(
-            title: Text(intent.toUpperCase()),
-            value: intent,
-            groupValue: _selectedIntent,
-            onChanged: (val) => setState(() => _selectedIntent = val!),
-          )),
-        ],
-      ),
-    );
-  }
-
-  // Step 5: Rig
-  Widget _buildRigStep() {
-    return Padding(
-      padding: const EdgeInsets.all(AppDimensions.paddingL),
-      child: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const Text(
-              AppStrings.rigInfo,
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: AppDimensions.paddingL),
-            DropdownButtonFormField<String>(
-              initialValue: _selectedRigType,
-              items: _rigTypes.map((t) => DropdownMenuItem(value: t, child: Text(t.replaceAll('_', ' ').toUpperCase()))).toList(),
-              onChanged: (val) => setState(() => _selectedRigType = val!),
-              decoration: const InputDecoration(labelText: 'Rig Type'),
-            ),
-            const SizedBox(height: AppDimensions.paddingM),
-            DropdownButtonFormField<String>(
-              initialValue: _selectedCrewType,
-              items: _crewTypes.map((c) => DropdownMenuItem(value: c, child: Text(c.toUpperCase()))).toList(),
-              onChanged: (val) => setState(() => _selectedCrewType = val!),
-              decoration: const InputDecoration(labelText: 'Crew Type'),
-            ),
-            const SizedBox(height: AppDimensions.paddingM),
-            SwitchListTile(
-              title: const Text('Pet Friendly'),
-              value: _isPetFriendly,
-              onChanged: (val) => setState(() => _isPetFriendly = val),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // Step 6: Bio
-  Widget _buildBioStep() {
-    return Padding(
-      padding: const EdgeInsets.all(AppDimensions.paddingL),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const Text(
-            AppStrings.bio,
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: AppDimensions.paddingL),
+          const Text('The Vibe', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 8),
+          const Text('What are you into?', style: TextStyle(color: Colors.grey)),
+          const SizedBox(height: 32),
+          
+          const Text('Short Bio', style: TextStyle(fontWeight: FontWeight.bold)),
+          const SizedBox(height: 8),
           TextField(
             controller: _bioController,
-            maxLines: 5,
+            maxLines: 3,
             decoration: const InputDecoration(
-              labelText: 'Tell us about yourself...',
-              hintText: 'I love traveling and meeting new people!',
-              alignLabelWithHint: true,
+              hintText: 'I love vanlife and campfires...',
             ),
+          ),
+          const SizedBox(height: 24),
+          
+          const Text('Hobbies', style: TextStyle(fontWeight: FontWeight.bold)),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: _hobbies.map((hobby) {
+              final isSelected = _selectedHobbies.contains(hobby);
+              return FilterChip(
+                label: Text(hobby),
+                selected: isSelected,
+                onSelected: (selected) {
+                  setState(() {
+                    if (selected) _selectedHobbies.add(hobby);
+                    else _selectedHobbies.remove(hobby);
+                  });
+                },
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 24),
+          
+          const Text('Matching Intent', style: TextStyle(fontWeight: FontWeight.bold)),
+          const SizedBox(height: 12),
+          Row(
+            children: _intents.map((intent) => Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: ChoiceChip(
+                  label: Text(intent.toUpperCase()),
+                  selected: _selectedIntent == intent,
+                  onSelected: (val) => setState(() => _selectedIntent = intent),
+                ),
+              ),
+            )).toList(),
           ),
         ],
       ),
     );
+  }
+
+  Widget _buildNomadSetupSection() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(AppDimensions.paddingL),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Text('The Rig', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 8),
+          const Text('Tell us about your home on wheels.', style: TextStyle(color: Colors.grey)),
+          const SizedBox(height: 32),
+          
+          const Text('Rig Type', style: TextStyle(fontWeight: FontWeight.bold)),
+          const SizedBox(height: 12),
+          GridView.count(
+            crossAxisCount: 3,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            mainAxisSpacing: 12,
+            crossAxisSpacing: 12,
+            children: _rigTypeOptions.entries.map((entry) {
+              final isSelected = _selectedRigType == entry.key;
+              return InkWell(
+                onTap: () => setState(() => _selectedRigType = entry.key),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: isSelected ? AppColors.primary.withOpacity(0.1) : Colors.grey[100],
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: isSelected ? AppColors.primary : Colors.transparent, width: 2),
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(entry.value, color: isSelected ? AppColors.primary : Colors.grey),
+                      const SizedBox(height: 4),
+                      Text(entry.key.toUpperCase(), style: TextStyle(fontSize: 10, fontWeight: isSelected ? FontWeight.bold : FontWeight.normal)),
+                    ],
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+          
+          const SizedBox(height: 32),
+          const Text('Crew Type', style: TextStyle(fontWeight: FontWeight.bold)),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 12,
+            children: _crewTypes.map((c) => ChoiceChip(
+              label: Text(c.toUpperCase()),
+              selected: _selectedCrewType == c,
+              onSelected: (val) => setState(() => _selectedCrewType = c),
+            )).toList(),
+          ),
+          
+          const SizedBox(height: 24),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Pet Friendly'),
+            subtitle: const Text('Do you travel with furry friends?'),
+            value: _isPetFriendly,
+            onChanged: (val) => setState(() => _isPetFriendly = val),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDiscoverySection() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(AppDimensions.paddingL),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Text('The Journey', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 8),
+          const Text('Where are you headed?', style: TextStyle(color: Colors.grey)),
+          const SizedBox(height: 32),
+          
+          TextField(
+            controller: _originNameController,
+            decoration: InputDecoration(
+              labelText: 'Where are you now?',
+              prefixIcon: const Icon(Icons.my_location),
+              suffixIcon: IconButton(icon: const Icon(Icons.map_outlined), onPressed: () => _openLocationPicker(isOrigin: true)),
+            ),
+            readOnly: true,
+            onTap: () => _openLocationPicker(isOrigin: true),
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: _destNameController,
+            decoration: InputDecoration(
+              labelText: 'Where are you heading?',
+              prefixIcon: const Icon(Icons.place),
+              suffixIcon: IconButton(icon: const Icon(Icons.map_outlined), onPressed: () => _openLocationPicker(isOrigin: false)),
+            ),
+            readOnly: true,
+            onTap: () => _openLocationPicker(isOrigin: false),
+          ),
+          const SizedBox(height: 16),
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: const Icon(Icons.calendar_today),
+            title: Text(_startDate != null ? DateFormat.yMMMd().format(_startDate!) : 'Departure Date'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: _pickStartDate,
+          ),
+          
+          const SizedBox(height: 48),
+          const Text('Search Distance', style: TextStyle(fontWeight: FontWeight.bold)),
+          const SizedBox(height: 4),
+          Text('${_maxDistanceKm.round()} km radius', style: const TextStyle(color: AppColors.primary)),
+          Slider(
+            value: _maxDistanceKm,
+            min: 25,
+            max: 500,
+            divisions: 19,
+            onChanged: (val) => setState(() => _maxDistanceKm = val),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _openLocationPicker({required bool isOrigin}) async {
+    final result = await context.push<Map<String, dynamic>>('/location-picker');
+    if (result != null && mounted) {
+      final lat = result['lat'] as double;
+      final lng = result['lng'] as double;
+      final name = result['name'] as String?;
+      setState(() {
+        if (isOrigin) {
+          _originLat = lat;
+          _originLng = lng;
+          _originNameController.text = name ?? '${lat.toStringAsFixed(2)}, ${lng.toStringAsFixed(2)}';
+        } else {
+          _destLat = lat;
+          _destLng = lng;
+          _destNameController.text = name ?? '${lat.toStringAsFixed(2)}, ${lng.toStringAsFixed(2)}';
+        }
+      });
+    }
   }
 }

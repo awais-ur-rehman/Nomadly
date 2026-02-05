@@ -23,12 +23,16 @@ Message _$MessageFromJson(Map<String, dynamic> json) {
 mixin _$Message {
   @JsonKey(name: '_id')
   String get id => throw _privateConstructorUsedError;
+  @JsonKey(name: 'conversation_id')
   String get conversationId => throw _privateConstructorUsedError;
+  @JsonKey(name: 'sender_id')
   User get sender => throw _privateConstructorUsedError;
   String get message => throw _privateConstructorUsedError;
-  String get messageType =>
-      throw _privateConstructorUsedError; // 'text', 'image', 'location'
+  @JsonKey(name: 'message_type')
+  String get messageType => throw _privateConstructorUsedError;
+  @JsonKey(name: 'read_by')
   List<String> get readBy => throw _privateConstructorUsedError;
+  @JsonKey(name: 'timestamp')
   DateTime get timestamp => throw _privateConstructorUsedError;
 
   /// Serializes this Message to a JSON map.
@@ -47,12 +51,12 @@ abstract class $MessageCopyWith<$Res> {
   @useResult
   $Res call({
     @JsonKey(name: '_id') String id,
-    String conversationId,
-    User sender,
+    @JsonKey(name: 'conversation_id') String conversationId,
+    @JsonKey(name: 'sender_id') User sender,
     String message,
-    String messageType,
-    List<String> readBy,
-    DateTime timestamp,
+    @JsonKey(name: 'message_type') String messageType,
+    @JsonKey(name: 'read_by') List<String> readBy,
+    @JsonKey(name: 'timestamp') DateTime timestamp,
   });
 
   $UserCopyWith<$Res> get sender;
@@ -137,12 +141,12 @@ abstract class _$$MessageImplCopyWith<$Res> implements $MessageCopyWith<$Res> {
   @useResult
   $Res call({
     @JsonKey(name: '_id') String id,
-    String conversationId,
-    User sender,
+    @JsonKey(name: 'conversation_id') String conversationId,
+    @JsonKey(name: 'sender_id') User sender,
     String message,
-    String messageType,
-    List<String> readBy,
-    DateTime timestamp,
+    @JsonKey(name: 'message_type') String messageType,
+    @JsonKey(name: 'read_by') List<String> readBy,
+    @JsonKey(name: 'timestamp') DateTime timestamp,
   });
 
   @override
@@ -211,12 +215,12 @@ class __$$MessageImplCopyWithImpl<$Res>
 class _$MessageImpl implements _Message {
   const _$MessageImpl({
     @JsonKey(name: '_id') required this.id,
-    required this.conversationId,
-    required this.sender,
+    @JsonKey(name: 'conversation_id') required this.conversationId,
+    @JsonKey(name: 'sender_id') required this.sender,
     required this.message,
-    this.messageType = 'text',
-    final List<String> readBy = const [],
-    required this.timestamp,
+    @JsonKey(name: 'message_type') this.messageType = 'text',
+    @JsonKey(name: 'read_by') final List<String> readBy = const [],
+    @JsonKey(name: 'timestamp') required this.timestamp,
   }) : _readBy = readBy;
 
   factory _$MessageImpl.fromJson(Map<String, dynamic> json) =>
@@ -226,19 +230,19 @@ class _$MessageImpl implements _Message {
   @JsonKey(name: '_id')
   final String id;
   @override
+  @JsonKey(name: 'conversation_id')
   final String conversationId;
   @override
+  @JsonKey(name: 'sender_id')
   final User sender;
   @override
   final String message;
   @override
-  @JsonKey()
+  @JsonKey(name: 'message_type')
   final String messageType;
-  // 'text', 'image', 'location'
   final List<String> _readBy;
-  // 'text', 'image', 'location'
   @override
-  @JsonKey()
+  @JsonKey(name: 'read_by')
   List<String> get readBy {
     if (_readBy is EqualUnmodifiableListView) return _readBy;
     // ignore: implicit_dynamic_type
@@ -246,6 +250,7 @@ class _$MessageImpl implements _Message {
   }
 
   @override
+  @JsonKey(name: 'timestamp')
   final DateTime timestamp;
 
   @override
@@ -300,12 +305,12 @@ class _$MessageImpl implements _Message {
 abstract class _Message implements Message {
   const factory _Message({
     @JsonKey(name: '_id') required final String id,
-    required final String conversationId,
-    required final User sender,
+    @JsonKey(name: 'conversation_id') required final String conversationId,
+    @JsonKey(name: 'sender_id') required final User sender,
     required final String message,
-    final String messageType,
-    final List<String> readBy,
-    required final DateTime timestamp,
+    @JsonKey(name: 'message_type') final String messageType,
+    @JsonKey(name: 'read_by') final List<String> readBy,
+    @JsonKey(name: 'timestamp') required final DateTime timestamp,
   }) = _$MessageImpl;
 
   factory _Message.fromJson(Map<String, dynamic> json) = _$MessageImpl.fromJson;
@@ -314,16 +319,21 @@ abstract class _Message implements Message {
   @JsonKey(name: '_id')
   String get id;
   @override
+  @JsonKey(name: 'conversation_id')
   String get conversationId;
   @override
+  @JsonKey(name: 'sender_id')
   User get sender;
   @override
   String get message;
   @override
-  String get messageType; // 'text', 'image', 'location'
+  @JsonKey(name: 'message_type')
+  String get messageType;
   @override
+  @JsonKey(name: 'read_by')
   List<String> get readBy;
   @override
+  @JsonKey(name: 'timestamp')
   DateTime get timestamp;
 
   /// Create a copy of Message

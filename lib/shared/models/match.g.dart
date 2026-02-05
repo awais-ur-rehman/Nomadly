@@ -7,10 +7,10 @@ part of 'match.dart';
 // **************************************************************************
 
 _$MatchImpl _$$MatchImplFromJson(Map<String, dynamic> json) => _$MatchImpl(
-  id: json['_id'] as String,
-  userId: json['userId'] as String,
-  matchedUserId: json['matchedUserId'] as String,
-  swipeAction: json['swipeAction'] as String,
+  id: json['_id'] as String?,
+  userId: json['userId'] as String?,
+  matchedUserId: json['matchedUserId'] as String?,
+  conversationId: json['conversation_id'],
   isMutual: json['isMutual'] as bool? ?? false,
   matchedUser: json['matchedUser'] == null
       ? null
@@ -25,7 +25,7 @@ Map<String, dynamic> _$$MatchImplToJson(_$MatchImpl instance) =>
       '_id': instance.id,
       'userId': instance.userId,
       'matchedUserId': instance.matchedUserId,
-      'swipeAction': instance.swipeAction,
+      'conversation_id': instance.conversationId,
       'isMutual': instance.isMutual,
       'matchedUser': instance.matchedUser,
       'createdAt': instance.createdAt?.toIso8601String(),

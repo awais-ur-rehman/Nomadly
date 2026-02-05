@@ -18,14 +18,24 @@ _$UserImpl _$$UserImplFromJson(Map<String, dynamic> json) => _$UserImpl(
   rig: json['rig'] == null
       ? null
       : Rig.fromJson(json['rig'] as Map<String, dynamic>),
-  travelRoute: json['travelRoute'] == null
+  travelRoute: json['travel_route'] == null
       ? null
-      : TravelRoute.fromJson(json['travelRoute'] as Map<String, dynamic>),
+      : TravelRoute.fromJson(json['travel_route'] as Map<String, dynamic>),
   isBuilder: json['is_builder'] as bool? ?? false,
   isPrivate: json['is_private'] as bool? ?? false,
   nomadId: json['nomad_id'] == null
       ? null
       : NomadId.fromJson(json['nomad_id'] as Map<String, dynamic>),
+  verification: json['verification'] == null
+      ? null
+      : Verification.fromJson(json['verification'] as Map<String, dynamic>),
+  matchingProfile: json['matching_profile'] == null
+      ? null
+      : MatchingProfile.fromJson(
+          json['matching_profile'] as Map<String, dynamic>,
+        ),
+  invitedBy: json['invited_by'] as String?,
+  inviteCount: (json['invite_count'] as num?)?.toInt() ?? 0,
   isActive: json['is_active'] as bool? ?? true,
   followerCount: (json['followerCount'] as num?)?.toInt() ?? 0,
   followingCount: (json['followingCount'] as num?)?.toInt() ?? 0,
@@ -49,10 +59,14 @@ Map<String, dynamic> _$$UserImplToJson(_$UserImpl instance) =>
       'phone': instance.phone,
       'profile': instance.profile,
       'rig': instance.rig,
-      'travelRoute': instance.travelRoute,
+      'travel_route': instance.travelRoute,
       'is_builder': instance.isBuilder,
       'is_private': instance.isPrivate,
       'nomad_id': instance.nomadId,
+      'verification': instance.verification,
+      'matching_profile': instance.matchingProfile,
+      'invited_by': instance.invitedBy,
+      'invite_count': instance.inviteCount,
       'is_active': instance.isActive,
       'followerCount': instance.followerCount,
       'followingCount': instance.followingCount,

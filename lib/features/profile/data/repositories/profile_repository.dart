@@ -153,6 +153,38 @@ class ProfileRepository {
     }
   }
 
+  // Get travelers nearby (GET /api/v1/search/travelers -> mapped to users endpoint in backend)
+  // Wait, backend route is /api/v1/users/travelers
+  Future<List<User>> getTravelers({
+    required double lat,
+    required double lng,
+    double radiusKm = 50.0,
+    int page = 1,
+    int limit = 20,
+  }) async {
+    try {
+      final response = await _apiClient.get(
+        '${AppConfig.usersEndpoint}/travelers',
+        queryParameters: {
+          'lat': lat,
+          'lng': lng,
+          'radius': radiusKm * 1000, // Convert to meters
+          'page': page,
+          'limit': limit,
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = response.data['data'] ?? [];
+        return data.map((json) => User.fromJson(json)).toList();
+      }
+      return [];
+    } on DioException catch (e) {
+      _logger.e('Get travelers error: ${e.message}');
+      throw _handleError(e);
+    }
+  }
+
   String _handleError(DioException error) {
     if (error.response != null) {
       final data = error.response!.data;
@@ -162,5 +194,5 @@ class ProfileRepository {
     }
     return 'An unexpected error occurred.';
   }
-}
+}    
 

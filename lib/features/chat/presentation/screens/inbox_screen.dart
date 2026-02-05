@@ -11,6 +11,7 @@ import '../../../../shared/models/match.dart'; // Import Match model
 import '../../../../shared/models/user.dart'; // Import User model
 import '../../../../shared/models/profile.dart'; // Import Profile model
 import '../../../auth/providers/auth_provider.dart';
+import '../../../safety/providers/safety_provider.dart';
 
 class InboxScreen extends ConsumerStatefulWidget {
   const InboxScreen({super.key});
@@ -27,6 +28,7 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(chatListProvider.notifier).loadConversations();
       ref.read(matchProvider.notifier).loadMatches();
+      ref.read(safetyProvider.notifier).loadBlockedUsers();
     });
   }
 
@@ -35,6 +37,27 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
     final chatState = ref.watch(chatListProvider);
     final matchState = ref.watch(matchProvider);
     final currentUser = ref.watch(authProvider).user;
+    final safety = ref.watch(safetyProvider);
+
+    // Filter out blocked users from matches and conversations
+    final filteredMatches = matchState.matches
+        .where((m) => 
+            !safety.isBlocked(m.matchedUserId ?? '') && 
+            m.matchedUserId != currentUser?.uid) // Filter self-matches
+        .toList();
+
+    final filteredConversations = chatState.conversations.where((c) {
+      // Ensure there is at least one OTHER participant (hide self-chats)
+      final hasOther = c.participants.any((u) => u.uid != currentUser?.uid);
+      if (!hasOther) return false;
+
+      final other = c.participants.firstWhere(
+        (u) => u.uid != currentUser?.uid,
+        orElse: () => c.participants.first,
+        // Using uid checks handles backend _id vs id inconsistency
+      );
+      return !safety.isBlocked(other.uid);
+    }).toList();
 
     return Scaffold(
       body: CustomScrollView(
@@ -57,16 +80,16 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
                   const SizedBox(height: 12),
                   SizedBox(
                     height: 100,
-                    child: matchState.isLoading && matchState.matches.isEmpty
+                    child: matchState.isLoading && filteredMatches.isEmpty
                         ? const Center(child: CircularProgressIndicator())
-                        : matchState.matches.isEmpty
+                        : filteredMatches.isEmpty
                             ? _buildEmptyMatches()
                             : ListView.separated(
                                 scrollDirection: Axis.horizontal,
-                                itemCount: matchState.matches.length,
+                                itemCount: filteredMatches.length,
                                 separatorBuilder: (context, index) => const SizedBox(width: 16),
                                 itemBuilder: (context, index) {
-                                  final match = matchState.matches[index];
+                                  final match = filteredMatches[index];
                                   return _buildMatchAvatar(context, match, ref);
                                 },
                               ),
@@ -94,9 +117,9 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
           const SliverToBoxAdapter(child: SizedBox(height: 8)),
 
           // Conversations List
-          if (chatState.isLoading && chatState.conversations.isEmpty)
+          if (chatState.isLoading && filteredConversations.isEmpty)
              const SliverFillRemaining(child: Center(child: CircularProgressIndicator()))
-          else if (chatState.conversations.isEmpty)
+          else if (filteredConversations.isEmpty)
             SliverFillRemaining(
               child: Center(
                 child: Column(
@@ -117,10 +140,10 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
             SliverList(
               delegate: SliverChildBuilderDelegate(
                 (context, index) {
-                  final conversation = chatState.conversations[index];
-                  return _buildConversationItem(context, conversation, currentUser?.id);
+                  final conversation = filteredConversations[index];
+                  return _buildConversationItem(context, conversation, currentUser?.uid);
                 },
-                childCount: chatState.conversations.length,
+                childCount: filteredConversations.length,
               ),
             ),
         ],
@@ -142,12 +165,12 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
     
     return GestureDetector(
       onTap: () async {
-        final conversation = await ref.read(chatListProvider.notifier).createConversation(match.matchedUserId);
-        
+        final conversation = await ref.read(chatListProvider.notifier).createConversation(match.matchedUserId ?? '');
+
         if (conversation != null && context.mounted) {
-             final otherUser = user ?? 
+             final otherUser = user ??
                 User(
-                  id: match.matchedUserId, 
+                  id: match.matchedUserId ?? '',
                   email: '',
                   profile: Profile(name: 'Match'), // Fallback
                 );
@@ -179,7 +202,7 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
   Widget _buildConversationItem(BuildContext context, Conversation conversation, String? currentUserId) {
     // Find other participant
     final otherUser = conversation.participants.firstWhere(
-      (u) => u.id != currentUserId,
+      (u) => u.uid != currentUserId,
       orElse: () => conversation.participants.first, // Fallback
     );
 

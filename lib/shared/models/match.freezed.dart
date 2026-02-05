@@ -22,14 +22,13 @@ Match _$MatchFromJson(Map<String, dynamic> json) {
 /// @nodoc
 mixin _$Match {
   @JsonKey(name: '_id')
-  String get id => throw _privateConstructorUsedError;
-  String get userId => throw _privateConstructorUsedError;
-  String get matchedUserId => throw _privateConstructorUsedError;
-  String get swipeAction =>
-      throw _privateConstructorUsedError; // 'left', 'right', 'star'
+  String? get id => throw _privateConstructorUsedError;
+  String? get userId => throw _privateConstructorUsedError;
+  String? get matchedUserId => throw _privateConstructorUsedError;
+  @JsonKey(name: 'conversation_id')
+  dynamic get conversationId => throw _privateConstructorUsedError;
   bool get isMutual => throw _privateConstructorUsedError;
-  User? get matchedUser =>
-      throw _privateConstructorUsedError; // Populated user details
+  User? get matchedUser => throw _privateConstructorUsedError;
   DateTime? get createdAt => throw _privateConstructorUsedError;
 
   /// Serializes this Match to a JSON map.
@@ -47,10 +46,10 @@ abstract class $MatchCopyWith<$Res> {
       _$MatchCopyWithImpl<$Res, Match>;
   @useResult
   $Res call({
-    @JsonKey(name: '_id') String id,
-    String userId,
-    String matchedUserId,
-    String swipeAction,
+    @JsonKey(name: '_id') String? id,
+    String? userId,
+    String? matchedUserId,
+    @JsonKey(name: 'conversation_id') dynamic conversationId,
     bool isMutual,
     User? matchedUser,
     DateTime? createdAt,
@@ -74,32 +73,32 @@ class _$MatchCopyWithImpl<$Res, $Val extends Match>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? id = null,
-    Object? userId = null,
-    Object? matchedUserId = null,
-    Object? swipeAction = null,
+    Object? id = freezed,
+    Object? userId = freezed,
+    Object? matchedUserId = freezed,
+    Object? conversationId = freezed,
     Object? isMutual = null,
     Object? matchedUser = freezed,
     Object? createdAt = freezed,
   }) {
     return _then(
       _value.copyWith(
-            id: null == id
+            id: freezed == id
                 ? _value.id
                 : id // ignore: cast_nullable_to_non_nullable
-                      as String,
-            userId: null == userId
+                      as String?,
+            userId: freezed == userId
                 ? _value.userId
                 : userId // ignore: cast_nullable_to_non_nullable
-                      as String,
-            matchedUserId: null == matchedUserId
+                      as String?,
+            matchedUserId: freezed == matchedUserId
                 ? _value.matchedUserId
                 : matchedUserId // ignore: cast_nullable_to_non_nullable
-                      as String,
-            swipeAction: null == swipeAction
-                ? _value.swipeAction
-                : swipeAction // ignore: cast_nullable_to_non_nullable
-                      as String,
+                      as String?,
+            conversationId: freezed == conversationId
+                ? _value.conversationId
+                : conversationId // ignore: cast_nullable_to_non_nullable
+                      as dynamic,
             isMutual: null == isMutual
                 ? _value.isMutual
                 : isMutual // ignore: cast_nullable_to_non_nullable
@@ -141,10 +140,10 @@ abstract class _$$MatchImplCopyWith<$Res> implements $MatchCopyWith<$Res> {
   @override
   @useResult
   $Res call({
-    @JsonKey(name: '_id') String id,
-    String userId,
-    String matchedUserId,
-    String swipeAction,
+    @JsonKey(name: '_id') String? id,
+    String? userId,
+    String? matchedUserId,
+    @JsonKey(name: 'conversation_id') dynamic conversationId,
     bool isMutual,
     User? matchedUser,
     DateTime? createdAt,
@@ -168,32 +167,32 @@ class __$$MatchImplCopyWithImpl<$Res>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? id = null,
-    Object? userId = null,
-    Object? matchedUserId = null,
-    Object? swipeAction = null,
+    Object? id = freezed,
+    Object? userId = freezed,
+    Object? matchedUserId = freezed,
+    Object? conversationId = freezed,
     Object? isMutual = null,
     Object? matchedUser = freezed,
     Object? createdAt = freezed,
   }) {
     return _then(
       _$MatchImpl(
-        id: null == id
+        id: freezed == id
             ? _value.id
             : id // ignore: cast_nullable_to_non_nullable
-                  as String,
-        userId: null == userId
+                  as String?,
+        userId: freezed == userId
             ? _value.userId
             : userId // ignore: cast_nullable_to_non_nullable
-                  as String,
-        matchedUserId: null == matchedUserId
+                  as String?,
+        matchedUserId: freezed == matchedUserId
             ? _value.matchedUserId
             : matchedUserId // ignore: cast_nullable_to_non_nullable
-                  as String,
-        swipeAction: null == swipeAction
-            ? _value.swipeAction
-            : swipeAction // ignore: cast_nullable_to_non_nullable
-                  as String,
+                  as String?,
+        conversationId: freezed == conversationId
+            ? _value.conversationId
+            : conversationId // ignore: cast_nullable_to_non_nullable
+                  as dynamic,
         isMutual: null == isMutual
             ? _value.isMutual
             : isMutual // ignore: cast_nullable_to_non_nullable
@@ -213,42 +212,41 @@ class __$$MatchImplCopyWithImpl<$Res>
 
 /// @nodoc
 @JsonSerializable()
-class _$MatchImpl implements _Match {
+class _$MatchImpl extends _Match {
   const _$MatchImpl({
-    @JsonKey(name: '_id') required this.id,
-    required this.userId,
-    required this.matchedUserId,
-    required this.swipeAction,
+    @JsonKey(name: '_id') this.id,
+    this.userId,
+    this.matchedUserId,
+    @JsonKey(name: 'conversation_id') this.conversationId,
     this.isMutual = false,
     this.matchedUser,
     this.createdAt,
-  });
+  }) : super._();
 
   factory _$MatchImpl.fromJson(Map<String, dynamic> json) =>
       _$$MatchImplFromJson(json);
 
   @override
   @JsonKey(name: '_id')
-  final String id;
+  final String? id;
   @override
-  final String userId;
+  final String? userId;
   @override
-  final String matchedUserId;
+  final String? matchedUserId;
   @override
-  final String swipeAction;
-  // 'left', 'right', 'star'
+  @JsonKey(name: 'conversation_id')
+  final dynamic conversationId;
   @override
   @JsonKey()
   final bool isMutual;
   @override
   final User? matchedUser;
-  // Populated user details
   @override
   final DateTime? createdAt;
 
   @override
   String toString() {
-    return 'Match(id: $id, userId: $userId, matchedUserId: $matchedUserId, swipeAction: $swipeAction, isMutual: $isMutual, matchedUser: $matchedUser, createdAt: $createdAt)';
+    return 'Match(id: $id, userId: $userId, matchedUserId: $matchedUserId, conversationId: $conversationId, isMutual: $isMutual, matchedUser: $matchedUser, createdAt: $createdAt)';
   }
 
   @override
@@ -260,8 +258,10 @@ class _$MatchImpl implements _Match {
             (identical(other.userId, userId) || other.userId == userId) &&
             (identical(other.matchedUserId, matchedUserId) ||
                 other.matchedUserId == matchedUserId) &&
-            (identical(other.swipeAction, swipeAction) ||
-                other.swipeAction == swipeAction) &&
+            const DeepCollectionEquality().equals(
+              other.conversationId,
+              conversationId,
+            ) &&
             (identical(other.isMutual, isMutual) ||
                 other.isMutual == isMutual) &&
             (identical(other.matchedUser, matchedUser) ||
@@ -277,7 +277,7 @@ class _$MatchImpl implements _Match {
     id,
     userId,
     matchedUserId,
-    swipeAction,
+    const DeepCollectionEquality().hash(conversationId),
     isMutual,
     matchedUser,
     createdAt,
@@ -297,32 +297,34 @@ class _$MatchImpl implements _Match {
   }
 }
 
-abstract class _Match implements Match {
+abstract class _Match extends Match {
   const factory _Match({
-    @JsonKey(name: '_id') required final String id,
-    required final String userId,
-    required final String matchedUserId,
-    required final String swipeAction,
+    @JsonKey(name: '_id') final String? id,
+    final String? userId,
+    final String? matchedUserId,
+    @JsonKey(name: 'conversation_id') final dynamic conversationId,
     final bool isMutual,
     final User? matchedUser,
     final DateTime? createdAt,
   }) = _$MatchImpl;
+  const _Match._() : super._();
 
   factory _Match.fromJson(Map<String, dynamic> json) = _$MatchImpl.fromJson;
 
   @override
   @JsonKey(name: '_id')
-  String get id;
+  String? get id;
   @override
-  String get userId;
+  String? get userId;
   @override
-  String get matchedUserId;
+  String? get matchedUserId;
   @override
-  String get swipeAction; // 'left', 'right', 'star'
+  @JsonKey(name: 'conversation_id')
+  dynamic get conversationId;
   @override
   bool get isMutual;
   @override
-  User? get matchedUser; // Populated user details
+  User? get matchedUser;
   @override
   DateTime? get createdAt;
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../shared/services/toast_service.dart';
@@ -57,15 +58,32 @@ class NotificationsScreen extends ConsumerWidget {
                       ),
                       onTap: () {
                         ref.read(notificationProvider.notifier).markAsRead(notification.id);
-                        if (notification.type == 'match') {
-                           // Navigate to matches or specific chat? Matches tab for now.
-                           // context.go('/home'); // Switch tab?
-                           // Ideally deep link to match
-                        } else if (notification.type == 'message') {
-                           // context.push('/chat/${notification.referenceId}');
+                        
+                        final targetId = notification.data;
+                        if (targetId == null || targetId.isEmpty) return;
+
+                        switch (notification.type) {
+                          case 'message':
+                          case 'match':
+                            context.push('/chat/$targetId');
+                            break;
+                          case 'post':
+                          case 'like':
+                          case 'comment':
+                            context.push('/post/$targetId');
+                            break;
+                          case 'follow':
+                            context.push('/profile/$targetId');
+                            break;
+                          case 'activity':
+                            context.push('/activity/$targetId');
+                            break;
+                          case 'job':
+                            context.push('/job/$targetId');
+                            break;
+                          default:
+                            ToastService.showInfo('Notification tapped: ${notification.title}');
                         }
-                        // For now just showing toast as routing depends on payload
-                        ToastService.showInfo('Tapped notification: ${notification.type}');
                       },
                       tileColor: notification.isRead ? null : AppColors.primaryExtraLight.withValues(alpha: 0.3),
                     );

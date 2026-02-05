@@ -17,6 +17,7 @@ class AuthRepository {
     required String password,
     required String username,
     required String name,
+    required String inviteCode,
     String? phone,
     int? age,
     String? gender,
@@ -27,8 +28,9 @@ class AuthRepository {
         data: {
           'email': email,
           'password': password,
-          'username': username,
+          if (username.isNotEmpty) 'username': username,
           'name': name,
+          'invite_code': inviteCode,
           if (phone != null) 'phone': phone,
           if (age != null) 'age': age,
           if (gender != null) 'gender': gender,

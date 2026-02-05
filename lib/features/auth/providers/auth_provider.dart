@@ -87,6 +87,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     required String password,
     required String username,
     required String name,
+    required String inviteCode,
     String? phone,
     int? age,
     String? gender,
@@ -99,6 +100,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         password: password,
         username: username,
         name: name,
+        inviteCode: inviteCode,
         phone: phone,
         age: age,
         gender: gender,
@@ -260,6 +262,16 @@ class AuthNotifier extends StateNotifier<AuthState> {
     } catch (e) {
       _logger.e('Logout error: $e');
       ToastService.showError('Failed to logout');
+    }
+  }
+
+  // Refresh user data
+  Future<void> refreshUser() async {
+    try {
+      final user = await _repository.getMe();
+      state = state.copyWith(user: user);
+    } catch (e) {
+      _logger.e('Failed to refresh user: $e');
     }
   }
 
