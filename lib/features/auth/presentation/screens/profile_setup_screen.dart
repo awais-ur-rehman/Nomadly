@@ -241,6 +241,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
+    final isKeyboardOpen = MediaQuery.of(context).viewInsets.bottom > 0;
 
     return Scaffold(
       backgroundColor: AppColors.obsidian,
@@ -295,22 +296,24 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
               ),
             ),
 
-            Padding(
-              padding: const EdgeInsets.all(30),
-              child: SizedBox(
-                width: double.infinity,
-                height: 64,
-                child: ElevatedButton(
-                  onPressed: authState.isLoading ? null : _nextStep,
-                  child: authState.isLoading && _currentStep == _totalSteps - 1
-                      ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: AppColors.white, strokeWidth: 2))
-                      : Text(
-                          _currentStep == _totalSteps - 1 ? 'GET STARTED' : 'CONTINUE',
-                          style: const TextStyle(letterSpacing: 2),
-                        ),
+            if (!isKeyboardOpen)
+              Padding(
+                padding: const EdgeInsets.all(AppDimensions.paddingL),
+                child: SizedBox(
+                  width: double.infinity,
+                  height: AppDimensions.buttonHeightL,
+                  child: ElevatedButton(
+                    onPressed: authState.isLoading ? null : _nextStep,
+                    child: authState.isLoading && _currentStep == _totalSteps - 1
+                        ? const CircularProgressIndicator(color: AppColors.white)
+                        : Text(
+                            (_currentStep == _totalSteps - 1 || (_currentStep == 8 && !_wantsToBeBuilder))
+                                ? AppStrings.finish
+                                : AppStrings.continue_,
+                          ),
+                  ),
                 ),
               ),
-            ),
           ],
         ),
       ),

@@ -17,19 +17,29 @@ class StoryTray extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 100,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        itemCount: stories.length + (onAddStory != null ? 1 : 0),
-        itemBuilder: (context, index) {
-          if (onAddStory != null && index == 0) {
-            return _buildAddStory(context);
-          }
-          final bundle = stories[onAddStory != null ? index - 1 : index];
-          return _buildStoryItem(context, bundle);
-        },
+    return RepaintBoundary(
+      child: Semantics(
+        container: true,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              height: 110,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                itemCount: stories.length + (onAddStory != null ? 1 : 0),
+                itemBuilder: (context, index) {
+                  if (onAddStory != null && index == 0) {
+                    return _buildAddStory(context);
+                  }
+                  final bundle = stories[onAddStory != null ? index - 1 : index];
+                  return _buildStoryItem(context, bundle);
+                },
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -38,20 +48,23 @@ class StoryTray extends StatelessWidget {
     return GestureDetector(
       onTap: onAddStory,
       child: Container(
-        width: 70,
+        width: 75,
         margin: const EdgeInsets.only(right: 12),
         child: Column(
           children: [
             Stack(
               children: [
                 Container(
-                  width: 64,
-                  height: 64,
+                  width: 68,
+                  height: 68,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Colors.grey[200],
+                    border: Border.all(color: Colors.white.withOpacity(0.1), width: 1),
+                    color: AppColors.slate.withOpacity(0.3),
                   ),
-                  child: const Icon(Icons.person, color: Colors.grey),
+                  child: const Center(
+                    child: Icon(Icons.person, color: Colors.white, size: 30),
+                  ),
                 ),
                 Positioned(
                   bottom: 0,
@@ -67,10 +80,15 @@ class StoryTray extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 8),
             const Text(
-              'Your Story',
-              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500),
+              'You',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 11,
+                fontWeight: FontWeight.w500,
+                fontFamily: 'Inter',
+              ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -87,18 +105,18 @@ class StoryTray extends StatelessWidget {
     return GestureDetector(
       onTap: () => onStoryTap?.call(bundle),
       child: Container(
-        width: 70,
+        width: 75,
         margin: const EdgeInsets.only(right: 12),
         child: Column(
           children: [
             Container(
-              padding: const EdgeInsets.all(2.5),
+              padding: const EdgeInsets.all(3),
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: LinearGradient(
                   colors: bundle.hasUnviewed
-                      ? [AppColors.primary, AppColors.secondary]
-                      : [Colors.grey[300]!, Colors.grey[300]!],
+                      ? [AppColors.primary, const Color(0xFF64B5F6)] // Sunset Orange to Sky Blue
+                      : [Colors.white.withOpacity(0.1), Colors.white.withOpacity(0.1)],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -106,27 +124,29 @@ class StoryTray extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.all(2),
                 decoration: const BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.obsidian,
                   shape: BoxShape.circle,
                 ),
                 child: CircleAvatar(
-                  radius: 28,
-                  backgroundColor: Colors.grey[200],
+                  radius: 30,
+                  backgroundColor: AppColors.slate,
                   backgroundImage: profile?.photoUrl != null && profile!.photoUrl!.isNotEmpty
                       ? CachedNetworkImageProvider(profile.photoUrl!)
                       : null,
                   child: profile?.photoUrl == null || profile!.photoUrl!.isEmpty
-                      ? const Icon(Icons.person, color: Colors.grey)
+                      ? const Icon(Icons.person, color: Colors.white)
                       : null,
                 ),
               ),
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 8),
             Text(
               user.username ?? (profile?.name ?? 'User'),
               style: TextStyle(
+                color: Colors.white.withOpacity(0.9),
                 fontSize: 11,
                 fontWeight: bundle.hasUnviewed ? FontWeight.bold : FontWeight.w500,
+                fontFamily: 'Inter',
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,

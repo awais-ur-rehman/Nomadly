@@ -58,88 +58,105 @@ class _VantageNavbarState extends State<VantageNavbar> with SingleTickerProvider
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      clipBehavior: Clip.none,
-      alignment: Alignment.bottomCenter,
-      children: [
-        // Dark Overlay when menu is open
-        if (_isMenuOpen)
-          GestureDetector(
-            onTap: _toggleMenu,
-            child: Container(
-              color: Colors.transparent, // Captures taps to close menu
-              width: MediaQuery.of(context).size.width,
-              height: MediaQuery.of(context).size.height,
+    return Semantics(
+      container: true,
+      child: Stack(
+        clipBehavior: Clip.none,
+        alignment: Alignment.bottomCenter,
+        children: [
+          // Dark Overlay when menu is open
+          if (_isMenuOpen)
+            GestureDetector(
+              onTap: _toggleMenu,
+              child: Container(
+                color: Colors.transparent, // Captures taps to close menu
+                width: MediaQuery.of(context).size.width,
+                height: MediaQuery.of(context).size.height,
+              ),
             ),
-          ),
-
-        // Floating Menu (Tooltip Style)
-        Positioned(
-          bottom: 150, // Premium vertical separation
-          child: ScaleTransition(
-            scale: _expandAnimation,
-            alignment: Alignment.bottomCenter,
-            child: FadeTransition(
-              opacity: _expandAnimation,
-              child: _buildFloatingMenu(),
-            ),
-          ),
-        ),
-
-        // Main Navbar Bar
-        Container(
-          height: 110,
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(32),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-              child: BottomAppBar(
-                padding: EdgeInsets.zero,
-                height: 72,
-                color: AppColors.obsidian.withOpacity(0.85),
-                elevation: 0,
-                notchMargin: 10,
-                shape: const CircularNotchedRectangle(),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    _buildNavItem(0, 'nav_home.svg', 'Home'),
-                    _buildNavItem(1, 'nav_ai.svg', 'Discover'),
-                    const SizedBox(width: 48), // Space for centered FAB
-                    _buildNavItem(3, 'nav_resources.svg', 'Chat'),
-                    _buildNavItem(4, 'nav_profile.svg', 'Profile'),
-                  ],
+  
+          // Floating Menu (Tooltip Style)
+          Positioned(
+            bottom: 150, // Premium vertical separation
+            child: RepaintBoundary( // Isolates menu animations
+              child: ScaleTransition(
+                scale: _expandAnimation,
+                alignment: Alignment.bottomCenter,
+                child: FadeTransition(
+                  opacity: _expandAnimation,
+                  child: _buildFloatingMenu(),
                 ),
               ),
             ),
           ),
-        ),
-
-        // Central FAB - Vertically centered on the top edge (half-in, half-out)
-        Positioned(
-          bottom: 24 + 72 - 32, // (padding) + (barHeight) - (half FAB height)
-          child: SizedBox(
-            height: 64,
-            width: 64,
-            child: FloatingActionButton(
-              onPressed: _toggleMenu,
-              backgroundColor: AppColors.primary,
-              elevation: 4,
-              shape: const CircleBorder(),
-              child: RotationTransition(
-                turns: Tween(begin: 0.0, end: 0.125).animate(_animationController),
-                child: SvgPicture.asset(
-                  'assets/icons/nav/nav_plus.svg',
-                  colorFilter: const ColorFilter.mode(AppColors.white, BlendMode.srcIn),
-                  width: 24,
-                  height: 24,
+  
+          // Main Navbar Bar
+          Container(
+            height: 110,
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(32),
+              child: Stack(
+                children: [
+                  // Background blur layer (Visual only, excluded from semantics)
+                  Positioned.fill(
+                    child: RepaintBoundary(
+                      child: ExcludeSemantics(
+                        child: BackdropFilter(
+                          filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+                          child: Container(
+                            color: AppColors.obsidian.withOpacity(0.85),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  // Interactive content layer (Visible to semantics)
+                  SizedBox(
+                    height: 72,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        _buildNavItem(0, 'nav_home.svg', 'Home'),
+                        _buildNavItem(1, 'nav_ai.svg', 'Discover'),
+                        const SizedBox(width: 48), // Space for centered FAB
+                        _buildNavItem(3, 'nav_resources.svg', 'Chat'),
+                        _buildNavItem(4, 'nav_profile.svg', 'Profile'),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+  
+          // Central FAB - Vertically centered on the top edge (half-in, half-out)
+          Positioned(
+            bottom: 24 + 72 - 32, // (padding) + (barHeight) - (half FAB height)
+            child: RepaintBoundary( // Isolates FAB rotation
+              child: SizedBox(
+                height: 64,
+                width: 64,
+                child: FloatingActionButton(
+                  onPressed: _toggleMenu,
+                  backgroundColor: AppColors.primary,
+                  elevation: 4,
+                  shape: const CircleBorder(),
+                  child: RotationTransition(
+                    turns: Tween(begin: 0.0, end: 0.125).animate(_animationController),
+                    child: SvgPicture.asset(
+                      'assets/icons/nav/nav_plus.svg',
+                      colorFilter: const ColorFilter.mode(AppColors.white, BlendMode.srcIn),
+                      width: 24,
+                      height: 24,
+                    ),
+                  ),
                 ),
               ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 

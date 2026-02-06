@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
@@ -30,7 +31,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final screenIndex = _currentIndex > 2 ? _currentIndex - 1 : _currentIndex;
 
     return Scaffold(
-      extendBody: true,
       appBar: _buildAppBar(),
       body: Stack(
         children: [
@@ -64,16 +64,32 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     switch (_currentIndex) {
       case 0: // Feed
         return AppBar(
-          title: const Text(AppStrings.appName),
+          backgroundColor: AppColors.obsidian,
+          elevation: 0,
+          scrolledUnderElevation: 0,
+          surfaceTintColor: Colors.transparent,
+          title: const SizedBox.shrink(), // Remove "Nomadly"
+          centerTitle: true,
           actions: [
             IconButton(
-              icon: const Icon(Icons.storefront_outlined),
+              icon: SvgPicture.asset(
+                'assets/icons/home/marketplace.svg',
+                width: 24,
+                height: 24,
+                colorFilter: const ColorFilter.mode(AppColors.primary, BlendMode.srcIn),
+              ),
               onPressed: () => context.push('/marketplace'),
             ),
             IconButton(
-              icon: const Icon(Icons.notifications_none),
+              icon: SvgPicture.asset(
+                'assets/icons/home/notification.svg',
+                width: 24,
+                height: 24,
+                colorFilter: const ColorFilter.mode(AppColors.primary, BlendMode.srcIn),
+              ),
               onPressed: () => context.push('/notifications'),
             ),
+            const SizedBox(width: 8),
           ],
         );
       case 1: // Discover

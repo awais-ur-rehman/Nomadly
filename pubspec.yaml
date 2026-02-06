@@ -107,6 +107,7 @@ flutter:
     - assets/icons/nav/
     - assets/icons/auth/
     - assets/icons/rigs/
+    - assets/icons/home/
 
   fonts:
     - family: Outfit
