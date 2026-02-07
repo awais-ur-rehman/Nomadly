@@ -351,10 +351,19 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           Switch(
             value: value,
             onChanged: onChanged,
-            activeColor: AppColors.primary,
             activeTrackColor: AppColors.primary.withValues(alpha: 0.3),
-            inactiveThumbColor: Colors.white.withValues(alpha: 0.5),
-            inactiveTrackColor: Colors.white.withValues(alpha: 0.1),
+            thumbColor: WidgetStateProperty.resolveWith((states) {
+              if (states.contains(WidgetState.selected)) {
+                return AppColors.primary;
+              }
+              return Colors.white.withValues(alpha: 0.5);
+            }),
+            trackColor: WidgetStateProperty.resolveWith((states) {
+              if (states.contains(WidgetState.selected)) {
+                return AppColors.primary.withValues(alpha: 0.3);
+              }
+              return Colors.white.withValues(alpha: 0.1);
+            }),
           ),
         ],
       ),

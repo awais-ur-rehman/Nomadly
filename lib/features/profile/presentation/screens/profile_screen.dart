@@ -107,7 +107,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           onFollowingTap: () {
             context.push('/profile/${user.uid}/connections?tab=1');
           },
-          onSettingsTap: () => _showSettingsSheet(context),
+          onSettingsTap: () => context.push('/settings'),
           banner: !user.isBuilder ? _buildMarketplaceBanner() : null,
           headerButtons: SizedBox(
             width: double.infinity,
@@ -132,90 +132,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           ),
         ),
       ),
-    );
-  }
-
-  void _showSettingsSheet(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: AppColors.slate,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (ctx) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 40,
-              height: 4,
-              margin: const EdgeInsets.only(top: 12, bottom: 8),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.3),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            _buildSettingsItem(
-              icon: Icons.edit_outlined,
-              title: 'Edit Profile',
-              onTap: () {
-                Navigator.pop(ctx);
-                context.push('/edit-profile');
-              },
-            ),
-            _buildSettingsItem(
-              icon: Icons.settings_outlined,
-              title: 'Settings',
-              onTap: () {
-                Navigator.pop(ctx);
-                context.push('/settings');
-              },
-            ),
-            _buildSettingsItem(
-              icon: Icons.bookmark_outline,
-              title: 'Saved',
-              onTap: () {
-                Navigator.pop(ctx);
-              },
-            ),
-            _buildSettingsItem(
-              icon: Icons.qr_code,
-              title: 'QR Code',
-              onTap: () {
-                Navigator.pop(ctx);
-              },
-            ),
-            _buildSettingsItem(
-              icon: Icons.help_outline,
-              title: 'Help & Support',
-              onTap: () {
-                Navigator.pop(ctx);
-              },
-            ),
-            const SizedBox(height: 16),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSettingsItem({
-    required IconData icon,
-    required String title,
-    required VoidCallback onTap,
-  }) {
-    return ListTile(
-      leading: Icon(icon, color: AppColors.white, size: 24),
-      title: Text(
-        title,
-        style: const TextStyle(
-          color: AppColors.white,
-          fontFamily: 'Inter',
-          fontSize: 16,
-        ),
-      ),
-      onTap: onTap,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 24),
     );
   }
 

@@ -25,22 +25,32 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     setState(() => _currentIndex = index);
   }
 
+  // Map visual tab index to screen index
+  // Visual: 0=Feed, 1=Discover, 2=FAB(skip), 3=Chat, 4=Profile
+  // Screen: 0=Feed, 1=Discover, 2=Chat, 3=Profile
+  int get _screenIndex {
+    switch (_currentIndex) {
+      case 0: return 0; // Feed
+      case 1: return 1; // Discover
+      case 3: return 2; // Chat
+      case 4: return 3; // Profile
+      default: return 0;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Map visual index (0,1,3,4) → screen index (0,1,2,3)
-    final screenIndex = _currentIndex > 3 ? _currentIndex - 1 : _currentIndex;
-
     return Scaffold(
       appBar: _buildAppBar(),
       body: Stack(
         children: [
           IndexedStack(
-            index: screenIndex,
+            index: _screenIndex,
             children: const [
-              PostsFeedScreen(), // Feed (0)
-              MatchingScreen(), // Discover (1)
-              InboxScreen(), // Chat (3)
-              ProfileScreen(), // Profile (4)
+              PostsFeedScreen(), // 0 - Feed
+              MatchingScreen(), // 1 - Discover
+              InboxScreen(), // 2 - Chat
+              ProfileScreen(), // 3 - Profile
             ],
           ),
 
@@ -68,7 +78,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           elevation: 0,
           scrolledUnderElevation: 0,
           surfaceTintColor: Colors.transparent,
-          title: const SizedBox.shrink(), // Remove "Nomadly"
+          title: const SizedBox.shrink(),
           centerTitle: true,
           actions: [
             IconButton(
@@ -98,20 +108,26 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             const SizedBox(width: 8),
           ],
         );
-      case 1: // Discover - No AppBar, MatchingScreen has its own search/filter header
+      case 1: // Discover - No AppBar, MatchingScreen has its own header
         return PreferredSize(preferredSize: Size.zero, child: Container());
       case 3: // Chat
-        return AppBar(title: const Text('Messages'));
-      case 4: // Profile
         return AppBar(
-          title: const Text('Profile'),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.settings_outlined),
-              onPressed: () => context.push('/settings'),
+          backgroundColor: AppColors.obsidian,
+          elevation: 0,
+          scrolledUnderElevation: 0,
+          surfaceTintColor: Colors.transparent,
+          title: const Text(
+            'Messages',
+            style: TextStyle(
+              fontFamily: 'Outfit',
+              fontWeight: FontWeight.w600,
+              fontSize: 18,
+              color: AppColors.white,
             ),
-          ],
+          ),
         );
+      case 4: // Profile - No AppBar, ProfileScreen has its own header
+        return PreferredSize(preferredSize: Size.zero, child: Container());
       default:
         return AppBar(title: const Text(AppStrings.appName));
     }

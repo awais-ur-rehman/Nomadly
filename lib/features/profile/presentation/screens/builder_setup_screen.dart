@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
-import '../../../../core/constants/app_dimensions.dart';
 import '../../../../shared/services/api_client.dart';
 import '../../../../shared/services/toast_service.dart';
 import '../../../../core/config/app_config.dart';
@@ -93,7 +92,7 @@ class _BuilderSetupScreenState extends ConsumerState<BuilderSetupScreen> {
             fontSize: 14,
             fontWeight: FontWeight.w800,
             letterSpacing: 2,
-            color: AppColors.white.withOpacity(0.5),
+            color: Colors.white.withValues(alpha: 0.5),
           ),
         ),
       ),
@@ -118,7 +117,7 @@ class _BuilderSetupScreenState extends ConsumerState<BuilderSetupScreen> {
               style: TextStyle(
                 fontFamily: 'Inter',
                 fontSize: 16,
-                color: AppColors.white.withOpacity(0.5),
+                color: Colors.white.withValues(alpha: 0.5),
                 height: 1.5,
               ),
             ),
@@ -141,12 +140,12 @@ class _BuilderSetupScreenState extends ConsumerState<BuilderSetupScreen> {
                     });
                   },
                   selectedColor: AppColors.primary,
-                  backgroundColor: AppColors.white.withOpacity(0.05),
+                  backgroundColor: Colors.white.withValues(alpha: 0.05),
                   labelStyle: TextStyle(
                     fontFamily: 'Outfit',
                     fontSize: 10,
                     fontWeight: FontWeight.w800,
-                    color: isSelected ? AppColors.white : AppColors.white.withOpacity(0.4),
+                    color: isSelected ? AppColors.white : Colors.white.withValues(alpha: 0.4),
                   ),
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10), side: BorderSide.none),
@@ -206,7 +205,7 @@ class _BuilderSetupScreenState extends ConsumerState<BuilderSetupScreen> {
           fontSize: 12,
           fontWeight: FontWeight.w800,
           letterSpacing: 1.5,
-          color: AppColors.white.withOpacity(0.4),
+          color: Colors.white.withValues(alpha: 0.4),
         ),
       ),
     );
