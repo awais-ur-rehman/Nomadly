@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -20,10 +19,11 @@ class MatchingScreen extends ConsumerStatefulWidget {
 }
 
 class _MatchingScreenState extends ConsumerState<MatchingScreen> with SingleTickerProviderStateMixin {
-  final CardSwiperController _controller = CardSwiperController();
+  CardSwiperController _controller = CardSwiperController();
   final _logger = Logger();
   final TextEditingController _searchController = TextEditingController();
-  
+  int _lastKnownCardCount = 0;
+
   // Filter Menu State
   bool _isFilterMenuOpen = false;
   late AnimationController _filterAnimController;
@@ -49,6 +49,7 @@ class _MatchingScreenState extends ConsumerState<MatchingScreen> with SingleTick
   void dispose() {
     _searchController.dispose();
     _filterAnimController.dispose();
+    _controller.dispose();
     super.dispose();
   }
 
@@ -69,7 +70,6 @@ class _MatchingScreenState extends ConsumerState<MatchingScreen> with SingleTick
     CardSwiperDirection direction,
     List<dynamic> currentList,
   ) async {
-    // We pass the current list to know what we are swiping on
     if (previousIndex >= currentList.length) return true;
 
     final recommended = currentList[previousIndex];
@@ -87,28 +87,33 @@ class _MatchingScreenState extends ConsumerState<MatchingScreen> with SingleTick
 
     _logger.d('[MatchingUI] Swiping $action on ${recommended.user.username}');
 
-    // Optimistic UI update is handled by the swiper visual
+    // Call provider to track swipe and make API call
     await ref.read(matchingProvider.notifier).swipeUser(recommended.user.uid, action);
-    
-    // Check for match
-    if (mounted) { 
+
+    // Check for match after swipe
+    if (mounted) {
       final checkState = ref.read(matchingProvider);
       if (checkState.newMatch != null) {
-          ref.read(matchProvider.notifier).loadMatches();
-          _showMatchDialog(checkState.newMatch!['match']);
-          ref.read(matchingProvider.notifier).clearMatch();
+        ref.read(matchProvider.notifier).loadMatches();
+        _showMatchDialog(checkState.newMatch!['match']);
+        ref.read(matchingProvider.notifier).clearMatch();
       }
     }
 
     return true;
   }
 
+  void _onSwipeEnd() {
+    _logger.d('[MatchingUI] All cards swiped');
+    ref.read(matchingProvider.notifier).onDeckEnd();
+  }
+
   void _showMatchDialog(Map<String, dynamic>? matchData) {
     if (matchData == null) return;
-    
+
     final matchedUser = matchData['user'];
     final conversationId = matchData['conversation_id'];
-    
+
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -117,11 +122,11 @@ class _MatchingScreenState extends ConsumerState<MatchingScreen> with SingleTick
         child: Container(
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.slate,
             borderRadius: BorderRadius.circular(24),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.1),
+                color: Colors.black.withOpacity(0.3),
                 blurRadius: 20,
                 offset: const Offset(0, 10),
               ),
@@ -136,7 +141,7 @@ class _MatchingScreenState extends ConsumerState<MatchingScreen> with SingleTick
                   fontSize: 32,
                   fontWeight: FontWeight.bold,
                   color: AppColors.primary,
-                  fontFamily: 'Outfit', 
+                  fontFamily: 'Outfit',
                 ),
               ),
               const SizedBox(height: 24),
@@ -149,7 +154,12 @@ class _MatchingScreenState extends ConsumerState<MatchingScreen> with SingleTick
               Text(
                 "You and ${matchedUser?['profile']?['name'] ?? 'Nomad'} vibe!",
                 textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.white,
+                  fontFamily: 'Inter',
+                ),
               ),
               const SizedBox(height: 32),
               ElevatedButton(
@@ -158,7 +168,7 @@ class _MatchingScreenState extends ConsumerState<MatchingScreen> with SingleTick
                    if (conversationId != null) {
                      context.push('/chat/$conversationId');
                    } else {
-                     context.go('/matches'); 
+                     context.go('/matches');
                    }
                 },
                 style: ElevatedButton.styleFrom(
@@ -167,12 +177,26 @@ class _MatchingScreenState extends ConsumerState<MatchingScreen> with SingleTick
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   elevation: 0,
                 ),
-                child: const Text('Send a Message', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                child: const Text(
+                  'Send a Message',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: 'Outfit',
+                  ),
+                ),
               ),
               const SizedBox(height: 12),
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text('Keep Swiping', style: TextStyle(color: Colors.grey)),
+                child: Text(
+                  'Keep Swiping',
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.6),
+                    fontFamily: 'Inter',
+                  ),
+                ),
               ),
             ],
           ),
@@ -184,16 +208,27 @@ class _MatchingScreenState extends ConsumerState<MatchingScreen> with SingleTick
   void _showCardSafetySheet(String userId) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.slate,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (ctx) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(width: 40, height: 4, margin: const EdgeInsets.only(top: 12, bottom: 24), decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2))),
+            Container(
+              width: 40,
+              height: 4,
+              margin: const EdgeInsets.only(top: 12, bottom: 24),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.3),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
             ListTile(
               leading: const Icon(Icons.block, color: Colors.red),
-              title: const Text('Block User', style: TextStyle(fontWeight: FontWeight.w600)),
+              title: const Text(
+                'Block User',
+                style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.white),
+              ),
               onTap: () async {
                 Navigator.pop(ctx);
                 final ok = await ref.read(safetyProvider.notifier).blockUser(userId);
@@ -205,7 +240,10 @@ class _MatchingScreenState extends ConsumerState<MatchingScreen> with SingleTick
             ),
             ListTile(
               leading: const Icon(Icons.flag_outlined, color: Colors.orange),
-              title: const Text('Report User', style: TextStyle(fontWeight: FontWeight.w600)),
+              title: const Text(
+                'Report User',
+                style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.white),
+              ),
               onTap: () {
                 Navigator.pop(ctx);
                 _showReportDialog(userId);
@@ -219,7 +257,6 @@ class _MatchingScreenState extends ConsumerState<MatchingScreen> with SingleTick
   }
 
   void _showReportDialog(String userId) {
-    // ... consistent report dialog ...
     const reasons = [
       ('harassment', 'Harassment'),
       ('fake_profile', 'Fake Profile'),
@@ -233,29 +270,47 @@ class _MatchingScreenState extends ConsumerState<MatchingScreen> with SingleTick
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDialogState) => AlertDialog(
+          backgroundColor: AppColors.slate,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: const Text('Report User'),
+          title: const Text(
+            'Report User',
+            style: TextStyle(color: AppColors.white, fontFamily: 'Outfit'),
+          ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: reasons.map((r) => RadioListTile<String>(
               value: r.$1,
               groupValue: selectedReason,
-              title: Text(r.$2),
+              title: Text(r.$2, style: const TextStyle(color: AppColors.white)),
               contentPadding: EdgeInsets.zero,
-              activeColor: Colors.red,
+              activeColor: AppColors.primary,
               onChanged: (v) => setDialogState(() => selectedReason = v),
             )).toList(),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel', style: TextStyle(color: Colors.grey))),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text(
+                'Cancel',
+                style: TextStyle(color: Colors.white.withOpacity(0.6)),
+              ),
+            ),
             TextButton(
               onPressed: () async {
-                if (selectedReason == null) { ToastService.showError('Select a reason'); return; }
+                if (selectedReason == null) {
+                  ToastService.showError('Select a reason');
+                  return;
+                }
                 Navigator.pop(ctx);
                 final ok = await ref.read(safetyProvider.notifier).reportUser(userId, selectedReason!);
-                if (mounted) ok ? ToastService.showSuccess('Report submitted') : ToastService.showError('Failed');
+                if (mounted) {
+                  ok ? ToastService.showSuccess('Report submitted') : ToastService.showError('Failed');
+                }
               },
-              child: const Text('Submit', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+              child: const Text(
+                'Submit',
+                style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+              ),
             ),
           ],
         ),
@@ -269,24 +324,23 @@ class _MatchingScreenState extends ConsumerState<MatchingScreen> with SingleTick
     final blockedIds = ref.watch(safetyProvider).blockedUserIds;
     final searchQuery = _searchController.text.toLowerCase();
 
-    // 1. Filter blocked users
-    var activeRecs = state.recommendations
+    // Get available recommendations (already filtered for swiped users in state)
+    // Then filter out blocked users
+    final activeRecs = state.availableRecommendations
         .where((r) => !blockedIds.contains(r.user.uid))
         .toList();
-    
-    // 2. Filter by search query (local filter)
-    if (searchQuery.isNotEmpty) {
-      activeRecs = activeRecs.where((r) {
-        final name = (r.user.profile?.name ?? '').toLowerCase();
-        final username = (r.user.username ?? '').toLowerCase();
-        return name.contains(searchQuery) || username.contains(searchQuery);
-      }).toList();
-    }
 
-    final isSearching = state.isSearching || searchQuery.isNotEmpty;
+    // Determine if we're in search mode
+    final isSearchMode = searchQuery.isNotEmpty;
+
+    // Determine the empty state type
+    final showDeckExhausted = !isSearchMode &&
+        !state.isLoading &&
+        activeRecs.isEmpty &&
+        (state.deckExhausted || state.swipedUserIds.isNotEmpty);
 
     return Scaffold(
-      backgroundColor: AppColors.obsidian, // Dark background
+      backgroundColor: AppColors.obsidian,
       body: Stack(
         children: [
           // Main Content Layer
@@ -359,34 +413,23 @@ class _MatchingScreenState extends ConsumerState<MatchingScreen> with SingleTick
                   ),
                 ),
 
-                // CONTENT: Search Results OR Swipe Deck
+                // CONTENT: Search Results OR Swipe Deck OR Empty State
                 Expanded(
-                  child: searchQuery.isNotEmpty
+                  child: isSearchMode
                       ? _buildSearchResults(state)
-                      : activeRecs.isEmpty
-                          ? _buildEmptyState(state, false)
-                          : Padding(
-                              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                              child: CardSwiper(
-                                controller: _controller,
-                                cardsCount: activeRecs.length,
-                                onSwipe: (prev, curr, dir) => _onSwipe(prev, curr, dir, activeRecs),
-                                numberOfCardsDisplayed: activeRecs.length == 1 ? 1 : 2,
-                                backCardOffset: const Offset(0, 30),
-                                padding: const EdgeInsets.all(0),
-                                cardBuilder: (context, index, percentThresholdX, percentThresholdY) {
-                                  final rec = activeRecs[index];
-                                  return MatchingCard(
-                                    recommended: rec,
-                                    onTap: () => context.push('/profile/${rec.user.uid}', extra: rec.user),
-                                  );
-                                },
-                              ),
-                            ),
+                      : state.isLoading
+                          ? _buildLoadingState()
+                          : state.error != null
+                              ? _buildErrorState(state.error!)
+                              : showDeckExhausted
+                                  ? _buildDeckExhaustedState()
+                                  : activeRecs.isEmpty
+                                      ? _buildNoUsersState()
+                                      : _buildCardSwiper(activeRecs),
                 ),
 
                 // Controls (Only show if we have cards AND NOT searching)
-                if (activeRecs.isNotEmpty && searchQuery.isEmpty)
+                if (activeRecs.isNotEmpty && !isSearchMode && !state.isLoading)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 130),
                     child: Row(
@@ -416,22 +459,20 @@ class _MatchingScreenState extends ConsumerState<MatchingScreen> with SingleTick
               ],
             ),
           ),
-          
+
           // Black Overlay for Menu
           if (_isFilterMenuOpen)
             Positioned.fill(
               child: GestureDetector(
                 onTap: _toggleFilterMenu,
                 behavior: HitTestBehavior.opaque,
-                child: Container(
-                  color: Colors.transparent, // Capture taps
-                ),
+                child: Container(color: Colors.transparent),
               ),
             ),
 
           // Filter Menu (Animated)
           Positioned(
-            top: MediaQuery.of(context).padding.top + 70, // Below top bar
+            top: MediaQuery.of(context).padding.top + 70,
             right: 20,
             child: ScaleTransition(
               scale: _filterExpandAnimation,
@@ -447,60 +488,232 @@ class _MatchingScreenState extends ConsumerState<MatchingScreen> with SingleTick
     );
   }
 
-  Widget _buildEmptyState(MatchingState state, bool isSearching) {
-    if (state.isLoading) {
-      return const Center(child: CircularProgressIndicator(color: AppColors.primary));
+  Widget _buildCardSwiper(List<dynamic> activeRecs) {
+    // Safety check - if no cards, don't render swiper
+    if (activeRecs.isEmpty) {
+      return _buildNoUsersState();
     }
 
-    if (state.error != null) {
-      return Center(child: Text(state.error!, style: const TextStyle(color: Colors.white)));
+    // Recreate controller if card count changed significantly (new deck loaded)
+    if (_lastKnownCardCount == 0 && activeRecs.length > 0 ||
+        activeRecs.length > _lastKnownCardCount) {
+      _controller.dispose();
+      _controller = CardSwiperController();
     }
+    _lastKnownCardCount = activeRecs.length;
 
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+      child: CardSwiper(
+        // Key ensures swiper rebuilds when list changes
+        key: ValueKey('swiper_${activeRecs.length}_${activeRecs.firstOrNull?.user.uid ?? "empty"}'),
+        controller: _controller,
+        cardsCount: activeRecs.length,
+        onSwipe: (prev, curr, dir) => _onSwipe(prev, curr, dir, activeRecs),
+        onEnd: _onSwipeEnd,
+        numberOfCardsDisplayed: activeRecs.length == 1 ? 1 : 2,
+        backCardOffset: const Offset(0, 30),
+        padding: const EdgeInsets.all(0),
+        cardBuilder: (context, index, percentThresholdX, percentThresholdY) {
+          // Safety bounds check
+          if (index < 0 || index >= activeRecs.length) {
+            return const SizedBox.shrink();
+          }
+          final rec = activeRecs[index];
+          return MatchingCard(
+            recommended: rec,
+            onTap: () => context.push('/profile/${rec.user.uid}', extra: rec.user),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildLoadingState() {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            isSearching ? Icons.search_off_rounded : Icons.explore_off_rounded,
-            size: 80,
-            color: Colors.white.withOpacity(0.2),
-          ),
+          const CircularProgressIndicator(color: AppColors.primary),
           const SizedBox(height: 20),
           Text(
-            isSearching ? 'No nomads found.' : "Searching for nomads...",
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
-          ),
-          const SizedBox(height: 10),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 40),
-            child: Text(
-              isSearching 
-                  ? "Try a different search term or clear the filter."
-                  : "We're expanding our network! Check back soon for new travelers in your area.",
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.white.withOpacity(0.6), height: 1.5),
+            'Finding nomads near you...',
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.6),
+              fontFamily: 'Inter',
             ),
           ),
-          if (isSearching) ...[
-            const SizedBox(height: 24),
-            TextButton.icon(
-              onPressed: () {
-                _searchController.clear();
-                setState(() {});
-                ref.read(matchingProvider.notifier).searchUsers('');
-              },
-              icon: const Icon(Icons.clear, color: Colors.white),
-              label: const Text("Clear Search", style: TextStyle(color: Colors.white)),
-            ),
-          ] else if (!state.isLoading) ...[
-            const SizedBox(height: 24),
-            TextButton.icon(
-              onPressed: () => ref.read(matchingProvider.notifier).loadRecommendations(refresh: true),
-              icon: const Icon(Icons.refresh, color: AppColors.primary),
-              label: const Text("Refresh List", style: TextStyle(color: AppColors.primary)),
-            ),
-          ]
         ],
+      ),
+    );
+  }
+
+  Widget _buildErrorState(String error) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(40),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.error_outline_rounded,
+              size: 80,
+              color: Colors.red.withOpacity(0.5),
+            ),
+            const SizedBox(height: 20),
+            const Text(
+              'Something went wrong',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+                fontFamily: 'Outfit',
+              ),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              error,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.6),
+                fontFamily: 'Inter',
+              ),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: () => ref.read(matchingProvider.notifier).loadRecommendations(refresh: true),
+              icon: const Icon(Icons.refresh),
+              label: const Text('Try Again'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDeckExhaustedState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(40),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.check_circle_outline_rounded,
+                size: 60,
+                color: AppColors.primary.withOpacity(0.8),
+              ),
+            ),
+            const SizedBox(height: 24),
+            const Text(
+              "You're all caught up!",
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+                fontFamily: 'Outfit',
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              "You've seen all the nomads in your area.\nCheck back later for new travelers!",
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.6),
+                height: 1.5,
+                fontFamily: 'Inter',
+              ),
+            ),
+            const SizedBox(height: 32),
+            ElevatedButton.icon(
+              onPressed: () => ref.read(matchingProvider.notifier).refreshDeck(),
+              icon: const Icon(Icons.refresh_rounded),
+              label: const Text('Refresh Deck'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextButton(
+              onPressed: () {
+                // Open filter to expand search radius
+                _toggleFilterMenu();
+              },
+              child: Text(
+                'Expand Search Radius',
+                style: TextStyle(
+                  color: Colors.white.withOpacity(0.6),
+                  fontFamily: 'Inter',
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNoUsersState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(40),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.explore_off_rounded,
+              size: 80,
+              color: Colors.white.withOpacity(0.2),
+            ),
+            const SizedBox(height: 20),
+            const Text(
+              'No nomads nearby',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+                fontFamily: 'Outfit',
+              ),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              "We're expanding our network!\nTry expanding your search radius.",
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.6),
+                height: 1.5,
+                fontFamily: 'Inter',
+              ),
+            ),
+            const SizedBox(height: 24),
+            OutlinedButton.icon(
+              onPressed: _toggleFilterMenu,
+              icon: const Icon(Icons.tune_rounded),
+              label: const Text('Adjust Filters'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.primary,
+                side: const BorderSide(color: AppColors.primary),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -511,7 +724,46 @@ class _MatchingScreenState extends ConsumerState<MatchingScreen> with SingleTick
     }
 
     if (state.searchResults.isEmpty) {
-      return _buildEmptyState(state, true);
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.search_off_rounded,
+              size: 80,
+              color: Colors.white.withOpacity(0.2),
+            ),
+            const SizedBox(height: 20),
+            const Text(
+              'No nomads found',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+                fontFamily: 'Outfit',
+              ),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              'Try a different search term',
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.6),
+                fontFamily: 'Inter',
+              ),
+            ),
+            const SizedBox(height: 24),
+            TextButton.icon(
+              onPressed: () {
+                _searchController.clear();
+                setState(() {});
+                ref.read(matchingProvider.notifier).searchUsers('');
+              },
+              icon: const Icon(Icons.clear, color: Colors.white),
+              label: const Text('Clear Search', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        ),
+      );
     }
 
     return ListView.builder(
@@ -520,7 +772,7 @@ class _MatchingScreenState extends ConsumerState<MatchingScreen> with SingleTick
       itemBuilder: (context, index) {
         final user = state.searchResults[index].user;
         return Card(
-          color: AppColors.white.withOpacity(0.05),
+          color: Colors.white.withOpacity(0.05),
           margin: const EdgeInsets.only(bottom: 12),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           child: ListTile(
@@ -540,13 +792,17 @@ class _MatchingScreenState extends ConsumerState<MatchingScreen> with SingleTick
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
                 fontSize: 16,
+                fontFamily: 'Outfit',
               ),
             ),
             subtitle: Text(
               user.profile?.bio ?? 'No bio yet',
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(color: Colors.white.withOpacity(0.5)),
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.5),
+                fontFamily: 'Inter',
+              ),
             ),
             onTap: () => context.push('/profile/${user.uid}', extra: user),
           ),
@@ -560,7 +816,7 @@ class _MatchingScreenState extends ConsumerState<MatchingScreen> with SingleTick
       width: 280,
       padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
       decoration: BoxDecoration(
-        color: const Color(0xFF1A1A1A), // Dark surface
+        color: const Color(0xFF1A1A1A),
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: Colors.white.withOpacity(0.1)),
         boxShadow: [
@@ -576,16 +832,17 @@ class _MatchingScreenState extends ConsumerState<MatchingScreen> with SingleTick
         mainAxisSize: MainAxisSize.min,
         children: [
           Padding(
-             padding: const EdgeInsets.only(bottom: 16, left: 4),
-             child: Text(
-               'EXPLORATION RADIUS',
-               style: TextStyle(
-                 color: AppColors.primary.withOpacity(0.8),
-                 fontSize: 12,
-                 fontWeight: FontWeight.bold,
-                 letterSpacing: 1.2,
-               ),
-             ),
+            padding: const EdgeInsets.only(bottom: 16, left: 4),
+            child: Text(
+              'EXPLORATION RADIUS',
+              style: TextStyle(
+                color: AppColors.primary.withOpacity(0.8),
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.2,
+                fontFamily: 'Outfit',
+              ),
+            ),
           ),
           _buildFilterOption('Town', '50 km', 50, Icons.home_work_outlined),
           const SizedBox(height: 8),
@@ -623,8 +880,23 @@ class _MatchingScreenState extends ConsumerState<MatchingScreen> with SingleTick
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
-                  Text(subtitle, style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 12)),
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                      fontFamily: 'Outfit',
+                    ),
+                  ),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.5),
+                      fontSize: 12,
+                      fontFamily: 'Inter',
+                    ),
+                  ),
                 ],
               ),
               const Spacer(),
@@ -653,7 +925,7 @@ class _SwipeButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final size = isSmall ? 50.0 : 64.0;
-    
+
     return GestureDetector(
       onTap: () {
         HapticFeedback.lightImpact();

@@ -293,6 +293,29 @@ class MatchingRepository {
       map['rig'] = rig;
     }
 
+    // Sanitize travel_route - handle empty GeoPoint objects
+    if (map['travel_route'] != null && map['travel_route'] is Map) {
+      final route = Map<String, dynamic>.from(map['travel_route']);
+
+      // Check origin - if it's an empty object or missing required fields, set to null
+      if (route['origin'] != null && route['origin'] is Map) {
+        final origin = route['origin'] as Map;
+        if (origin.isEmpty || origin['type'] == null || origin['coordinates'] == null) {
+          route['origin'] = null;
+        }
+      }
+
+      // Check destination - if it's an empty object or missing required fields, set to null
+      if (route['destination'] != null && route['destination'] is Map) {
+        final destination = route['destination'] as Map;
+        if (destination.isEmpty || destination['type'] == null || destination['coordinates'] == null) {
+          route['destination'] = null;
+        }
+      }
+
+      map['travel_route'] = route;
+    }
+
     // Sanitize matching_profile
     if (map['matching_profile'] != null && map['matching_profile'] is Map) {
       final mp = Map<String, dynamic>.from(map['matching_profile']);
