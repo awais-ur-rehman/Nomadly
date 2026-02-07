@@ -210,6 +210,21 @@ class SocialRepository {
       return [];
     }
   }
+
+  // Get User Stories (GET /api/v1/stories/user/:userId)
+  Future<List<Story>> getUserStories(String userId) async {
+    try {
+      final response = await _apiClient.get('$_storiesEndpoint/user/$userId');
+      if (response.statusCode == 200) {
+        final List<dynamic> data = response.data['data']['stories'] ?? response.data['data'] ?? [];
+        return data.map((json) => Story.fromJson(json)).toList();
+      }
+      return [];
+    } on DioException catch (e) {
+      _logger.e('Get user stories error: ${e.message}');
+      return [];
+    }
+  }
   
   // View Story (GET /api/v1/stories/:storyId)
   Future<void> viewStory(String storyId) async {

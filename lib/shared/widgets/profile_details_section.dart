@@ -37,19 +37,29 @@ class ProfileDetailsSection extends StatelessWidget {
           ),
         ],
 
-        // Hobby chips
+        // Hobby chips (max 3)
         if (hobbies.isNotEmpty) ...[
           const SizedBox(height: 10),
           Wrap(
             spacing: 6,
             runSpacing: 6,
-            children: hobbies.map<Widget>((h) => Chip(
-              label: Text(h, style: const TextStyle(fontSize: 12)),
-              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              visualDensity: VisualDensity.compact,
-              backgroundColor: AppColors.primaryExtraLight,
-              labelStyle: const TextStyle(color: AppColors.primary),
-            )).toList(),
+            children: [
+              ...hobbies.take(3).map<Widget>((h) => Chip(
+                label: Text(h, style: const TextStyle(fontSize: 12)),
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                visualDensity: VisualDensity.compact,
+                backgroundColor: AppColors.primaryExtraLight,
+                labelStyle: const TextStyle(color: AppColors.primary),
+              )),
+              if (hobbies.length > 3)
+                Chip(
+                  label: Text('+${hobbies.length - 3}', style: const TextStyle(fontSize: 12)),
+                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  visualDensity: VisualDensity.compact,
+                  backgroundColor: AppColors.greyExtraLight,
+                  labelStyle: const TextStyle(color: AppColors.textSecondary),
+                ),
+            ],
           ),
         ],
       ],
@@ -87,21 +97,12 @@ class ProfileDetailsSection extends StatelessWidget {
   }
 
   String _tripSummary(TravelRoute route) {
-    final dest = route.destination;
-    final origin = route.origin;
-    String text = '';
-    if (origin != null) {
-      text += '${origin.latitude.toStringAsFixed(1)},${origin.longitude.toStringAsFixed(1)}';
-    }
-    if (dest != null) {
-      if (text.isNotEmpty) text += ' → ';
-      text += '${dest.latitude.toStringAsFixed(1)},${dest.longitude.toStringAsFixed(1)}';
-    }
+    String text = 'On the Road';
     if (route.startDate != null) {
       text += ' · ${DateFormat.MMMd().format(route.startDate!)}';
       if (route.durationDays != null) {
         final end = route.startDate!.add(Duration(days: route.durationDays!));
-        text += '-${DateFormat.MMMd().format(end)}';
+        text += ' - ${DateFormat.MMMd().format(end)}';
       }
     }
     return text;

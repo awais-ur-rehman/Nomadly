@@ -28,7 +28,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     // Map visual index (0,1,3,4) → screen index (0,1,2,3)
-    final screenIndex = _currentIndex > 2 ? _currentIndex - 1 : _currentIndex;
+    final screenIndex = _currentIndex > 3 ? _currentIndex - 1 : _currentIndex;
 
     return Scaffold(
       appBar: _buildAppBar(),
@@ -37,13 +37,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           IndexedStack(
             index: screenIndex,
             children: const [
-              PostsFeedScreen(),   // Feed (0)
-              MatchingScreen(),    // Discover (1)
-              InboxScreen(),       // Chat (3)
-              ProfileScreen(),     // Profile (4)
+              PostsFeedScreen(), // Feed (0)
+              MatchingScreen(), // Discover (1)
+              InboxScreen(), // Chat (3)
+              ProfileScreen(), // Profile (4)
             ],
           ),
-          
+
           // Floating Navbar
           Align(
             alignment: Alignment.bottomCenter,
@@ -76,7 +76,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 'assets/icons/home/marketplace.svg',
                 width: 24,
                 height: 24,
-                colorFilter: const ColorFilter.mode(AppColors.primary, BlendMode.srcIn),
+                colorFilter: const ColorFilter.mode(
+                  AppColors.primary,
+                  BlendMode.srcIn,
+                ),
               ),
               onPressed: () => context.push('/marketplace'),
             ),
@@ -85,7 +88,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 'assets/icons/home/notification.svg',
                 width: 24,
                 height: 24,
-                colorFilter: const ColorFilter.mode(AppColors.primary, BlendMode.srcIn),
+                colorFilter: const ColorFilter.mode(
+                  AppColors.primary,
+                  BlendMode.srcIn,
+                ),
               ),
               onPressed: () => context.push('/notifications'),
             ),
@@ -93,14 +99,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ],
         );
       case 1: // Discover - No AppBar, MatchingScreen has its own search/filter header
-        return PreferredSize(
-          preferredSize: Size.zero,
-          child: Container(),
-        );
+        return PreferredSize(preferredSize: Size.zero, child: Container());
       case 3: // Chat
-        return AppBar(
-          title: const Text('Messages'),
-        );
+        return AppBar(title: const Text('Messages'));
       case 4: // Profile
         return AppBar(
           title: const Text('Profile'),
