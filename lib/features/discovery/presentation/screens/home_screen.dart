@@ -92,15 +92,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             const SizedBox(width: 8),
           ],
         );
-      case 1: // Discover
-        return AppBar(
-          title: const Text('Discover'),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.search),
-              onPressed: () => context.push('/search'),
-            ),
-          ],
+      case 1: // Discover - No AppBar, MatchingScreen has its own search/filter header
+        return PreferredSize(
+          preferredSize: Size.zero,
+          child: Container(),
         );
       case 3: // Chat
         return AppBar(

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:nomadly/features/discovery/data/repositories/user_repository.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:logger/logger.dart';
 import 'package:go_router/go_router.dart';
@@ -9,9 +10,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../activities/providers/activity_provider.dart';
 import '../../../../shared/models/activity.dart';
 import '../../../../shared/models/beacon.dart';
-import '../../../../shared/models/geo_point.dart';
 import '../../../../shared/models/user.dart';
-import '../../discovery/data/repositories/user_repository.dart';
 
 class MapScreen extends ConsumerStatefulWidget {
   const MapScreen({super.key});
@@ -26,7 +25,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   final Map<String, dynamic> _annotationData = {};
   final _logger = Logger();
   bool _locationPermissionGranted = false;
-  
+
   final _userRepo = UserRepository();
   List<User> _travelers = [];
 
@@ -45,7 +44,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     setState(() {
       _locationPermissionGranted = status.isGranted;
     });
-    
+
     if (status.isGranted) {
       _setupLocation();
       ref.read(activityProvider.notifier).loadNearbyActivities();
@@ -74,7 +73,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     _setupAnnotationManager();
     _fetchTravelersForCamera();
   }
-  
+
   Future<void> _fetchTravelersForCamera() async {
     if (_mapboxMap == null) return;
     try {
@@ -83,11 +82,11 @@ class _MapScreenState extends ConsumerState<MapScreen> {
         final travelers = await _userRepo.getTravelers(
           lat: camera.center!.coordinates.lat as double,
           lng: camera.center!.coordinates.lng as double,
-          radius: 50000, 
+          radius: 50000,
         );
         if (mounted) {
-           setState(() => _travelers = travelers);
-           _updateMarkers();
+          setState(() => _travelers = travelers);
+          _updateMarkers();
         }
       }
     } catch (e) {
@@ -97,7 +96,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 
   Future<void> _setupAnnotationManager() async {
     if (_mapboxMap == null) return;
-    _pointAnnotationManager = await _mapboxMap!.annotations.createPointAnnotationManager();
+    _pointAnnotationManager = await _mapboxMap!.annotations
+        .createPointAnnotationManager();
     _pointAnnotationManager?.addOnPointAnnotationClickListener(
       _PointAnnotationClickListener(
         onAnnotationClick: (annotation) {
@@ -110,9 +110,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
               final beacon = Beacon.fromJson(data);
               _showBeaconDialog(beacon);
             } else if (data.containsKey('username')) {
-               final user = User.fromJson(data);
-               // Navigate to user profile
-               context.push('/profile/${user.id}', extra: user);
+              final user = User.fromJson(data);
+              // Navigate to user profile
+              context.push('/profile/${user.id}', extra: user);
             }
           }
           return true;
@@ -129,11 +129,13 @@ class _MapScreenState extends ConsumerState<MapScreen> {
         title: Row(
           children: [
             CircleAvatar(
-               radius: 16,
-               backgroundImage: beacon.author.profile?.photoUrl != null 
-                  ? NetworkImage(beacon.author.profile!.photoUrl!) 
+              radius: 16,
+              backgroundImage: beacon.author.profile?.photoUrl != null
+                  ? NetworkImage(beacon.author.profile!.photoUrl!)
                   : null,
-               child: beacon.author.profile?.photoUrl == null ? const Icon(Icons.person, size: 16) : null,
+              child: beacon.author.profile?.photoUrl == null
+                  ? const Icon(Icons.person, size: 16)
+                  : null,
             ),
             const SizedBox(width: 8),
             Text(beacon.author.profile?.name ?? 'Unknown Nomad'),
@@ -146,12 +148,15 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             child: const Text('Close'),
           ),
           ElevatedButton(
-             onPressed: () {
-                Navigator.pop(context);
-                // Navigate to profile or chat
-                context.push('/profile/${beacon.author.id}', extra: beacon.author);
-             },
-             child: const Text('View Profile'),
+            onPressed: () {
+              Navigator.pop(context);
+              // Navigate to profile or chat
+              context.push(
+                '/profile/${beacon.author.id}',
+                extra: beacon.author,
+              );
+            },
+            child: const Text('View Profile'),
           ),
         ],
       ),
@@ -160,17 +165,22 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 
   void _updateMarkers() async {
     if (_pointAnnotationManager == null) return;
-    
+
     final state = ref.read(activityProvider);
     await _pointAnnotationManager?.deleteAll();
     _annotationData.clear();
-    
+
     final List<PointAnnotationOptions> annotations = [];
 
     // Activities
     for (final activity in state.activities) {
       final options = PointAnnotationOptions(
-        geometry: Point(coordinates: Position(activity.location.longitude, activity.location.latitude)),
+        geometry: Point(
+          coordinates: Position(
+            activity.location.longitude,
+            activity.location.latitude,
+          ),
+        ),
         iconImage: 'marker-15',
         iconSize: 2.0,
         textField: activity.title,
@@ -183,7 +193,12 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     // Beacons
     for (final beacon in state.beacons) {
       final options = PointAnnotationOptions(
-        geometry: Point(coordinates: Position(beacon.location.longitude, beacon.location.latitude)),
+        geometry: Point(
+          coordinates: Position(
+            beacon.location.longitude,
+            beacon.location.latitude,
+          ),
+        ),
         iconImage: 'rocket-15',
         iconColor: Colors.orange.value,
         iconSize: 2.5,
@@ -194,7 +209,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       );
       annotations.add(options);
     }
-    
+
     // Travelers
     for (final traveler in _travelers) {
       // Use origin or destination? 'travel_route.origin' is current/start.
@@ -203,36 +218,45 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       // So use origin.
       final route = traveler.travelRoute;
       if (route != null && route.origin != null) {
-          final options = PointAnnotationOptions(
-            geometry: Point(coordinates: Position(route.origin!.longitude, route.origin!.latitude)),
-            iconImage: 'car-15', // or marker-15 with color
-            iconColor: Colors.blue.value,
-            iconSize: 2.0,
-            textField: traveler.username ?? traveler.profile?.name ?? 'Traveler',
-            textOffset: [0, 1.5],
-            textAnchor: TextAnchor.TOP,
-          );
-          annotations.add(options);
+        final options = PointAnnotationOptions(
+          geometry: Point(
+            coordinates: Position(
+              route.origin!.longitude,
+              route.origin!.latitude,
+            ),
+          ),
+          iconImage: 'car-15', // or marker-15 with color
+          iconColor: Colors.blue.value,
+          iconSize: 2.0,
+          textField: traveler.username ?? traveler.profile?.name ?? 'Traveler',
+          textOffset: [0, 1.5],
+          textAnchor: TextAnchor.TOP,
+        );
+        annotations.add(options);
       }
     }
 
-    final createdAnnotations = await _pointAnnotationManager?.createMulti(annotations);
+    final createdAnnotations = await _pointAnnotationManager?.createMulti(
+      annotations,
+    );
     if (createdAnnotations != null) {
       int activityCount = state.activities.length;
       int beaconCount = state.beacons.length;
-      
+
       for (int i = 0; i < createdAnnotations.length; i++) {
         final annotation = createdAnnotations[i];
         if (annotation != null) {
           if (i < activityCount) {
-             _annotationData[annotation.id] = state.activities[i].toJson();
+            _annotationData[annotation.id] = state.activities[i].toJson();
           } else if (i < activityCount + beaconCount) {
-             _annotationData[annotation.id] = state.beacons[i - activityCount].toJson();
+            _annotationData[annotation.id] = state.beacons[i - activityCount]
+                .toJson();
           } else {
-             final travelerIndex = i - (activityCount + beaconCount);
-             if (travelerIndex < _travelers.length) {
-                _annotationData[annotation.id] = _travelers[travelerIndex].toJson();
-             }
+            final travelerIndex = i - (activityCount + beaconCount);
+            if (travelerIndex < _travelers.length) {
+              _annotationData[annotation.id] = _travelers[travelerIndex]
+                  .toJson();
+            }
           }
         }
       }
@@ -244,10 +268,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 
     try {
       await _mapboxMap!.location.updateSettings(
-        LocationComponentSettings(
-          enabled: true,
-          pulsingEnabled: true,
-        ),
+        LocationComponentSettings(enabled: true, pulsingEnabled: true),
       );
     } catch (e) {
       _logger.e('Error setting up location: $e');
@@ -300,12 +321,14 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             key: const ValueKey('mapWidget'),
             onMapCreated: _onMapCreated,
             cameraOptions: CameraOptions(
-              center: Point(coordinates: Position(-122.4194, 37.7749)), // SF Default
+              center: Point(
+                coordinates: Position(-122.4194, 37.7749),
+              ), // SF Default
               zoom: 12.0,
             ),
             styleUri: MapboxStyles.LIGHT,
           ),
-          
+
           // Loading Indicator
           if (activityState.isLoading)
             const Positioned(
@@ -335,7 +358,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                 child: Row(
                   children: [
                     const Expanded(
-                      child: Text('Location permission is needed to show your position.'),
+                      child: Text(
+                        'Location permission is needed to show your position.',
+                      ),
                     ),
                     TextButton(
                       onPressed: _requestLocationPermission,
@@ -345,7 +370,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                 ),
               ),
             ),
-          
+
           // Floating Action Buttons
           Positioned(
             bottom: 30,
@@ -366,7 +391,6 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       ),
     );
   }
-
 }
 
 class _PointAnnotationClickListener extends OnPointAnnotationClickListener {

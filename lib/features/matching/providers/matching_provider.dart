@@ -12,6 +12,8 @@ class MatchingState {
   final bool noMoreUsers;
   final String mode; // 'friends', 'dating', 'both'
   final Map<String, dynamic>? newMatch;
+  final List<RecommendedUser> searchResults;
+  final bool isSearching;
 
   MatchingState({
     this.recommendations = const [],
@@ -20,6 +22,8 @@ class MatchingState {
     this.noMoreUsers = false,
     this.mode = 'both',
     this.newMatch,
+    this.searchResults = const [],
+    this.isSearching = false,
   });
 
   MatchingState copyWith({
@@ -29,6 +33,8 @@ class MatchingState {
     bool? noMoreUsers,
     String? mode,
     Map<String, dynamic>? newMatch,
+    List<RecommendedUser>? searchResults,
+    bool? isSearching,
   }) {
     return MatchingState(
       recommendations: recommendations ?? this.recommendations,
@@ -37,6 +43,8 @@ class MatchingState {
       noMoreUsers: noMoreUsers ?? this.noMoreUsers,
       mode: mode ?? this.mode,
       newMatch: newMatch,
+      searchResults: searchResults ?? this.searchResults,
+      isSearching: isSearching ?? this.isSearching,
     );
   }
 }
@@ -70,8 +78,9 @@ class MatchingNotifier extends StateNotifier<MatchingState> {
         recommendations: users,
         noMoreUsers: users.isEmpty,
       );
-    } catch (e) {
+    } catch (e, stackTrace) {
       _logger.e('[MatchingProvider] Error loading: $e');
+      _logger.e('[MatchingProvider] Stack trace: $stackTrace');
       state = state.copyWith(
         isLoading: false,
         error: e.toString(),
@@ -144,6 +153,24 @@ class MatchingNotifier extends StateNotifier<MatchingState> {
       ToastService.showSuccess('Join request sent!');
     } catch (e) {
       ToastService.showError(e.toString());
+    }
+  }
+
+  Future<void> searchUsers(String query) async {
+    if (query.isEmpty) {
+      state = state.copyWith(searchResults: [], isSearching: false);
+      return;
+    }
+
+    state = state.copyWith(isSearching: true);
+    
+    // Simple debounce could be added here or in UI. Assuming UI handles heavy debounce.
+    try {
+      final results = await _repository.searchUsers(query);
+      state = state.copyWith(searchResults: results, isSearching: false);
+    } catch (e) {
+      _logger.e('Search failed: $e');
+      state = state.copyWith(isSearching: false);
     }
   }
 }
