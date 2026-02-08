@@ -112,6 +112,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   onTap: () => context.push('/verification'),
                 ),
                 _buildSettingsTile(
+                  icon: Icons.workspace_premium_outlined,
+                  title: 'Subscription',
+                  subtitle: user?.isPro == true ? 'Vantage Pro' : 'Free Plan',
+                  onTap: () => context.push('/subscription'),
+                ),
+                _buildSettingsTile(
                   icon: Icons.card_giftcard_outlined,
                   title: 'Invite Codes',
                   subtitle: '${user?.inviteCount ?? 0} invites available',
@@ -133,6 +139,34 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   title: 'Matching Preferences',
                   subtitle: 'Distance, age, interests',
                   onTap: () => context.push('/matching-preferences'),
+                ),
+                const SizedBox(height: 16),
+
+                // Marketplace Section
+                _buildSectionHeader('Marketplace'),
+                _buildSettingsTile(
+                  icon: Icons.assignment_outlined,
+                  title: 'My Applications',
+                  subtitle: 'Track your job applications',
+                  onTap: () => context.push('/my-applications'),
+                ),
+                _buildSettingsTile(
+                  icon: Icons.work_outline,
+                  title: 'My Posted Jobs',
+                  subtitle: 'Manage jobs you\'ve posted',
+                  onTap: () => context.push('/my-jobs'),
+                ),
+                _buildSettingsTile(
+                  icon: Icons.calendar_month_outlined,
+                  title: 'My Consultations',
+                  subtitle: 'Track your consultation requests',
+                  onTap: () => context.push('/my-consultations'),
+                ),
+                _buildSettingsTile(
+                  icon: Icons.storefront_outlined,
+                  title: 'Marketplace',
+                  subtitle: 'Find talent & browse jobs',
+                  onTap: () => context.push('/marketplace'),
                 ),
                 const SizedBox(height: 16),
 

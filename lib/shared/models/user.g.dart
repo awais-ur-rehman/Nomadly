@@ -6,6 +6,24 @@ part of 'user.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
+_$UserSubscriptionImpl _$$UserSubscriptionImplFromJson(
+  Map<String, dynamic> json,
+) => _$UserSubscriptionImpl(
+  status: json['status'] as String? ?? 'active',
+  plan: json['plan'] as String? ?? 'free',
+  expiresAt: json['expires_at'] == null
+      ? null
+      : DateTime.parse(json['expires_at'] as String),
+);
+
+Map<String, dynamic> _$$UserSubscriptionImplToJson(
+  _$UserSubscriptionImpl instance,
+) => <String, dynamic>{
+  'status': instance.status,
+  'plan': instance.plan,
+  'expires_at': instance.expiresAt?.toIso8601String(),
+};
+
 _$UserImpl _$$UserImplFromJson(Map<String, dynamic> json) => _$UserImpl(
   idSecondary: json['_id'] as String?,
   id: json['id'] as String?,
@@ -42,6 +60,9 @@ _$UserImpl _$$UserImplFromJson(Map<String, dynamic> json) => _$UserImpl(
   isFollowing: json['isFollowing'] as bool? ?? false,
   followsMe: json['followsMe'] as bool? ?? false,
   isFollowingPending: json['isFollowingPending'] as bool? ?? false,
+  subscription: json['subscription'] == null
+      ? null
+      : UserSubscription.fromJson(json['subscription'] as Map<String, dynamic>),
   createdAt: json['created_at'] == null
       ? null
       : DateTime.parse(json['created_at'] as String),
@@ -73,6 +94,7 @@ Map<String, dynamic> _$$UserImplToJson(_$UserImpl instance) =>
       'isFollowing': instance.isFollowing,
       'followsMe': instance.followsMe,
       'isFollowingPending': instance.isFollowingPending,
+      'subscription': instance.subscription,
       'created_at': instance.createdAt?.toIso8601String(),
       'updated_at': instance.updatedAt?.toIso8601String(),
     };

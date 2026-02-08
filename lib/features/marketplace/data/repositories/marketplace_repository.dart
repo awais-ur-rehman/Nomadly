@@ -4,19 +4,28 @@ import '../../../../core/config/app_config.dart';
 import '../../../../shared/services/api_client.dart';
 import '../../../../shared/models/builder.dart';
 import '../../../../shared/models/job.dart';
+import '../../../../shared/models/job_application.dart';
+import '../../../../shared/models/my_job.dart';
 
 class MarketplaceRepository {
   final _apiClient = ApiClient();
   final _logger = Logger();
 
   // Get builders
-  Future<List<BuilderProfile>> getBuilders({String? query, List<String>? specialties}) async {
+  Future<List<BuilderProfile>> getBuilders({
+    String? query,
+    List<String>? specialties,
+    int page = 1,
+    int limit = 20,
+  }) async {
     try {
       final response = await _apiClient.get(
         '${AppConfig.baseUrl}/api/v1/marketplace/builders',
         queryParameters: {
-          if (query != null) 'search': query,
+          if (query != null && query.isNotEmpty) 'search': query,
           if (specialties != null && specialties.isNotEmpty) 'specialties': specialties.join(','),
+          'page': page,
+          'limit': limit,
         },
       );
 
@@ -64,13 +73,15 @@ class MarketplaceRepository {
 
   // Jobs
   Future<List<Job>> getJobs({
-    double? lat, 
-    double? lng, 
+    double? lat,
+    double? lng,
     double? radius,
     List<String>? categories,
     String? budgetType,
     double? minBudget,
     double? maxBudget,
+    int page = 1,
+    int limit = 20,
   }) async {
     try {
       final response = await _apiClient.get(
@@ -83,6 +94,8 @@ class MarketplaceRepository {
           if (budgetType != null) 'budget_type': budgetType,
           if (minBudget != null) 'min_budget': minBudget,
           if (maxBudget != null) 'max_budget': maxBudget,
+          'page': page,
+          'limit': limit,
         },
       );
 
@@ -146,6 +159,123 @@ class MarketplaceRepository {
     } on DioException catch (e) {
       _logger.e('Apply for job error: ${e.message}');
       throw _handleError(e);
+    }
+  }
+
+  // Get my job applications
+  Future<List<JobApplication>> getMyApplications() async {
+    try {
+      final response = await _apiClient.get(
+        '${AppConfig.baseUrl}/api/v1/jobs/applications/mine',
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = response.data['data'];
+        return data.map((json) => JobApplication.fromJson(json)).toList();
+      }
+      return [];
+    } on DioException catch (e) {
+      _logger.e('Get my applications error: ${e.message}');
+      return [];
+    }
+  }
+
+  // Get my posted jobs
+  Future<List<MyJob>> getMyJobs() async {
+    try {
+      final response = await _apiClient.get(
+        '${AppConfig.baseUrl}/api/v1/jobs/mine',
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = response.data['data'];
+        return data.map((json) => MyJob.fromJson(json)).toList();
+      }
+      return [];
+    } on DioException catch (e) {
+      _logger.e('Get my jobs error: ${e.message}');
+      return [];
+    }
+  }
+
+  // Get applications for a specific job (for job authors)
+  Future<List<JobApplication>> getJobApplications(String jobId) async {
+    try {
+      final response = await _apiClient.get(
+        '${AppConfig.baseUrl}/api/v1/jobs/$jobId/applications',
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data['data'];
+        final List<dynamic> applications = data['applications'] ?? [];
+        return applications.map((json) => JobApplication.fromJson(json)).toList();
+      }
+      return [];
+    } on DioException catch (e) {
+      _logger.e('Get job applications error: ${e.message}');
+      return [];
+    }
+  }
+
+  // Update application status
+  Future<void> updateApplicationStatus(String applicationId, String status) async {
+    try {
+      await _apiClient.patch(
+        '${AppConfig.baseUrl}/api/v1/jobs/applications/$applicationId',
+        data: {'status': status},
+      );
+    } on DioException catch (e) {
+      _logger.e('Update application status error: ${e.message}');
+      throw _handleError(e);
+    }
+  }
+
+  // Delete job
+  Future<void> deleteJob(String jobId) async {
+    try {
+      await _apiClient.delete('${AppConfig.baseUrl}/api/v1/jobs/$jobId');
+    } on DioException catch (e) {
+      _logger.e('Delete job error: ${e.message}');
+      throw _handleError(e);
+    }
+  }
+
+  // Submit review for a consultation
+  Future<void> submitReview({
+    required String consultationId,
+    required int rating,
+    String? comment,
+  }) async {
+    try {
+      await _apiClient.post(
+        '${AppConfig.baseUrl}/api/v1/marketplace/review',
+        data: {
+          'consultation_id': consultationId,
+          'rating': rating,
+          if (comment != null) 'comment': comment,
+        },
+      );
+    } on DioException catch (e) {
+      _logger.e('Submit review error: ${e.message}');
+      throw _handleError(e);
+    }
+  }
+
+  // Get my consultations (as requester)
+  Future<List<Map<String, dynamic>>> getMyConsultations() async {
+    try {
+      final response = await _apiClient.get(
+        '${AppConfig.baseUrl}/api/v1/marketplace/consultations/mine',
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = response.data['data'] ?? [];
+        return data.cast<Map<String, dynamic>>();
+      }
+      return [];
+    } on DioException catch (e) {
+      _logger.e('Get my consultations error: ${e.message}');
+      return [];
     }
   }
 

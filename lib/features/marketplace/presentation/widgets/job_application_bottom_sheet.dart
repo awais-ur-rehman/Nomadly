@@ -43,9 +43,6 @@ class _JobApplicationBottomSheetState extends ConsumerState<JobApplicationBottom
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
     return Container(
       padding: EdgeInsets.only(
         bottom: MediaQuery.of(context).viewInsets.bottom,
@@ -53,9 +50,9 @@ class _JobApplicationBottomSheetState extends ConsumerState<JobApplicationBottom
         right: 20,
         top: 20,
       ),
-      decoration: BoxDecoration(
-        color: isDark ? Colors.grey[900] : Colors.white,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: const BoxDecoration(
+        color: AppColors.slate,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Form(
         key: _formKey,
@@ -63,12 +60,13 @@ class _JobApplicationBottomSheetState extends ConsumerState<JobApplicationBottom
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Handle
             Center(
               child: Container(
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: Colors.grey[300],
+                  color: AppColors.textSecondary,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -76,22 +74,48 @@ class _JobApplicationBottomSheetState extends ConsumerState<JobApplicationBottom
             const SizedBox(height: 20),
             Text(
               'Apply for ${widget.job.title}',
-              style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+              style: const TextStyle(
+                color: AppColors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
             const SizedBox(height: 8),
-            Text(
+            const Text(
               'Tell the author why you\'re a great fit for this job.',
-              style: theme.textTheme.bodyMedium?.copyWith(color: Colors.grey),
+              style: TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 14,
+              ),
             ),
             const SizedBox(height: 24),
             TextFormField(
               controller: _coverLetterController,
-              maxLines: 8,
+              maxLines: 6,
+              style: const TextStyle(color: AppColors.white),
               decoration: InputDecoration(
                 hintText: 'Share your experience, availability, and why you\'re interested...',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                hintStyle: TextStyle(color: AppColors.textSecondary.withValues(alpha: 0.7)),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
                 filled: true,
-                fillColor: isDark ? Colors.grey[800] : Colors.grey[50],
+                fillColor: AppColors.obsidian,
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: AppColors.primary),
+                ),
+                errorBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: AppColors.error),
+                ),
+                focusedErrorBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: AppColors.error),
+                ),
               ),
               validator: (value) {
                 if (value == null || value.trim().length < 20) {
@@ -107,14 +131,25 @@ class _JobApplicationBottomSheetState extends ConsumerState<JobApplicationBottom
                 onPressed: _isSubmitting ? null : _submit,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
+                  foregroundColor: AppColors.obsidian,
+                  disabledBackgroundColor: AppColors.obsidian,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   elevation: 0,
                 ),
                 child: _isSubmitting
-                    ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                    : const Text('Submit Application', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: AppColors.primary,
+                        ),
+                      )
+                    : const Text(
+                        'Submit Application',
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      ),
               ),
             ),
             const SizedBox(height: 20),

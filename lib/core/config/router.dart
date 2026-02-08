@@ -24,6 +24,10 @@ import '../../features/marketplace/presentation/screens/marketplace_screen.dart'
 import '../../features/marketplace/presentation/screens/builder_detail_screen.dart';
 import '../../features/marketplace/presentation/screens/create_job_screen.dart';
 import '../../features/marketplace/presentation/screens/job_detail_screen.dart';
+import '../../features/marketplace/presentation/screens/my_applications_screen.dart';
+import '../../features/marketplace/presentation/screens/my_jobs_screen.dart';
+import '../../features/marketplace/presentation/screens/job_applications_screen.dart';
+import '../../features/marketplace/presentation/screens/my_consultations_screen.dart';
 import '../../shared/models/builder.dart';
 import '../../shared/models/job.dart';
 import '../../features/social/presentation/screens/notifications_screen.dart';
@@ -41,6 +45,7 @@ import '../../features/map/presentation/screens/location_picker_screen.dart';
 import '../../features/safety/presentation/screens/blocked_users_screen.dart';
 import '../../features/invite/presentation/screens/invite_screen.dart';
 import '../../features/verification/presentation/screens/verification_screen.dart';
+import '../../features/subscription/presentation/screens/subscription_screen.dart';
 
 /// Listenable that notifies GoRouter when auth state changes
 class RouterListenable extends ChangeNotifier {
@@ -278,6 +283,29 @@ final routerProvider = Provider<GoRouter>((ref) {
           return JobDetailScreen(jobId: id, preloadedJob: job);
         },
       ),
+      // Job Applications (for job authors)
+      GoRoute(
+        path: '/job/:id/applications',
+        builder: (context, state) {
+          final jobId = state.pathParameters['id']!;
+          return JobApplicationsScreen(jobId: jobId);
+        },
+      ),
+      // My Applications
+      GoRoute(
+        path: '/my-applications',
+        builder: (context, state) => const MyApplicationsScreen(),
+      ),
+      // My Posted Jobs
+      GoRoute(
+        path: '/my-jobs',
+        builder: (context, state) => const MyJobsScreen(),
+      ),
+      // My Consultations
+      GoRoute(
+        path: '/my-consultations',
+        builder: (context, state) => const MyConsultationsScreen(),
+      ),
       // Location Picker (returns LatLng via pop)
       GoRoute(
         path: '/location-picker',
@@ -302,6 +330,11 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/verification',
         builder: (context, state) => const VerificationScreen(),
+      ),
+      // Subscription
+      GoRoute(
+        path: '/subscription',
+        builder: (context, state) => const SubscriptionScreen(),
       ),
     ],
   );

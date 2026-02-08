@@ -31,21 +31,21 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
     final isOwnProfile = currentUser?.uid == widget.userId;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.obsidian,
       appBar: AppBar(
         title: Text(
           profileState.user?.username ?? '',
           style: const TextStyle(
-            color: Colors.black,
+            color: AppColors.white,
             fontWeight: FontWeight.w600,
           ),
         ),
-        backgroundColor: Colors.white,
-        iconTheme: const IconThemeData(color: Colors.black),
+        backgroundColor: AppColors.obsidian,
+        iconTheme: const IconThemeData(color: AppColors.white),
         elevation: 0,
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
-          child: Container(color: Colors.grey[300], height: 1),
+          child: Container(color: AppColors.slate, height: 1),
         ),
       ),
       body: profileState.isLoading && profileState.user == null
