@@ -7,7 +7,6 @@ import 'package:nomadly/core/constants/app_colors.dart';
 import 'package:nomadly/core/constants/app_dimensions.dart';
 import 'package:nomadly/core/utils/address_resolver.dart';
 import 'package:nomadly/shared/models/activity.dart';
-import 'package:nomadly/shared/models/geo_point.dart';
 import 'package:nomadly/features/activities/providers/activity_provider.dart';
 import 'package:nomadly/features/auth/providers/auth_provider.dart';
 
@@ -28,6 +27,7 @@ class ActivityDetailScreen extends ConsumerStatefulWidget {
 class _ActivityDetailScreenState extends ConsumerState<ActivityDetailScreen> {
   Activity? _activity;
   bool _isLoading = false;
+  bool _isRequestLoading = false;
 
   @override
   void initState() {
@@ -68,8 +68,9 @@ class _ActivityDetailScreenState extends ConsumerState<ActivityDetailScreen> {
     }
 
     final currentUser = ref.watch(authProvider).user;
-    final isParticipant = activity.participants.any((u) => u.id == currentUser?.id);
-    final isCreator = activity.creator.id == currentUser?.id;
+    final isParticipant = activity.participants.any((u) => u.uid == currentUser?.uid);
+    final isCreator = activity.creator.uid == currentUser?.uid;
+    final isPending = activity.pendingRequests.any((u) => u.uid == currentUser?.uid);
 
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -87,6 +88,32 @@ class _ActivityDetailScreenState extends ConsumerState<ActivityDetailScreen> {
             onPressed: () => context.pop(),
           ),
         ),
+        actions: isCreator
+            ? [
+                Container(
+                  margin: const EdgeInsets.only(right: 4),
+                  decoration: const BoxDecoration(
+                    color: Colors.black45,
+                    shape: BoxShape.circle,
+                  ),
+                  child: IconButton(
+                    icon: const Icon(Icons.edit, color: Colors.white, size: 20),
+                    onPressed: () => _showEditSheet(activity),
+                  ),
+                ),
+                Container(
+                  margin: const EdgeInsets.only(right: 8),
+                  decoration: const BoxDecoration(
+                    color: Colors.black45,
+                    shape: BoxShape.circle,
+                  ),
+                  child: IconButton(
+                    icon: const Icon(Icons.delete_outline, color: Colors.red, size: 20),
+                    onPressed: () => _showDeleteConfirmation(activity),
+                  ),
+                ),
+              ]
+            : null,
       ),
       body: Column(
         children: [
@@ -148,7 +175,7 @@ class _ActivityDetailScreenState extends ConsumerState<ActivityDetailScreen> {
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        'Hosted by ${activity.creator.profile?.name ?? 'Unknown'}',
+                        'Hosted by ${activity.creator.profile?.name ?? activity.creator.username}',
                         style: const TextStyle(color: AppColors.textSecondary),
                       ),
                     ],
@@ -186,6 +213,12 @@ class _ActivityDetailScreenState extends ConsumerState<ActivityDetailScreen> {
 
                   const SizedBox(height: 24),
 
+                  // Pending Requests (Host View Only)
+                  if (isCreator && activity.pendingRequests.isNotEmpty) ...[
+                    _buildPendingRequestsSection(activity, ref),
+                    const SizedBox(height: 24),
+                  ],
+
                   // Participants
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -202,25 +235,34 @@ class _ActivityDetailScreenState extends ConsumerState<ActivityDetailScreen> {
                     ],
                   ),
                   const SizedBox(height: 12),
-                  SizedBox(
-                      height: 50,
-                      child: ListView.separated(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: activity.participants.length,
-                        separatorBuilder: (_, __) => const SizedBox(width: 8),
-                        itemBuilder: (context, index) {
-                          final user = activity.participants[index];
-                          return CircleAvatar(
-                             backgroundImage: user.profile?.photoUrl != null
-                                ? NetworkImage(user.profile!.photoUrl!)
-                                : null,
-                             child: user.profile?.photoUrl == null
-                                ? const Icon(Icons.person)
-                                : null,
-                          );
-                        },
-                      ),
-                  ),
+                  if (activity.participants.isEmpty)
+                    const Text(
+                      'No one has joined yet',
+                      style: TextStyle(color: AppColors.textSecondary),
+                    )
+                  else
+                    SizedBox(
+                        height: 50,
+                        child: ListView.separated(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: activity.participants.length,
+                          separatorBuilder: (_, _) => const SizedBox(width: 8),
+                          itemBuilder: (context, index) {
+                            final user = activity.participants[index];
+                            return GestureDetector(
+                              onTap: () => context.push('/profile/${user.uid}'),
+                              child: CircleAvatar(
+                                 backgroundImage: user.profile?.photoUrl != null
+                                    ? NetworkImage(user.profile!.photoUrl!)
+                                    : null,
+                                 child: user.profile?.photoUrl == null
+                                    ? const Icon(Icons.person)
+                                    : null,
+                              ),
+                            );
+                          },
+                        ),
+                    ),
                 ],
               ),
             ),
@@ -233,17 +275,242 @@ class _ActivityDetailScreenState extends ConsumerState<ActivityDetailScreen> {
                width: double.infinity,
                height: 50,
                child: ElevatedButton(
-                 onPressed: isParticipant || isCreator
-                     ? null // Already joined or creator
-                     : () => ref.read(activityProvider.notifier).joinActivity(activity.id),
+                 onPressed: _getButtonOnPressed(isCreator, isParticipant, isPending, activity),
                  style: ElevatedButton.styleFrom(
-                   backgroundColor: isParticipant ? Colors.green : AppColors.primary,
+                   backgroundColor: _getButtonColor(isCreator, isParticipant, isPending),
+                   disabledBackgroundColor: _getButtonColor(isCreator, isParticipant, isPending).withValues(alpha: 0.7),
+                   padding: const EdgeInsets.symmetric(horizontal: 16),
                  ),
-                 child: Text(
-                   isCreator ? 'You are hosting this' : (isParticipant ? 'You are going' : 'Join Activity'),
+                 child: FittedBox(
+                   fit: BoxFit.scaleDown,
+                   child: Text(
+                     _getButtonText(isCreator, isParticipant, isPending),
+                     style: TextStyle(
+                       color: isCreator || isParticipant || isPending ? Colors.white : AppColors.obsidian,
+                       fontSize: 16,
+                       fontWeight: FontWeight.w600,
+                     ),
+                   ),
                  ),
                ),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _getButtonText(bool isCreator, bool isParticipant, bool isPending) {
+    if (isCreator) return "You're Hosting";
+    if (isParticipant) return 'Leave Activity';
+    if (isPending) return 'Request Pending';
+    return 'Request to Join';
+  }
+
+  Color _getButtonColor(bool isCreator, bool isParticipant, bool isPending) {
+    if (isCreator) return AppColors.grey;
+    if (isParticipant) return Colors.red.withValues(alpha: 0.8);
+    if (isPending) return AppColors.accent;
+    return AppColors.primary;
+  }
+
+  VoidCallback? _getButtonOnPressed(bool isCreator, bool isParticipant, bool isPending, Activity activity) {
+    if (isCreator || isPending) return null;
+    if (isParticipant) {
+      return () => _showLeaveConfirmation(activity);
+    }
+    return () => ref.read(activityProvider.notifier).joinActivity(activity.id);
+  }
+
+  void _showLeaveConfirmation(Activity activity) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: AppColors.slate,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text(
+          'Leave Activity',
+          style: TextStyle(
+            color: Colors.white,
+            fontFamily: 'Outfit',
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        content: Text(
+          'Are you sure you want to leave "${activity.title}"?',
+          style: TextStyle(
+            color: Colors.white.withValues(alpha: 0.8),
+            fontFamily: 'Inter',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: Text(
+              'Stay',
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.6),
+                fontFamily: 'Inter',
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(dialogContext);
+              final updated = await ref.read(activityProvider.notifier).leaveActivity(activity.id);
+              if (updated != null && mounted) {
+                setState(() => _activity = updated);
+              }
+            },
+            child: const Text(
+              'Leave',
+              style: TextStyle(
+                color: Colors.red,
+                fontFamily: 'Inter',
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPendingRequestsSection(Activity activity, WidgetRef ref) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Text(
+              'PENDING REQUESTS',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textSecondary,
+                letterSpacing: 1,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: AppColors.accent.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                '${activity.pendingRequests.length}',
+                style: const TextStyle(
+                  color: AppColors.accent,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        ...activity.pendingRequests.map((user) => _buildPendingRequestCard(user, activity, ref)),
+      ],
+    );
+  }
+
+  Widget _buildPendingRequestCard(dynamic user, Activity activity, WidgetRef ref) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.slate.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.grey.withValues(alpha: 0.2)),
+      ),
+      child: Row(
+        children: [
+          GestureDetector(
+            onTap: () => context.push('/profile/${user.uid}'),
+            child: CircleAvatar(
+              radius: 20,
+              backgroundImage: user.profile?.photoUrl != null
+                  ? NetworkImage(user.profile!.photoUrl!)
+                  : null,
+              child: user.profile?.photoUrl == null
+                  ? const Icon(Icons.person, size: 20)
+                  : null,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: GestureDetector(
+              onTap: () => context.push('/profile/${user.uid}'),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    user.profile?.name ?? 'Unknown',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                    ),
+                  ),
+                  Text(
+                    '@${user.username ?? 'user'}',
+                    style: const TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          // Approve Button
+          IconButton(
+            onPressed: _isRequestLoading
+                ? null
+                : () async {
+                    setState(() => _isRequestLoading = true);
+                    final updated = await ref
+                        .read(activityProvider.notifier)
+                        .approveRequest(activity.id, user.uid);
+                    if (updated != null && mounted) {
+                      setState(() {
+                        _activity = updated;
+                        _isRequestLoading = false;
+                      });
+                    } else {
+                      setState(() => _isRequestLoading = false);
+                    }
+                  },
+            style: IconButton.styleFrom(
+              backgroundColor: Colors.green.withValues(alpha: 0.15),
+              foregroundColor: Colors.green,
+            ),
+            icon: const Icon(Icons.check, size: 20),
+          ),
+          const SizedBox(width: 4),
+          // Reject Button
+          IconButton(
+            onPressed: _isRequestLoading
+                ? null
+                : () async {
+                    setState(() => _isRequestLoading = true);
+                    final updated = await ref
+                        .read(activityProvider.notifier)
+                        .rejectRequest(activity.id, user.uid);
+                    if (updated != null && mounted) {
+                      setState(() {
+                        _activity = updated;
+                        _isRequestLoading = false;
+                      });
+                    } else {
+                      setState(() => _isRequestLoading = false);
+                    }
+                  },
+            style: IconButton.styleFrom(
+              backgroundColor: Colors.red.withValues(alpha: 0.15),
+              foregroundColor: Colors.red,
+            ),
+            icon: const Icon(Icons.close, size: 20),
           ),
         ],
       ),
@@ -273,6 +540,246 @@ class _ActivityDetailScreenState extends ConsumerState<ActivityDetailScreen> {
                 ),
         ),
       ],
+    );
+  }
+
+  void _showEditSheet(Activity activity) {
+    final titleController = TextEditingController(text: activity.title);
+    final descriptionController = TextEditingController(text: activity.description);
+    final maxParticipantsController = TextEditingController(text: activity.maxParticipants.toString());
+    DateTime selectedTime = activity.startTime;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.obsidian,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setSheetState) => Padding(
+          padding: EdgeInsets.only(
+            left: 20,
+            right: 20,
+            top: 20,
+            bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Edit Activity',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      fontFamily: 'Outfit',
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close, color: Colors.white),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              TextField(
+                controller: titleController,
+                style: const TextStyle(color: Colors.white),
+                decoration: InputDecoration(
+                  labelText: 'Title',
+                  labelStyle: TextStyle(color: Colors.white.withValues(alpha: 0.6)),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: AppColors.primary),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: descriptionController,
+                style: const TextStyle(color: Colors.white),
+                maxLines: 3,
+                decoration: InputDecoration(
+                  labelText: 'Description',
+                  labelStyle: TextStyle(color: Colors.white.withValues(alpha: 0.6)),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: AppColors.primary),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: maxParticipantsController,
+                style: const TextStyle(color: Colors.white),
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  labelText: 'Max Participants',
+                  labelStyle: TextStyle(color: Colors.white.withValues(alpha: 0.6)),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: AppColors.primary),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              InkWell(
+                onTap: () async {
+                  final date = await showDatePicker(
+                    context: context,
+                    initialDate: selectedTime,
+                    firstDate: DateTime.now(),
+                    lastDate: DateTime.now().add(const Duration(days: 365)),
+                  );
+                  if (date != null) {
+                    final time = await showTimePicker(
+                      context: context,
+                      initialTime: TimeOfDay.fromDateTime(selectedTime),
+                    );
+                    if (time != null) {
+                      setSheetState(() {
+                        selectedTime = DateTime(
+                          date.year,
+                          date.month,
+                          date.day,
+                          time.hour,
+                          time.minute,
+                        );
+                      });
+                    }
+                  }
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.access_time, color: Colors.white.withValues(alpha: 0.6)),
+                      const SizedBox(width: 12),
+                      Text(
+                        DateFormat('EEE, MMM d • h:mm a').format(selectedTime),
+                        style: const TextStyle(color: Colors.white),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () async {
+                    Navigator.pop(context);
+                    final updated = await ref.read(activityProvider.notifier).updateActivity(
+                      activity.id,
+                      {
+                        'title': titleController.text,
+                        'description': descriptionController.text,
+                        'max_participants': int.tryParse(maxParticipantsController.text) ?? activity.maxParticipants,
+                        'event_time': selectedTime.toIso8601String(),
+                      },
+                    );
+                    if (updated != null && mounted) {
+                      setState(() => _activity = updated);
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text(
+                    'Save Changes',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 16,
+                      fontFamily: 'Outfit',
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showDeleteConfirmation(Activity activity) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: AppColors.slate,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text(
+          'Cancel Activity',
+          style: TextStyle(
+            color: Colors.white,
+            fontFamily: 'Outfit',
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        content: Text(
+          'Are you sure you want to cancel "${activity.title}"? This action cannot be undone.',
+          style: TextStyle(
+            color: Colors.white.withValues(alpha: 0.8),
+            fontFamily: 'Inter',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: Text(
+              'Keep Activity',
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.6),
+                fontFamily: 'Inter',
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: () async {
+              final router = GoRouter.of(context);
+              Navigator.pop(dialogContext);
+              final success = await ref.read(activityProvider.notifier).deleteActivity(activity.id);
+              if (success && mounted) {
+                router.pop();
+              }
+            },
+            child: const Text(
+              'Cancel Activity',
+              style: TextStyle(
+                color: Colors.red,
+                fontFamily: 'Inter',
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

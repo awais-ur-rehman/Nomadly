@@ -142,6 +142,22 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 ),
                 const SizedBox(height: 16),
 
+                // Travel & Activities Section
+                _buildSectionHeader('Travel & Activities'),
+                _buildSettingsTile(
+                  icon: Icons.explore_outlined,
+                  title: 'My Trip',
+                  subtitle: 'View and manage your current trip',
+                  onTap: () => context.push('/my-trip'),
+                ),
+                _buildSettingsTile(
+                  icon: Icons.event,
+                  title: 'My Activities',
+                  subtitle: 'Activities you\'re hosting or joined',
+                  onTap: () => context.push('/my-activities'),
+                ),
+                const SizedBox(height: 16),
+
                 // Marketplace Section
                 _buildSectionHeader('Marketplace'),
                 _buildSettingsTile(

@@ -8,7 +8,7 @@ import '../../../../shared/widgets/vantage_navbar.dart';
 import '../../../chat/presentation/screens/inbox_screen.dart';
 import '../../../profile/presentation/screens/profile_screen.dart';
 import '../../../social/presentation/screens/posts_feed_screen.dart';
-import '../../../matching/presentation/screens/matching_screen.dart';
+import 'discover_hub_screen.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -48,7 +48,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             index: _screenIndex,
             children: const [
               PostsFeedScreen(), // 0 - Feed
-              MatchingScreen(), // 1 - Discover
+              DiscoverHubScreen(), // 1 - Discover (Travelers, Trips, Activities)
               InboxScreen(), // 2 - Chat
               ProfileScreen(), // 3 - Profile
             ],

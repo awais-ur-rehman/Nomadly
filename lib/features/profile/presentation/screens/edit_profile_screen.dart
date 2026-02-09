@@ -47,13 +47,13 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   late TextEditingController _durationController;
   double _maxDistanceKm = 150;
 
-  // Options
+  // Options - must match backend enum values
   final _genders = ['male', 'female', 'non-binary', 'other'];
   final _intents = ['friends', 'dating', 'both'];
   final _rigTypes = [
-    'sprinter', 'skoolie', 'suv', 'truck_camper', 'rv', 'car', 'other'
+    'van', 'bus', 'truck', 'car', 'rv', 'sprinter', 'skoolie', 'suv', 'truck_camper', 'other'
   ];
-  final _crewTypes = ['solo', 'couple', 'family', 'friends'];
+  final _crewTypes = ['solo', 'couple', 'family', 'friends', 'with_pets'];
   final _hobbies = [
     'Hiking', 'Surfing', 'Yoga', 'Climbing', 'Photography', 'Music',
     'Cooking', 'Reading', 'Gaming', 'Coding', 'Art', 'Travel', 'Vanlife',
@@ -73,12 +73,21 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     _ageController = TextEditingController(text: profile?.age?.toString() ?? '');
     _bioController = TextEditingController(text: profile?.bio ?? '');
 
-    _selectedGender = profile?.gender ?? 'male';
-    _selectedHobbies = List.from(profile?.hobbies ?? []);
-    _selectedIntent = profile?.intent ?? 'friends';
+    // Validate dropdown values exist in options list
+    final gender = profile?.gender ?? 'male';
+    _selectedGender = _genders.contains(gender) ? gender : 'other';
 
-    _selectedRigType = rig?.type ?? 'sprinter';
-    _selectedCrewType = rig?.crewType ?? 'solo';
+    _selectedHobbies = List.from(profile?.hobbies ?? []);
+
+    final intent = profile?.intent ?? 'friends';
+    _selectedIntent = _intents.contains(intent) ? intent : 'friends';
+
+    final rigType = rig?.type ?? 'van';
+    _selectedRigType = _rigTypes.contains(rigType) ? rigType : 'other';
+
+    final crewType = rig?.crewType ?? 'solo';
+    _selectedCrewType = _crewTypes.contains(crewType) ? crewType : 'solo';
+
     _isPetFriendly = rig?.petFriendly ?? false;
 
     // Travel route

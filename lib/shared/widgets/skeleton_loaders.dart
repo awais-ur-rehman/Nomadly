@@ -431,3 +431,68 @@ class MyJobListSkeleton extends StatelessWidget {
     );
   }
 }
+
+/// Skeleton for trip card
+class TripCardSkeleton extends StatelessWidget {
+  const TripCardSkeleton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return SkeletonShimmer(
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: AppColors.slate,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Route header (origin -> destination)
+            Row(
+              children: [
+                const SkeletonCircle(size: 24),
+                const SizedBox(width: 8),
+                const SkeletonBox(width: 100, height: 14),
+                const SizedBox(width: 12),
+                const Icon(Icons.arrow_forward, color: Colors.transparent, size: 16),
+                const SizedBox(width: 12),
+                const SkeletonCircle(size: 24),
+                const SizedBox(width: 8),
+                const Expanded(child: SkeletonBox(height: 14)),
+              ],
+            ),
+            const SizedBox(height: 20),
+            // Date info
+            Row(
+              children: [
+                const SkeletonBox(width: 20, height: 20, borderRadius: 4),
+                const SizedBox(width: 8),
+                const SkeletonBox(width: 150, height: 14),
+              ],
+            ),
+            const SizedBox(height: 12),
+            // Status
+            Row(
+              children: [
+                const SkeletonBox(width: 20, height: 20, borderRadius: 4),
+                const SizedBox(width: 8),
+                const SkeletonBox(width: 80, height: 14),
+              ],
+            ),
+            const SizedBox(height: 20),
+            // Action buttons
+            Row(
+              children: [
+                const Expanded(child: SkeletonBox(height: 44, borderRadius: 12)),
+                const SizedBox(width: 12),
+                const Expanded(child: SkeletonBox(height: 44, borderRadius: 12)),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

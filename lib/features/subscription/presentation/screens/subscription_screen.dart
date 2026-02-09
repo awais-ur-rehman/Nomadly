@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../shared/providers/revenue_cat_provider.dart';
 import '../../../auth/providers/auth_provider.dart';
+import '../../../marketplace/presentation/screens/my_jobs_screen.dart';
 
 class SubscriptionScreen extends ConsumerWidget {
   const SubscriptionScreen({super.key});
@@ -386,12 +387,28 @@ class _PlanCard extends StatelessWidget {
 class _JobsRemainingCard extends ConsumerWidget {
   const _JobsRemainingCard();
 
+  int _getJobsPostedThisWeek(List<dynamic> jobs) {
+    final now = DateTime.now();
+    // Get the start of the current week (Monday)
+    final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
+    final weekStart = DateTime(startOfWeek.year, startOfWeek.month, startOfWeek.day);
+
+    return jobs.where((job) => job.createdAt.isAfter(weekStart)).length;
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // TODO: Fetch actual job count from backend
-    const jobsPostedThisWeek = 1;
+    final jobsAsync = ref.watch(myJobsProvider);
     const maxJobs = 3;
-    const remaining = maxJobs - jobsPostedThisWeek;
+
+    // Calculate jobs posted this week from actual data
+    final jobsPostedThisWeek = jobsAsync.when(
+      data: (jobs) => _getJobsPostedThisWeek(jobs),
+      loading: () => 0,
+      error: (_, __) => 0,
+    );
+
+    final remaining = maxJobs - jobsPostedThisWeek;
 
     return Container(
       padding: const EdgeInsets.all(16),

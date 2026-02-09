@@ -168,6 +168,133 @@ class ActivityRepository {
     }
   }
 
+  /// Approve a pending request to join an activity
+  Future<Activity> approveRequest(String activityId, String userId) async {
+    try {
+      final response = await _apiClient.patch(
+        '${AppConfig.baseUrl}/api/v1/activities/$activityId/approve/$userId',
+      );
+
+      if (response.statusCode == 200) {
+        return Activity.fromJson(response.data['data']);
+      }
+
+      throw Exception('Failed to approve request');
+    } on DioException catch (e) {
+      _logger.e('Approve request error: ${e.message}');
+      throw _handleError(e);
+    }
+  }
+
+  /// Reject a pending request to join an activity
+  Future<Activity> rejectRequest(String activityId, String userId) async {
+    try {
+      final response = await _apiClient.patch(
+        '${AppConfig.baseUrl}/api/v1/activities/$activityId/reject/$userId',
+      );
+
+      if (response.statusCode == 200) {
+        return Activity.fromJson(response.data['data']);
+      }
+
+      throw Exception('Failed to reject request');
+    } on DioException catch (e) {
+      _logger.e('Reject request error: ${e.message}');
+      throw _handleError(e);
+    }
+  }
+
+  /// Get activities the current user is hosting
+  Future<List<Activity>> getMyHostedActivities() async {
+    try {
+      final response = await _apiClient.get(
+        '${AppConfig.baseUrl}/api/v1/activities/mine',
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = response.data['data'] ?? [];
+        return data.map((json) => Activity.fromJson(json)).toList();
+      }
+
+      throw Exception('Failed to load hosted activities');
+    } on DioException catch (e) {
+      _logger.e('Get hosted activities error: ${e.message}');
+      return [];
+    }
+  }
+
+  /// Get activities the current user has joined
+  Future<List<Activity>> getMyJoinedActivities() async {
+    try {
+      final response = await _apiClient.get(
+        '${AppConfig.baseUrl}/api/v1/activities/joined',
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = response.data['data'] ?? [];
+        return data.map((json) => Activity.fromJson(json)).toList();
+      }
+
+      throw Exception('Failed to load joined activities');
+    } on DioException catch (e) {
+      _logger.e('Get joined activities error: ${e.message}');
+      return [];
+    }
+  }
+
+  /// Update an activity (host only)
+  Future<Activity> updateActivity(String activityId, Map<String, dynamic> data) async {
+    try {
+      final response = await _apiClient.patch(
+        '${AppConfig.baseUrl}/api/v1/activities/$activityId',
+        data: data,
+      );
+
+      if (response.statusCode == 200) {
+        return Activity.fromJson(response.data['data']);
+      }
+
+      throw Exception('Failed to update activity');
+    } on DioException catch (e) {
+      _logger.e('Update activity error: ${e.message}');
+      throw _handleError(e);
+    }
+  }
+
+  /// Delete/cancel an activity (host only)
+  Future<void> deleteActivity(String activityId) async {
+    try {
+      final response = await _apiClient.delete(
+        '${AppConfig.baseUrl}/api/v1/activities/$activityId',
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception('Failed to delete activity');
+      }
+    } on DioException catch (e) {
+      _logger.e('Delete activity error: ${e.message}');
+      throw _handleError(e);
+    }
+  }
+
+  /// Leave an activity (participant only)
+  Future<Activity> leaveActivity(String activityId) async {
+    try {
+      final response = await _apiClient.delete(
+        '${AppConfig.baseUrl}/api/v1/activities/$activityId/leave',
+      );
+
+      if (response.statusCode == 200) {
+        return Activity.fromJson(response.data['data']);
+      }
+
+      throw Exception('Failed to leave activity');
+    } on DioException catch (e) {
+      _logger.e('Leave activity error: ${e.message}');
+      throw _handleError(e);
+    }
+  }
+
   String _handleError(DioException error) {
     if (error.response != null) {
       final data = error.response!.data;

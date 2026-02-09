@@ -167,12 +167,7 @@ class _UserSearchItem extends ConsumerWidget {
           fontSize: 13,
         ),
       ),
-      trailing: _FollowButton(
-        userId: user.uid,
-        isFollowing: user.isFollowing,
-        isFollowingPending: user.isFollowingPending,
-        isPrivate: user.isPrivate,
-      ),
+      trailing: _FollowButton(userId: user.uid),
       onTap: () {
         context.push('/user/${user.uid}');
       },
@@ -182,19 +177,21 @@ class _UserSearchItem extends ConsumerWidget {
 
 class _FollowButton extends ConsumerWidget {
   final String userId;
-  final bool isFollowing;
-  final bool isFollowingPending;
-  final bool isPrivate;
 
-  const _FollowButton({
-    required this.userId,
-    required this.isFollowing,
-    required this.isFollowingPending,
-    required this.isPrivate,
-  });
+  const _FollowButton({required this.userId});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Watch the provider to get latest state for this user
+    final searchState = ref.watch(userSearchProvider);
+    final user = searchState.results.firstWhere(
+      (u) => u.uid == userId,
+      orElse: () => searchState.results.first,
+    );
+
+    final isFollowing = user.isFollowing;
+    final isFollowingPending = user.isFollowingPending;
+
     String buttonText;
     Color buttonColor;
     Color textColor;
