@@ -114,15 +114,15 @@ class ActivityNotifier extends StateNotifier<ActivityState> {
     }
   }
   
-  Future<void> joinActivity(String activityId) async {
+  Future<Activity?> joinActivity(String activityId) async {
      try {
-       // Optimistic update or refresh?
-       // Let's refresh whole list or update specific item if API returns updated object
-       await _repository.joinActivity(activityId);
-       ToastService.showSuccess('Joined activity!');
-       await loadNearbyActivities(); // Refresh to show updated participant list
+       final updatedActivity = await _repository.joinActivity(activityId);
+       ToastService.showSuccess('Join request sent!');
+       await loadNearbyActivities();
+       return updatedActivity;
      } catch (e) {
        ToastService.showError(e.toString());
+       return null;
      }
   }
 

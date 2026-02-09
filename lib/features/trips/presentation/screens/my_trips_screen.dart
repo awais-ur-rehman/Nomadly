@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_dimensions.dart';
-import '../../../../core/utils/address_resolver.dart';
+import '../../../../shared/models/trip.dart';
 import '../../../../shared/widgets/skeleton_loaders.dart';
 import '../../providers/trip_provider.dart';
 
@@ -13,7 +13,8 @@ class MyTripsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final tripAsync = ref.watch(currentTripProvider);
+    final myTrips = ref.watch(myTripsProvider);
+    final joinedTrips = ref.watch(joinedTripsProvider);
 
     return Scaffold(
       backgroundColor: AppColors.obsidian,
@@ -21,7 +22,7 @@ class MyTripsScreen extends ConsumerWidget {
         backgroundColor: AppColors.obsidian,
         elevation: 0,
         title: const Text(
-          'My Trip',
+          'My Trips',
           style: TextStyle(
             color: AppColors.white,
             fontWeight: FontWeight.bold,
@@ -30,70 +31,135 @@ class MyTripsScreen extends ConsumerWidget {
         iconTheme: const IconThemeData(color: AppColors.white),
       ),
       body: RefreshIndicator(
-        onRefresh: () => ref.refresh(currentTripProvider.future),
+        onRefresh: () async {
+          ref.invalidate(myTripsProvider);
+          ref.invalidate(joinedTripsProvider);
+        },
         color: AppColors.primary,
         backgroundColor: AppColors.slate,
-        child: tripAsync.when(
-          loading: () => const Padding(
-            padding: EdgeInsets.all(AppDimensions.paddingM),
-            child: TripCardSkeleton(),
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.all(AppDimensions.paddingM),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // My Created Trips
+              const Text(
+                'Created by you',
+                style: TextStyle(
+                  color: AppColors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 12),
+              myTrips.when(
+                loading: () => const Column(
+                  children: [
+                    TripCardSkeleton(),
+                    SizedBox(height: 12),
+                    TripCardSkeleton(),
+                  ],
+                ),
+                error: (error, _) => _buildErrorState(
+                  onRetry: () => ref.invalidate(myTripsProvider),
+                ),
+                data: (trips) {
+                  if (trips.isEmpty) {
+                    return _buildEmptyState(
+                      context,
+                      icon: Icons.explore_outlined,
+                      message: 'No trips created yet',
+                      subMessage: 'Plan your next adventure to find travel companions',
+                      showCreateButton: true,
+                    );
+                  }
+                  return Column(
+                    children: trips.map((trip) => Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: _TripCard(
+                        trip: trip,
+                        isCreator: true,
+                        onTap: () => context.push('/trip/${trip.id}', extra: trip),
+                        onDelete: () => _showDeleteDialog(context, ref, trip),
+                      ),
+                    )).toList(),
+                  );
+                },
+              ),
+
+              const SizedBox(height: 24),
+
+              // Joined Trips
+              const Text(
+                'Joined as companion',
+                style: TextStyle(
+                  color: AppColors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 12),
+              joinedTrips.when(
+                loading: () => const TripCardSkeleton(),
+                error: (_, _) => const SizedBox.shrink(),
+                data: (trips) {
+                  if (trips.isEmpty) {
+                    return _buildEmptyState(
+                      context,
+                      icon: Icons.people_outline,
+                      message: 'No joined trips',
+                      subMessage: 'Browse nearby trips to find travel companions',
+                    );
+                  }
+                  return Column(
+                    children: trips.map((trip) => Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: _TripCard(
+                        trip: trip,
+                        isCreator: false,
+                        onTap: () => context.push('/trip/${trip.id}', extra: trip),
+                      ),
+                    )).toList(),
+                  );
+                },
+              ),
+
+              const SizedBox(height: 100),
+            ],
           ),
-          error: (error, _) => _buildErrorState(
-            onRetry: () => ref.refresh(currentTripProvider),
-          ),
-          data: (trip) {
-            if (trip == null ||
-                trip.origin == null ||
-                trip.destination == null) {
-              return _buildEmptyState(context);
-            }
-            return _TripContent(
-              trip: trip,
-              onDelete: () => _showDeleteDialog(context, ref),
-              onEdit: () => context.push('/create-trip'),
-            );
-          },
         ),
       ),
-      floatingActionButton: tripAsync.when(
-        loading: () => null,
-        error: (_, _) => null,
-        data: (trip) {
-          if (trip == null || trip.origin == null) {
-            return FloatingActionButton.extended(
-              onPressed: () => context.push('/create-trip'),
-              backgroundColor: AppColors.primary,
-              foregroundColor: AppColors.obsidian,
-              label: const Text(
-                'Plan a Trip',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              icon: const Icon(Icons.add),
-            );
-          }
-          return null;
-        },
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => context.push('/create-trip'),
+        backgroundColor: AppColors.primary,
+        foregroundColor: AppColors.obsidian,
+        label: const Text(
+          'Plan a Trip',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        icon: const Icon(Icons.add),
       ),
     );
   }
 
-  void _showDeleteDialog(BuildContext context, WidgetRef ref) {
+  void _showDeleteDialog(BuildContext context, WidgetRef ref, Trip trip) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         backgroundColor: AppColors.slate,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text(
           'Delete Trip',
           style: TextStyle(color: AppColors.white),
         ),
-        content: const Text(
-          'Are you sure you want to delete your trip? This action cannot be undone.',
-          style: TextStyle(color: AppColors.textSecondary),
+        content: Text(
+          'Are you sure you want to delete "${trip.title}"? This action cannot be undone.',
+          style: const TextStyle(color: AppColors.textSecondary),
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(dialogContext),
             child: const Text(
               'Cancel',
               style: TextStyle(color: AppColors.textSecondary),
@@ -101,11 +167,10 @@ class MyTripsScreen extends ConsumerWidget {
           ),
           ElevatedButton(
             onPressed: () async {
-              Navigator.pop(context);
-              final success =
-                  await ref.read(tripProvider.notifier).deleteUserRoute();
+              Navigator.pop(dialogContext);
+              final success = await ref.read(tripProvider.notifier).deleteTrip(trip.id);
               if (success) {
-                ref.invalidate(currentTripProvider);
+                ref.invalidate(myTripsProvider);
               }
             },
             style: ElevatedButton.styleFrom(
@@ -119,51 +184,51 @@ class MyTripsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildEmptyState(BuildContext context) {
-    return Center(
-      child: SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(24),
-              decoration: const BoxDecoration(
-                color: AppColors.slate,
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.explore_outlined,
-                size: 48,
-                color: AppColors.textSecondary,
-              ),
+  Widget _buildEmptyState(
+    BuildContext context, {
+    required IconData icon,
+    required String message,
+    String? subMessage,
+    bool showCreateButton = false,
+  }) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: AppColors.slate,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, size: 48, color: AppColors.textSecondary),
+          const SizedBox(height: 12),
+          Text(
+            message,
+            style: const TextStyle(
+              color: AppColors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
             ),
-            const SizedBox(height: 16),
-            const Text(
-              'No trip planned yet',
-              style: TextStyle(
-                color: AppColors.white,
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
+          ),
+          if (subMessage != null) ...[
             const SizedBox(height: 8),
-            const Text(
-              'Plan your next adventure to find\nfellow travelers along the way',
+            Text(
+              subMessage,
               textAlign: TextAlign.center,
-              style: TextStyle(
+              style: const TextStyle(
                 color: AppColors.textSecondary,
                 fontSize: 14,
               ),
             ),
-            const SizedBox(height: 24),
+          ],
+          if (showCreateButton) ...[
+            const SizedBox(height: 16),
             ElevatedButton.icon(
               onPressed: () => context.push('/create-trip'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 foregroundColor: AppColors.obsidian,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -175,7 +240,7 @@ class MyTripsScreen extends ConsumerWidget {
               ),
             ),
           ],
-        ),
+        ],
       ),
     );
   }
@@ -185,18 +250,11 @@ class MyTripsScreen extends ConsumerWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(
-            Icons.error_outline,
-            size: 48,
-            color: AppColors.error,
-          ),
+          const Icon(Icons.error_outline, size: 48, color: AppColors.error),
           const SizedBox(height: 16),
           const Text(
-            'Failed to load trip',
-            style: TextStyle(
-              color: AppColors.white,
-              fontSize: 16,
-            ),
+            'Failed to load trips',
+            style: TextStyle(color: AppColors.white, fontSize: 16),
           ),
           const SizedBox(height: 16),
           ElevatedButton(
@@ -213,249 +271,188 @@ class MyTripsScreen extends ConsumerWidget {
   }
 }
 
-class _TripContent extends StatelessWidget {
-  final dynamic trip;
-  final VoidCallback onDelete;
-  final VoidCallback onEdit;
+class _TripCard extends StatelessWidget {
+  final Trip trip;
+  final bool isCreator;
+  final VoidCallback onTap;
+  final VoidCallback? onDelete;
 
-  const _TripContent({
+  const _TripCard({
     required this.trip,
-    required this.onDelete,
-    required this.onEdit,
+    required this.isCreator,
+    required this.onTap,
+    this.onDelete,
   });
 
   @override
   Widget build(BuildContext context) {
-    final startDate = trip.startDate;
-    final durationDays = trip.durationDays ?? 1;
-    final endDate = startDate?.add(Duration(days: durationDays - 1));
+    final statusColor = trip.isActive
+        ? AppColors.success
+        : trip.isUpcoming
+            ? AppColors.accent
+            : AppColors.textSecondary;
+    final statusText = trip.isActive
+        ? 'Active'
+        : trip.isUpcoming
+            ? 'Upcoming'
+            : 'Completed';
 
-    final isActive = startDate != null &&
-        startDate.isBefore(DateTime.now()) &&
-        (endDate?.isAfter(DateTime.now()) ?? false);
-    final isUpcoming = startDate != null && startDate.isAfter(DateTime.now());
-
-    String status = 'Completed';
-    Color statusColor = AppColors.textSecondary;
-    if (isActive) {
-      status = 'Active';
-      statusColor = AppColors.success;
-    } else if (isUpcoming) {
-      status = 'Upcoming';
-      statusColor = AppColors.accent;
-    }
-
-    return SingleChildScrollView(
-      physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.all(AppDimensions.paddingM),
+    return GestureDetector(
+      onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(20),
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: AppColors.slate,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: statusColor.withValues(alpha: 0.3),
-            width: 1,
-          ),
+          border: Border.all(color: statusColor.withValues(alpha: 0.3)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Route Header
             Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.15),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.trip_origin,
-                    color: AppColors.primary,
-                    size: 16,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: _LocationText(
-                    lat: trip.origin!.latitude,
-                    lng: trip.origin!.longitude,
-                    fallback: 'Origin',
-                  ),
-                ),
-              ],
-            ),
-            Padding(
-              padding: const EdgeInsets.only(left: 19),
-              child: Container(
-                width: 2,
-                height: 24,
-                color: AppColors.primary.withValues(alpha: 0.3),
-              ),
-            ),
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: AppColors.success.withValues(alpha: 0.15),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.location_on,
-                    color: AppColors.success,
-                    size: 16,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: _LocationText(
-                    lat: trip.destination!.latitude,
-                    lng: trip.destination!.longitude,
-                    fallback: 'Destination',
-                  ),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 24),
-            const Divider(color: AppColors.obsidian),
-            const SizedBox(height: 16),
-
-            // Date Info
-            Row(
-              children: [
-                const Icon(Icons.calendar_today,
-                    color: AppColors.textSecondary, size: 18),
-                const SizedBox(width: 10),
-                Text(
-                  startDate != null
-                      ? '${DateFormat('MMM d').format(startDate)} - ${DateFormat('MMM d').format(endDate!)} ($durationDays days)'
-                      : 'No dates set',
-                  style: const TextStyle(
-                    color: AppColors.white,
-                    fontSize: 15,
-                  ),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 12),
-
-            // Status
-            Row(
-              children: [
-                Icon(
-                  isActive
-                      ? Icons.play_circle_outline
-                      : (isUpcoming
-                          ? Icons.schedule
-                          : Icons.check_circle_outline),
-                  color: statusColor,
-                  size: 18,
-                ),
-                const SizedBox(width: 10),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
                     color: statusColor.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
-                    status,
+                    statusText.toUpperCase(),
                     style: TextStyle(
                       color: statusColor,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                 ),
+                if (isCreator && trip.pendingCount > 0) ...[
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.person_add, color: AppColors.primary, size: 12),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${trip.pendingCount}',
+                          style: const TextStyle(
+                            color: AppColors.primary,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+                if (!isCreator) ...[
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: const Text(
+                      'COMPANION',
+                      style: TextStyle(
+                        color: Colors.blue,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+                const Spacer(),
+                if (isCreator && onDelete != null)
+                  GestureDetector(
+                    onTap: onDelete,
+                    child: Icon(Icons.delete_outline, color: AppColors.error.withValues(alpha: 0.7), size: 20),
+                  )
+                else
+                  const Icon(Icons.chevron_right, color: AppColors.textSecondary),
               ],
             ),
-
-            const SizedBox(height: 24),
-
-            // Action Buttons
+            const SizedBox(height: 12),
+            Text(
+              trip.title,
+              style: const TextStyle(
+                color: AppColors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 8),
+            // Origin → Destination
             Row(
               children: [
+                const Icon(Icons.trip_origin, color: AppColors.primary, size: 14),
+                const SizedBox(width: 6),
                 Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: onEdit,
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.primary,
-                      side: const BorderSide(color: AppColors.primary),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    icon: const Icon(Icons.edit_outlined, size: 18),
-                    label: const Text(
-                      'Edit Trip',
-                      style:
-                          TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-                    ),
+                  child: Text(
+                    trip.origin.placeName ?? 'Origin',
+                    style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                const SizedBox(width: 12),
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 6),
+                  child: Icon(Icons.arrow_forward, color: AppColors.textSecondary, size: 14),
+                ),
                 Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: onDelete,
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.error,
-                      side: const BorderSide(color: AppColors.error),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    icon: const Icon(Icons.delete_outline, size: 18),
-                    label: const Text(
-                      'Delete',
-                      style:
-                          TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-                    ),
+                  child: Text(
+                    trip.destination.placeName ?? 'Destination',
+                    style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ],
             ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                const Icon(Icons.calendar_today, color: AppColors.textSecondary, size: 14),
+                const SizedBox(width: 6),
+                Text(
+                  '${DateFormat('MMM d').format(trip.startDate)} - ${DateFormat('MMM d').format(trip.endDate)} • ${trip.durationDays} days',
+                  style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                ),
+              ],
+            ),
+            if (trip.lookingForCompanions) ...[
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  const Icon(Icons.people_outline, color: AppColors.textSecondary, size: 14),
+                  const SizedBox(width: 6),
+                  Text(
+                    '${trip.companions.length}/${trip.maxCompanions} companions',
+                    style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                  ),
+                  if (trip.availableSpots > 0) ...[
+                    const Spacer(),
+                    Text(
+                      '${trip.availableSpots} spots left',
+                      style: const TextStyle(color: AppColors.primary, fontSize: 13, fontWeight: FontWeight.w500),
+                    ),
+                  ],
+                ],
+              ),
+            ],
           ],
         ),
       ),
-    );
-  }
-}
-
-class _LocationText extends StatelessWidget {
-  final double lat;
-  final double lng;
-  final String fallback;
-
-  const _LocationText({
-    required this.lat,
-    required this.lng,
-    required this.fallback,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return FutureBuilder<String>(
-      future: AddressResolver.getAddressFromLatLng(lat, lng),
-      initialData: fallback,
-      builder: (context, snapshot) {
-        return Text(
-          snapshot.data ?? fallback,
-          style: const TextStyle(
-            color: AppColors.white,
-            fontSize: 15,
-            fontWeight: FontWeight.w500,
-          ),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        );
-      },
     );
   }
 }

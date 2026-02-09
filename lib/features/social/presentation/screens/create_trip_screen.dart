@@ -2,18 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-import 'package:latlong2/latlong.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_dimensions.dart';
-import '../../../../core/config/app_config.dart';
-import '../../../../shared/services/api_client.dart';
 import '../../../../shared/services/toast_service.dart';
+import '../../../trips/providers/trip_provider.dart';
 
-/// Screen for announcing a new trip (origin → destination).
+/// Screen for creating a new trip (origin → destination).
 ///
-/// Updates the user's `travel_route` on the backend so the matching
-/// algorithm can use it, and optionally creates a feed post so friends
-/// can see the announcement and join.
+/// Creates a Trip in the database that others can discover and join.
 class CreateTripScreen extends ConsumerStatefulWidget {
   const CreateTripScreen({super.key});
 
@@ -22,24 +18,29 @@ class CreateTripScreen extends ConsumerStatefulWidget {
 }
 
 class _CreateTripScreenState extends ConsumerState<CreateTripScreen> {
+  final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _durationController = TextEditingController(text: '7');
   final _originNameController = TextEditingController();
   final _destNameController = TextEditingController();
+  final _maxCompanionsController = TextEditingController(text: '3');
 
   double? _originLat;
   double? _originLng;
   double? _destLat;
   double? _destLng;
   DateTime? _startDate;
+  bool _lookingForCompanions = true;
   bool _isSaving = false;
 
   @override
   void dispose() {
+    _titleController.dispose();
     _descriptionController.dispose();
     _durationController.dispose();
     _originNameController.dispose();
     _destNameController.dispose();
+    _maxCompanionsController.dispose();
     super.dispose();
   }
 
@@ -49,6 +50,17 @@ class _CreateTripScreenState extends ConsumerState<CreateTripScreen> {
       initialDate: _startDate ?? DateTime.now().add(const Duration(days: 1)),
       firstDate: DateTime.now(),
       lastDate: DateTime.now().add(const Duration(days: 365)),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.dark(
+              primary: AppColors.primary,
+              surface: AppColors.slate,
+            ),
+          ),
+          child: child!,
+        );
+      },
     );
     if (picked != null) setState(() => _startDate = picked);
   }
@@ -77,8 +89,12 @@ class _CreateTripScreenState extends ConsumerState<CreateTripScreen> {
   }
 
   bool _validate() {
+    if (_titleController.text.trim().isEmpty) {
+      ToastService.showError('Enter a title for your trip');
+      return false;
+    }
     if (_originLat == null) {
-      ToastService.showError('Select your current location');
+      ToastService.showError('Select your starting location');
       return false;
     }
     if (_destLat == null) {
@@ -103,35 +119,36 @@ class _CreateTripScreenState extends ConsumerState<CreateTripScreen> {
     setState(() => _isSaving = true);
 
     try {
-      // 1. Update travel route on backend
-      await ApiClient().patch(
-        '${AppConfig.usersEndpoint}/route',
-        data: {
-          'origin': {'lat': _originLat, 'lng': _originLng},
-          'destination': {'lat': _destLat, 'lng': _destLng},
-          'start_date': _startDate!.toUtc().toIso8601String(),
-          'duration_days': int.parse(_durationController.text),
+      final tripData = {
+        'title': _titleController.text.trim(),
+        'description': _descriptionController.text.trim(),
+        'origin': {
+          'lat': _originLat,
+          'lng': _originLng,
+          'place_name': _originNameController.text,
         },
-      );
+        'destination': {
+          'lat': _destLat,
+          'lng': _destLng,
+          'place_name': _destNameController.text,
+        },
+        'start_date': _startDate!.toUtc().toIso8601String(),
+        'duration_days': int.parse(_durationController.text),
+        'looking_for_companions': _lookingForCompanions,
+        'max_companions': int.tryParse(_maxCompanionsController.text) ?? 3,
+        'visibility': 'public',
+      };
 
-      // 2. Optionally create a post to announce the trip
-      final description = _descriptionController.text.trim();
-      if (description.isNotEmpty) {
-        try {
-          // Note: Posts require at least one photo per API schema
-          // Skip post creation if no photos available
-          // The trip route was already saved above
-        } catch (_) {
-          // Post creation is non-critical
-        }
-      }
+      final trip = await ref.read(tripProvider.notifier).createTrip(tripData);
 
-      if (mounted) {
-        ToastService.showSuccess('Trip announced! Your route is now visible to others on the map.');
+      if (trip != null && mounted) {
+        // Invalidate trip providers so they refresh
+        ref.invalidate(myTripsProvider);
+        ref.invalidate(nearbyTripsProvider);
         context.pop();
       }
     } catch (e) {
-      ToastService.showError('Failed to save trip');
+      ToastService.showError('Failed to create trip');
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }
@@ -140,18 +157,33 @@ class _CreateTripScreenState extends ConsumerState<CreateTripScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.obsidian,
       appBar: AppBar(
-        title: const Text('New Trip'),
+        backgroundColor: AppColors.obsidian,
+        title: const Text(
+          'Create Trip',
+          style: TextStyle(color: AppColors.white, fontWeight: FontWeight.bold),
+        ),
+        iconTheme: const IconThemeData(color: AppColors.white),
         actions: [
           TextButton(
             onPressed: _isSaving ? null : _submit,
             child: _isSaving
                 ? const SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2),
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: AppColors.primary,
+                    ),
                   )
-                : const Text('Post'),
+                : const Text(
+                    'Create',
+                    style: TextStyle(
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
           ),
         ],
       ),
@@ -160,117 +192,245 @@ class _CreateTripScreenState extends ConsumerState<CreateTripScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header illustration
+            // Header
             Center(
               child: Column(
                 children: [
-                  Icon(Icons.route_outlined,
-                      size: 48, color: AppColors.primary),
-                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.15),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.route_outlined,
+                      size: 40,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
                   const Text(
-                    'Where are you heading?',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    'Plan Your Adventure',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.white,
+                      fontFamily: 'Outfit',
+                    ),
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Others can see your route and join along',
-                    style: TextStyle(color: Colors.grey[600]),
+                    'Others can discover your trip and join along',
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 14,
+                    ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 32),
+
+            // Title
+            _buildLabel('Trip Title'),
+            TextField(
+              controller: _titleController,
+              style: const TextStyle(color: AppColors.white),
+              decoration: _inputDecoration('e.g., Road trip to Joshua Tree'),
+            ),
+            const SizedBox(height: 20),
 
             // Origin
-            TextField(
-              controller: _originNameController,
-              readOnly: true,
+            _buildLabel('Starting From'),
+            GestureDetector(
               onTap: () => _openLocationPicker(isOrigin: true),
-              decoration: InputDecoration(
-                labelText: 'From',
-                prefixIcon: const Icon(Icons.my_location),
-                border: const OutlineInputBorder(),
-                suffixIcon: IconButton(
-                  icon: const Icon(Icons.map_outlined),
-                  onPressed: () => _openLocationPicker(isOrigin: true),
+              child: AbsorbPointer(
+                child: TextField(
+                  controller: _originNameController,
+                  style: const TextStyle(color: AppColors.white),
+                  decoration: _inputDecoration('Tap to select location').copyWith(
+                    prefixIcon: const Icon(Icons.trip_origin, color: AppColors.success),
+                    suffixIcon: const Icon(Icons.chevron_right, color: AppColors.textSecondary),
+                  ),
                 ),
               ),
             ),
-
-            // Arrow
-            const Center(
-              child: Padding(
-                padding: EdgeInsets.symmetric(vertical: 8),
-                child: Icon(Icons.arrow_downward, color: AppColors.grey),
-              ),
-            ),
+            const SizedBox(height: 20),
 
             // Destination
-            TextField(
-              controller: _destNameController,
-              readOnly: true,
+            _buildLabel('Destination'),
+            GestureDetector(
               onTap: () => _openLocationPicker(isOrigin: false),
-              decoration: InputDecoration(
-                labelText: 'To',
-                prefixIcon: const Icon(Icons.place),
-                border: const OutlineInputBorder(),
-                suffixIcon: IconButton(
-                  icon: const Icon(Icons.map_outlined),
-                  onPressed: () => _openLocationPicker(isOrigin: false),
+              child: AbsorbPointer(
+                child: TextField(
+                  controller: _destNameController,
+                  style: const TextStyle(color: AppColors.white),
+                  decoration: _inputDecoration('Tap to select location').copyWith(
+                    prefixIcon: const Icon(Icons.location_on, color: AppColors.error),
+                    suffixIcon: const Icon(Icons.chevron_right, color: AppColors.textSecondary),
+                  ),
                 ),
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
 
-            // Date + duration row
+            // Start Date & Duration Row
             Row(
               children: [
                 Expanded(
-                  child: InkWell(
-                    onTap: _pickStartDate,
-                    child: InputDecorator(
-                      decoration: const InputDecoration(
-                        labelText: 'Start date',
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.calendar_today),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildLabel('Start Date'),
+                      GestureDetector(
+                        onTap: _pickStartDate,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                          decoration: BoxDecoration(
+                            color: AppColors.slate,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: AppColors.divider),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.calendar_today, color: AppColors.primary, size: 20),
+                              const SizedBox(width: 12),
+                              Text(
+                                _startDate == null
+                                    ? 'Select'
+                                    : DateFormat('MMM d, yyyy').format(_startDate!),
+                                style: TextStyle(
+                                  color: _startDate == null ? AppColors.textSecondary : AppColors.white,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
-                      child: Text(
-                        _startDate != null
-                            ? DateFormat.yMMMd().format(_startDate!)
-                            : 'Select',
-                      ),
-                    ),
+                    ],
                   ),
                 ),
-                const SizedBox(width: 12),
-                SizedBox(
-                  width: 100,
-                  child: TextField(
-                    controller: _durationController,
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
-                      labelText: 'Days',
-                      border: OutlineInputBorder(),
-                    ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildLabel('Duration (days)'),
+                      TextField(
+                        controller: _durationController,
+                        keyboardType: TextInputType.number,
+                        style: const TextStyle(color: AppColors.white),
+                        decoration: _inputDecoration('7'),
+                      ),
+                    ],
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
 
-            // Optional description
+            // Description
+            _buildLabel('Description (optional)'),
             TextField(
               controller: _descriptionController,
               maxLines: 3,
-              decoration: const InputDecoration(
-                labelText: 'Say something about this trip (optional)',
-                hintText: 'Looking for travel buddies heading the same way!',
-                alignLabelWithHint: true,
-                border: OutlineInputBorder(),
+              style: const TextStyle(color: AppColors.white),
+              decoration: _inputDecoration('Tell others about your trip...'),
+            ),
+            const SizedBox(height: 24),
+
+            // Looking for companions toggle
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppColors.slate,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.divider),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.people_outline, color: AppColors.primary),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Looking for companions',
+                          style: TextStyle(
+                            color: AppColors.white,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        Text(
+                          'Let others request to join your trip',
+                          style: TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Switch(
+                    value: _lookingForCompanions,
+                    onChanged: (v) => setState(() => _lookingForCompanions = v),
+                    activeColor: AppColors.primary,
+                  ),
+                ],
               ),
             ),
+
+            if (_lookingForCompanions) ...[
+              const SizedBox(height: 16),
+              _buildLabel('Max Companions'),
+              TextField(
+                controller: _maxCompanionsController,
+                keyboardType: TextInputType.number,
+                style: const TextStyle(color: AppColors.white),
+                decoration: _inputDecoration('3'),
+              ),
+            ],
+
+            const SizedBox(height: 100), // Space for FAB
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildLabel(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Text(
+        text,
+        style: TextStyle(
+          color: AppColors.textSecondary,
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+          fontFamily: 'Outfit',
+        ),
+      ),
+    );
+  }
+
+  InputDecoration _inputDecoration(String hint) {
+    return InputDecoration(
+      hintText: hint,
+      hintStyle: TextStyle(color: AppColors.textSecondary),
+      filled: true,
+      fillColor: AppColors.slate,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: AppColors.divider),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: AppColors.divider),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: AppColors.primary),
       ),
     );
   }

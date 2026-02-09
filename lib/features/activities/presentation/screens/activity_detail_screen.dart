@@ -1,8 +1,10 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:go_router/go_router.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:nomadly/core/constants/app_colors.dart';
 import 'package:nomadly/core/constants/app_dimensions.dart';
 import 'package:nomadly/core/utils/address_resolver.dart';
@@ -33,9 +35,8 @@ class _ActivityDetailScreenState extends ConsumerState<ActivityDetailScreen> {
   void initState() {
     super.initState();
     _activity = widget.preloadedActivity;
-    if (_activity == null) {
-      _loadActivity();
-    }
+    // Always load fresh data from API, preloaded is just for instant display
+    _loadActivity();
   }
 
   Future<void> _loadActivity() async {
@@ -53,6 +54,128 @@ class _ActivityDetailScreenState extends ConsumerState<ActivityDetailScreen> {
       if (mounted) {
         setState(() => _isLoading = false);
       }
+    }
+  }
+
+  Color _getActivityColor(String type) {
+    switch (type.toLowerCase()) {
+      case 'hike':
+        return Colors.green;
+      case 'yoga':
+        return Colors.purple;
+      case 'surf':
+        return Colors.blue;
+      case 'meal':
+        return Colors.orange;
+      case 'social':
+        return Colors.pink;
+      case 'cowork':
+        return Colors.teal;
+      case 'camping':
+        return Colors.brown;
+      default:
+        return AppColors.primary;
+    }
+  }
+
+  IconData _getActivityIcon(String type) {
+    switch (type.toLowerCase()) {
+      case 'hike':
+        return Icons.hiking;
+      case 'yoga':
+        return Icons.self_improvement;
+      case 'surf':
+        return Icons.surfing;
+      case 'meal':
+        return Icons.restaurant;
+      case 'social':
+        return Icons.people;
+      case 'cowork':
+        return Icons.laptop;
+      case 'camping':
+        return Icons.cabin;
+      default:
+        return Icons.event;
+    }
+  }
+
+  String _getRelativeTime(DateTime time) {
+    final now = DateTime.now();
+    final diff = time.difference(now);
+    if (diff.isNegative) {
+      final absDiff = diff.abs();
+      if (absDiff.inMinutes < 60) return 'Started ${absDiff.inMinutes}m ago';
+      if (absDiff.inHours < 24) return 'Started ${absDiff.inHours}h ago';
+      return 'Started ${absDiff.inDays}d ago';
+    }
+    if (diff.inMinutes < 60) return 'Starts in ${diff.inMinutes}m';
+    if (diff.inHours < 24) return 'Starts in ${diff.inHours}h';
+    if (diff.inDays < 7) return 'Starts in ${diff.inDays}d';
+    return DateFormat('MMM d').format(time);
+  }
+
+  void _openInMaps(double lat, double lng, String label) {
+    final encodedLabel = Uri.encodeComponent(label);
+    if (Platform.isIOS) {
+      // Show choice between Apple Maps and Google Maps
+      showModalBottomSheet(
+        context: context,
+        backgroundColor: AppColors.obsidian,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        builder: (ctx) => SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                const Text(
+                  'Open in Maps',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    fontFamily: 'Outfit',
+                  ),
+                ),
+                const SizedBox(height: 16),
+                ListTile(
+                  leading: const Icon(Icons.map, color: Colors.white),
+                  title: const Text('Apple Maps', style: TextStyle(color: Colors.white)),
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    launchUrl(Uri.parse('https://maps.apple.com/?daddr=$lat,$lng&q=$encodedLabel'));
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.directions, color: Colors.white),
+                  title: const Text('Google Maps', style: TextStyle(color: Colors.white)),
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    launchUrl(Uri.parse('https://www.google.com/maps/dir/?api=1&destination=$lat,$lng'), mode: LaunchMode.externalApplication);
+                  },
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    } else {
+      // Android - open Google Maps directly
+      launchUrl(
+        Uri.parse('https://www.google.com/maps/dir/?api=1&destination=$lat,$lng'),
+        mode: LaunchMode.externalApplication,
+      );
     }
   }
 
@@ -121,15 +244,48 @@ class _ActivityDetailScreenState extends ConsumerState<ActivityDetailScreen> {
           SizedBox(
             height: 250,
             width: double.infinity,
-            child: activity.imageUrl != null
-                ? CachedNetworkImage(
-                    imageUrl: activity.imageUrl!,
-                    fit: BoxFit.cover,
-                  )
-                : Container(
-                    color: AppColors.primary,
-                    child: const Icon(Icons.event, size: 80, color: Colors.white),
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                activity.imageUrl != null
+                    ? CachedNetworkImage(
+                        imageUrl: activity.imageUrl!,
+                        fit: BoxFit.cover,
+                      )
+                    : Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              _getActivityColor(activity.type),
+                              _getActivityColor(activity.type).withValues(alpha: 0.7),
+                            ],
+                          ),
+                        ),
+                        child: Icon(_getActivityIcon(activity.type), size: 80, color: Colors.white.withValues(alpha: 0.3)),
+                      ),
+                // Bottom gradient for readability
+                Positioned(
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  height: 80,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.transparent,
+                          Theme.of(context).scaffoldBackgroundColor,
+                        ],
+                      ),
+                    ),
                   ),
+                ),
+              ],
+            ),
           ),
 
           Expanded(
@@ -150,12 +306,23 @@ class _ActivityDetailScreenState extends ConsumerState<ActivityDetailScreen> {
                           ),
                         ),
                       ),
-                      Chip(
-                        label: Text(
-                          activity.type.toUpperCase(),
-                          style: const TextStyle(color: Colors.white, fontSize: 12),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: _getActivityColor(activity.type).withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(20),
                         ),
-                        backgroundColor: AppColors.primary,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(_getActivityIcon(activity.type), size: 14, color: _getActivityColor(activity.type)),
+                            const SizedBox(width: 4),
+                            Text(
+                              activity.type.toUpperCase(),
+                              style: TextStyle(color: _getActivityColor(activity.type), fontSize: 12, fontWeight: FontWeight.w600),
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),
@@ -185,17 +352,40 @@ class _ActivityDetailScreenState extends ConsumerState<ActivityDetailScreen> {
                   // Time & Location
                   _buildInfoRow(
                     Icons.access_time,
-                    DateFormat('EEEE, MMM d • h:mm a').format(activity.startTime.toLocal()),
+                    '${DateFormat('EEEE, MMM d • h:mm a').format(activity.startTime.toLocal())}  •  ${_getRelativeTime(activity.startTime)}',
                   ),
                   const SizedBox(height: 12),
                   _buildInfoRow(
                     Icons.location_on,
-                    null, 
+                    null,
                     future: AddressResolver.getAddressFromLatLng(
                         activity.location.latitude, activity.location.longitude),
                     fallback: '${activity.location.latitude}, ${activity.location.longitude}',
                   ),
-                  
+                  const SizedBox(height: 12),
+
+                  // Open in Maps button
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: () => _openInMaps(
+                        activity.location.latitude,
+                        activity.location.longitude,
+                        activity.title,
+                      ),
+                      icon: const Icon(Icons.directions, size: 18),
+                      label: const Text('Get Directions'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.primary,
+                        side: const BorderSide(color: AppColors.primary),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                    ),
+                  ),
+
                   const SizedBox(height: 24),
                   const Divider(),
                   const SizedBox(height: 16),
@@ -234,30 +424,59 @@ class _ActivityDetailScreenState extends ConsumerState<ActivityDetailScreen> {
                         ),
                     ],
                   ),
+                  if (activity.maxParticipants > 0) ...[
+                    const SizedBox(height: 8),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(4),
+                      child: LinearProgressIndicator(
+                        value: activity.participants.length / activity.maxParticipants,
+                        backgroundColor: AppColors.grey.withValues(alpha: 0.2),
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          activity.participants.length >= activity.maxParticipants
+                              ? Colors.red
+                              : AppColors.primary,
+                        ),
+                        minHeight: 4,
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 12),
                   if (activity.participants.isEmpty)
                     const Text(
-                      'No one has joined yet',
+                      'No one has joined yet. Be the first!',
                       style: TextStyle(color: AppColors.textSecondary),
                     )
                   else
                     SizedBox(
-                        height: 50,
+                        height: 64,
                         child: ListView.separated(
                           scrollDirection: Axis.horizontal,
                           itemCount: activity.participants.length,
-                          separatorBuilder: (_, _) => const SizedBox(width: 8),
+                          separatorBuilder: (_, _) => const SizedBox(width: 12),
                           itemBuilder: (context, index) {
                             final user = activity.participants[index];
                             return GestureDetector(
                               onTap: () => context.push('/profile/${user.uid}'),
-                              child: CircleAvatar(
-                                 backgroundImage: user.profile?.photoUrl != null
-                                    ? NetworkImage(user.profile!.photoUrl!)
-                                    : null,
-                                 child: user.profile?.photoUrl == null
-                                    ? const Icon(Icons.person)
-                                    : null,
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  CircleAvatar(
+                                    radius: 20,
+                                    backgroundImage: user.profile?.photoUrl != null
+                                        ? NetworkImage(user.profile!.photoUrl!)
+                                        : null,
+                                    child: user.profile?.photoUrl == null
+                                        ? const Icon(Icons.person, size: 18)
+                                        : null,
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    user.profile?.name?.split(' ').first ?? user.username ?? '',
+                                    style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
                               ),
                             );
                           },
@@ -269,30 +488,44 @@ class _ActivityDetailScreenState extends ConsumerState<ActivityDetailScreen> {
           ),
           
           // Action Button
-          Padding(
-            padding: const EdgeInsets.all(AppDimensions.paddingL),
-            child: SizedBox(
-               width: double.infinity,
-               height: 50,
-               child: ElevatedButton(
-                 onPressed: _getButtonOnPressed(isCreator, isParticipant, isPending, activity),
-                 style: ElevatedButton.styleFrom(
-                   backgroundColor: _getButtonColor(isCreator, isParticipant, isPending),
-                   disabledBackgroundColor: _getButtonColor(isCreator, isParticipant, isPending).withValues(alpha: 0.7),
-                   padding: const EdgeInsets.symmetric(horizontal: 16),
-                 ),
-                 child: FittedBox(
-                   fit: BoxFit.scaleDown,
-                   child: Text(
-                     _getButtonText(isCreator, isParticipant, isPending),
-                     style: TextStyle(
-                       color: isCreator || isParticipant || isPending ? Colors.white : AppColors.obsidian,
-                       fontSize: 16,
-                       fontWeight: FontWeight.w600,
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.all(AppDimensions.paddingL),
+              child: SizedBox(
+                 width: double.infinity,
+                 height: 50,
+                 child: ElevatedButton(
+                   onPressed: _isRequestLoading ? null : _getButtonOnPressed(isCreator, isParticipant, isPending, activity),
+                   style: ElevatedButton.styleFrom(
+                     backgroundColor: _getButtonColor(isCreator, isParticipant, isPending),
+                     disabledBackgroundColor: _getButtonColor(isCreator, isParticipant, isPending).withValues(alpha: 0.7),
+                     padding: const EdgeInsets.symmetric(horizontal: 16),
+                     shape: RoundedRectangleBorder(
+                       borderRadius: BorderRadius.circular(14),
                      ),
                    ),
+                   child: _isRequestLoading
+                       ? const SizedBox(
+                           width: 24,
+                           height: 24,
+                           child: CircularProgressIndicator(
+                             strokeWidth: 2.5,
+                             color: Colors.white,
+                           ),
+                         )
+                       : FittedBox(
+                           fit: BoxFit.scaleDown,
+                           child: Text(
+                             _getButtonText(isCreator, isParticipant, isPending),
+                             style: TextStyle(
+                               color: isCreator || isParticipant || isPending ? Colors.white : AppColors.obsidian,
+                               fontSize: 16,
+                               fontWeight: FontWeight.w600,
+                             ),
+                           ),
+                         ),
                  ),
-               ),
+              ),
             ),
           ),
         ],
@@ -319,7 +552,16 @@ class _ActivityDetailScreenState extends ConsumerState<ActivityDetailScreen> {
     if (isParticipant) {
       return () => _showLeaveConfirmation(activity);
     }
-    return () => ref.read(activityProvider.notifier).joinActivity(activity.id);
+    return () async {
+      setState(() => _isRequestLoading = true);
+      final updated = await ref.read(activityProvider.notifier).joinActivity(activity.id);
+      if (mounted) {
+        setState(() {
+          if (updated != null) _activity = updated;
+          _isRequestLoading = false;
+        });
+      }
+    };
   }
 
   void _showLeaveConfirmation(Activity activity) {
@@ -642,15 +884,16 @@ class _ActivityDetailScreenState extends ConsumerState<ActivityDetailScreen> {
               const SizedBox(height: 16),
               InkWell(
                 onTap: () async {
+                  final sheetContext = context;
                   final date = await showDatePicker(
-                    context: context,
+                    context: sheetContext,
                     initialDate: selectedTime,
                     firstDate: DateTime.now(),
                     lastDate: DateTime.now().add(const Duration(days: 365)),
                   );
-                  if (date != null) {
+                  if (date != null && sheetContext.mounted) {
                     final time = await showTimePicker(
-                      context: context,
+                      context: sheetContext,
                       initialTime: TimeOfDay.fromDateTime(selectedTime),
                     );
                     if (time != null) {

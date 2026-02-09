@@ -1,6 +1,5 @@
 import 'package:dio/dio.dart';
 import 'package:logger/logger.dart';
-import '../../../../core/config/app_config.dart';
 import '../../../../shared/services/api_client.dart';
 import '../../../../shared/models/builder.dart';
 import '../../../../shared/models/job.dart';
@@ -20,7 +19,7 @@ class MarketplaceRepository {
   }) async {
     try {
       final response = await _apiClient.get(
-        '${AppConfig.baseUrl}/api/v1/marketplace/builders',
+        '/v1/marketplace/builders',
         queryParameters: {
           if (query != null && query.isNotEmpty) 'search': query,
           if (specialties != null && specialties.isNotEmpty) 'specialties': specialties.join(','),
@@ -36,14 +35,14 @@ class MarketplaceRepository {
       throw Exception('Failed to load builders');
     } on DioException catch (e) {
       _logger.e('Get builders error: ${e.message}');
-      return [];
+      throw Exception('Failed to load builders: ${e.message}');
     }
   }
 
   // Get builder reviews
   Future<List<BuilderReview>> getBuilderReviews(String builderId) async {
     try {
-      final response = await _apiClient.get('${AppConfig.baseUrl}/api/v1/marketplace/builders/$builderId/reviews');
+      final response = await _apiClient.get('/v1/marketplace/builders/$builderId/reviews');
       if (response.statusCode == 200) {
         final List<dynamic> data = response.data['data'];
         return data.map((json) => BuilderReview.fromJson(json)).toList();
@@ -59,7 +58,7 @@ class MarketplaceRepository {
   Future<void> requestConsultation(String builderId, String specialty) async {
     try {
       await _apiClient.post(
-        '${AppConfig.marketplaceEndpoint}/consult',
+        '/v1/marketplace/consult',
         data: {
           'builder_id': builderId,
           'specialty': specialty,
@@ -85,7 +84,7 @@ class MarketplaceRepository {
   }) async {
     try {
       final response = await _apiClient.get(
-        '${AppConfig.baseUrl}/api/v1/jobs',
+        '/v1/jobs',
         queryParameters: {
           if (lat != null) 'lat': lat,
           if (lng != null) 'lng': lng,
@@ -114,7 +113,7 @@ class MarketplaceRepository {
     try {
       _logger.i('Creating job with data: $jobData');
       final response = await _apiClient.post(
-        '${AppConfig.baseUrl}/api/v1/jobs',
+        '/v1/jobs',
         data: jobData,
       );
       _logger.i('Create job response: ${response.statusCode}');
@@ -138,7 +137,7 @@ class MarketplaceRepository {
   // Get single job
   Future<Job?> getJob(String jobId) async {
     try {
-      final response = await _apiClient.get('${AppConfig.baseUrl}/api/v1/jobs/$jobId');
+      final response = await _apiClient.get('/v1/jobs/$jobId');
       if (response.statusCode == 200) {
         return Job.fromJson(response.data['data']);
       }
@@ -153,7 +152,7 @@ class MarketplaceRepository {
   Future<void> applyForJob(String jobId, String coverLetter) async {
     try {
       await _apiClient.post(
-        '${AppConfig.baseUrl}/api/v1/jobs/$jobId/apply',
+        '/v1/jobs/$jobId/apply',
         data: {'cover_letter': coverLetter},
       );
     } on DioException catch (e) {
@@ -165,9 +164,7 @@ class MarketplaceRepository {
   // Get my job applications
   Future<List<JobApplication>> getMyApplications() async {
     try {
-      final response = await _apiClient.get(
-        '${AppConfig.baseUrl}/api/v1/jobs/applications/mine',
-      );
+      final response = await _apiClient.get('/v1/jobs/applications/mine');
 
       if (response.statusCode == 200) {
         final List<dynamic> data = response.data['data'];
@@ -183,9 +180,7 @@ class MarketplaceRepository {
   // Get my posted jobs
   Future<List<MyJob>> getMyJobs() async {
     try {
-      final response = await _apiClient.get(
-        '${AppConfig.baseUrl}/api/v1/jobs/mine',
-      );
+      final response = await _apiClient.get('/v1/jobs/mine');
 
       if (response.statusCode == 200) {
         final List<dynamic> data = response.data['data'];
@@ -201,9 +196,7 @@ class MarketplaceRepository {
   // Get applications for a specific job (for job authors)
   Future<List<JobApplication>> getJobApplications(String jobId) async {
     try {
-      final response = await _apiClient.get(
-        '${AppConfig.baseUrl}/api/v1/jobs/$jobId/applications',
-      );
+      final response = await _apiClient.get('/v1/jobs/$jobId/applications');
 
       if (response.statusCode == 200) {
         final data = response.data['data'];
@@ -221,7 +214,7 @@ class MarketplaceRepository {
   Future<void> updateApplicationStatus(String applicationId, String status) async {
     try {
       await _apiClient.patch(
-        '${AppConfig.baseUrl}/api/v1/jobs/applications/$applicationId',
+        '/v1/jobs/applications/$applicationId',
         data: {'status': status},
       );
     } on DioException catch (e) {
@@ -233,7 +226,7 @@ class MarketplaceRepository {
   // Delete job
   Future<void> deleteJob(String jobId) async {
     try {
-      await _apiClient.delete('${AppConfig.baseUrl}/api/v1/jobs/$jobId');
+      await _apiClient.delete('/v1/jobs/$jobId');
     } on DioException catch (e) {
       _logger.e('Delete job error: ${e.message}');
       throw _handleError(e);
@@ -248,7 +241,7 @@ class MarketplaceRepository {
   }) async {
     try {
       await _apiClient.post(
-        '${AppConfig.baseUrl}/api/v1/marketplace/review',
+        '/v1/marketplace/review',
         data: {
           'consultation_id': consultationId,
           'rating': rating,
@@ -264,9 +257,7 @@ class MarketplaceRepository {
   // Get my consultations (as requester)
   Future<List<Map<String, dynamic>>> getMyConsultations() async {
     try {
-      final response = await _apiClient.get(
-        '${AppConfig.baseUrl}/api/v1/marketplace/consultations/mine',
-      );
+      final response = await _apiClient.get('/v1/marketplace/consultations/mine');
 
       if (response.statusCode == 200) {
         final List<dynamic> data = response.data['data'] ?? [];

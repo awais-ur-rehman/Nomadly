@@ -4,7 +4,9 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_dimensions.dart';
+import '../../../../shared/models/activity.dart';
 import '../../../../shared/widgets/skeleton_loaders.dart';
+import '../../../../shared/models/trip.dart';
 import '../../../matching/presentation/screens/matching_screen.dart';
 import '../../../trips/providers/trip_provider.dart';
 import '../../../activities/providers/activity_provider.dart';
@@ -88,12 +90,12 @@ class _TripsDiscoveryTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final currentTrip = ref.watch(currentTripProvider);
+    final myTrips = ref.watch(myTripsProvider);
     final nearbyTrips = ref.watch(nearbyTripsProvider);
 
     return RefreshIndicator(
       onRefresh: () async {
-        ref.invalidate(currentTripProvider);
+        ref.invalidate(myTripsProvider);
         ref.invalidate(nearbyTripsProvider);
       },
       color: AppColors.primary,
@@ -105,16 +107,22 @@ class _TripsDiscoveryTab extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // My Current Trip Section
-            _buildSectionHeader('Your Trip', onSeeAll: () => context.push('/my-trip')),
+            _buildSectionHeader('Your Trips', onSeeAll: () => context.push('/my-trip')),
             const SizedBox(height: 12),
-            currentTrip.when(
+            myTrips.when(
               loading: () => const TripCardSkeleton(),
-              error: (_, __) => _buildCreateTripCard(context),
-              data: (trip) {
-                if (trip == null || trip.origin == null) {
+              error: (_, _) => _buildCreateTripCard(context),
+              data: (trips) {
+                final activeTrips = trips.where((t) => t.isUpcoming || t.isActive).toList();
+                if (activeTrips.isEmpty) {
                   return _buildCreateTripCard(context);
                 }
-                return _buildMyTripCard(context, trip);
+                return Column(
+                  children: activeTrips.take(2).map((trip) => Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: _buildMyTripCard(context, trip),
+                  )).toList(),
+                );
               },
             ),
 
@@ -186,6 +194,7 @@ class _TripsDiscoveryTab extends ConsumerWidget {
 
   Widget _buildCreateTripCard(BuildContext context) {
     return Container(
+      width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: AppColors.slate,
@@ -246,15 +255,19 @@ class _TripsDiscoveryTab extends ConsumerWidget {
     );
   }
 
-  Widget _buildMyTripCard(BuildContext context, dynamic trip) {
+  Widget _buildMyTripCard(BuildContext context, Trip trip) {
+    final statusColor = trip.isActive ? AppColors.success : AppColors.accent;
+    final statusText = trip.isActive ? 'ACTIVE' : 'UPCOMING';
+
     return GestureDetector(
-      onTap: () => context.push('/my-trip'),
+      onTap: () => context.push('/trip/${trip.id}', extra: trip),
       child: Container(
+        width: double.infinity,
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: AppColors.slate,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.success.withValues(alpha: 0.3)),
+          border: Border.all(color: statusColor.withValues(alpha: 0.3)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -264,70 +277,108 @@ class _TripsDiscoveryTab extends ConsumerWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: AppColors.success.withValues(alpha: 0.15),
+                    color: statusColor.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(6),
                   ),
-                  child: const Text(
-                    'ACTIVE',
+                  child: Text(
+                    statusText,
                     style: TextStyle(
-                      color: AppColors.success,
+                      color: statusColor,
                       fontSize: 10,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                 ),
+                if (trip.pendingCount > 0) ...[
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      '${trip.pendingCount} pending',
+                      style: const TextStyle(
+                        color: AppColors.primary,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
                 const Spacer(),
                 const Icon(Icons.chevron_right, color: AppColors.textSecondary),
               ],
             ),
             const SizedBox(height: 12),
+            Text(
+              trip.title,
+              style: const TextStyle(
+                color: AppColors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 8),
+            // Origin → Destination
             Row(
               children: [
-                const Icon(Icons.trip_origin, color: AppColors.primary, size: 16),
-                const SizedBox(width: 8),
+                const Icon(Icons.trip_origin, color: AppColors.primary, size: 14),
+                const SizedBox(width: 6),
                 Expanded(
                   child: Text(
-                    'Your current trip',
-                    style: const TextStyle(
-                      color: AppColors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    trip.origin.placeName ?? 'Origin',
+                    style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 6),
+                  child: Icon(Icons.arrow_forward, color: AppColors.textSecondary, size: 14),
+                ),
+                Expanded(
+                  child: Text(
+                    trip.destination.placeName ?? 'Destination',
+                    style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ],
             ),
-            if (trip.startDate != null) ...[
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  const Icon(Icons.calendar_today, color: AppColors.textSecondary, size: 14),
-                  const SizedBox(width: 8),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                const Icon(Icons.calendar_today, color: AppColors.textSecondary, size: 14),
+                const SizedBox(width: 6),
+                Text(
+                  '${DateFormat('MMM d').format(trip.startDate)} • ${trip.durationDays} days',
+                  style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                ),
+                if (trip.lookingForCompanions) ...[
+                  const Spacer(),
                   Text(
-                    DateFormat('MMM d').format(trip.startDate),
-                    style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                    '${trip.availableSpots} spots left',
+                    style: const TextStyle(color: AppColors.primary, fontSize: 13, fontWeight: FontWeight.w500),
                   ),
-                  if (trip.durationDays != null) ...[
-                    Text(
-                      ' • ${trip.durationDays} days',
-                      style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
-                    ),
-                  ],
                 ],
-              ),
-            ],
+              ],
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildNearbyTripCard(BuildContext context, dynamic trip) {
+  Widget _buildNearbyTripCard(BuildContext context, Trip trip) {
     return GestureDetector(
-      onTap: () => context.push('/trip/${trip.id}'),
+      onTap: () => context.push('/trip/${trip.id}', extra: trip),
       child: Container(
+        width: double.infinity,
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: AppColors.slate,
@@ -340,11 +391,11 @@ class _TripsDiscoveryTab extends ConsumerWidget {
               children: [
                 CircleAvatar(
                   radius: 20,
-                  backgroundImage: trip.creator?.profile?.photoUrl != null
-                      ? NetworkImage(trip.creator.profile.photoUrl)
+                  backgroundImage: trip.creator.profile?.photoUrl != null
+                      ? NetworkImage(trip.creator.profile!.photoUrl!)
                       : null,
                   backgroundColor: AppColors.obsidian,
-                  child: trip.creator?.profile?.photoUrl == null
+                  child: trip.creator.profile?.photoUrl == null
                       ? const Icon(Icons.person, size: 20, color: AppColors.textSecondary)
                       : null,
                 ),
@@ -354,7 +405,7 @@ class _TripsDiscoveryTab extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        trip.title ?? 'Untitled Trip',
+                        trip.title,
                         style: const TextStyle(
                           color: AppColors.white,
                           fontSize: 16,
@@ -364,7 +415,7 @@ class _TripsDiscoveryTab extends ConsumerWidget {
                         overflow: TextOverflow.ellipsis,
                       ),
                       Text(
-                        '@${trip.creator?.username ?? 'unknown'}',
+                        '@${trip.creator.username ?? 'unknown'}',
                         style: const TextStyle(
                           color: AppColors.textSecondary,
                           fontSize: 13,
@@ -373,7 +424,7 @@ class _TripsDiscoveryTab extends ConsumerWidget {
                     ],
                   ),
                 ),
-                if (trip.spotsLeft != null && trip.spotsLeft > 0)
+                if (trip.spotsLeft != null && trip.spotsLeft! > 0)
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
@@ -381,7 +432,7 @@ class _TripsDiscoveryTab extends ConsumerWidget {
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
-                      '${trip.spotsLeft} spot${trip.spotsLeft > 1 ? 's' : ''} left',
+                      '${trip.spotsLeft} spot${trip.spotsLeft! > 1 ? 's' : ''} left',
                       style: const TextStyle(
                         color: AppColors.accent,
                         fontSize: 11,
@@ -391,19 +442,45 @@ class _TripsDiscoveryTab extends ConsumerWidget {
                   ),
               ],
             ),
-            if (trip.startDate != null) ...[
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  const Icon(Icons.calendar_today, color: AppColors.textSecondary, size: 14),
-                  const SizedBox(width: 6),
-                  Text(
-                    DateFormat('MMM d').format(trip.startDate),
+            const SizedBox(height: 12),
+            // Origin → Destination
+            Row(
+              children: [
+                const Icon(Icons.trip_origin, color: AppColors.primary, size: 14),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    trip.origin.placeName ?? 'Origin',
                     style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                ],
-              ),
-            ],
+                ),
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 6),
+                  child: Icon(Icons.arrow_forward, color: AppColors.textSecondary, size: 12),
+                ),
+                Expanded(
+                  child: Text(
+                    trip.destination.placeName ?? 'Destination',
+                    style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                const Icon(Icons.calendar_today, color: AppColors.textSecondary, size: 14),
+                const SizedBox(width: 6),
+                Text(
+                  '${DateFormat('MMM d').format(trip.startDate)} • ${trip.durationDays} days',
+                  style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                ),
+              ],
+            ),
           ],
         ),
       ),
@@ -619,12 +696,12 @@ class _ActivitiesHubTab extends ConsumerWidget {
 
   Widget _buildActivityCard(
     BuildContext context,
-    dynamic activity, {
+    Activity activity, {
     bool isLive = false,
     bool isSoon = false,
   }) {
     return GestureDetector(
-      onTap: () => context.push('/activity/${activity.id}'),
+      onTap: () => context.push('/activity/${activity.id}', extra: activity),
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
@@ -649,7 +726,7 @@ class _ActivitiesHubTab extends ConsumerWidget {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Icon(
-                    _getActivityIcon(activity.activityType),
+                    _getActivityIcon(activity.type),
                     color: AppColors.primary,
                     size: 20,
                   ),
@@ -660,7 +737,7 @@ class _ActivitiesHubTab extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        activity.title ?? 'Untitled',
+                        activity.title,
                         style: const TextStyle(
                           color: AppColors.white,
                           fontSize: 16,
@@ -670,7 +747,7 @@ class _ActivitiesHubTab extends ConsumerWidget {
                         overflow: TextOverflow.ellipsis,
                       ),
                       Text(
-                        'by ${activity.creator?.profile?.name ?? activity.creator?.username ?? 'Unknown'}',
+                        'by ${activity.creator.profile?.name ?? activity.creator.username ?? 'Unknown'}',
                         style: const TextStyle(
                           color: AppColors.textSecondary,
                           fontSize: 13,
@@ -725,7 +802,7 @@ class _ActivitiesHubTab extends ConsumerWidget {
                 const Spacer(),
                 if (activity.maxParticipants > 0)
                   Text(
-                    '${activity.participants?.length ?? 0}/${activity.maxParticipants}',
+                    '${activity.participants.length}/${activity.maxParticipants}',
                     style: const TextStyle(
                       color: AppColors.primary,
                       fontSize: 13,
