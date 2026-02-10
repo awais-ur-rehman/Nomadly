@@ -160,6 +160,7 @@ class AuthRepository {
     required Map<String, dynamic> rigData,
     bool isBuilder = false,
     Map<String, dynamic>? builderData,
+    Map<String, dynamic>? travelRouteData, // Added parameter
   }) async {
     try {
       final response = await _apiClient.post(
@@ -169,6 +170,7 @@ class AuthRepository {
           'rig': rigData,
           'is_builder': isBuilder,
           if (builderData != null) 'builder_profile': builderData,
+          if (travelRouteData != null) 'travel_route': travelRouteData, // Include in payload
         },
       );
 

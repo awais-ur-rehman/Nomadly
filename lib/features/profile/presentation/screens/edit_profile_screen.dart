@@ -202,28 +202,31 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       'pet_friendly': _isPetFriendly,
     };
 
+    // Pass existing builder status to avoid overwriting it with default false
+    final user = ref.read(authProvider).user;
+    final isBuilder = user?.isBuilder ?? false;
+    // builderProfile is not in User model, so we pass null. Backend will strictly merge if provided, or ignore if null.
+    
+    // Prepare travel route data
+    Map<String, dynamic>? routeData;
+    if (_originLat != null && _destLat != null && _startDate != null) {
+      final duration = int.tryParse(_durationController.text) ?? 7;
+      routeData = {
+        'origin': {'lat': _originLat, 'lng': _originLng},
+        'destination': {'lat': _destLat, 'lng': _destLng},
+        'start_date': _startDate!.toUtc().toIso8601String(),
+        'duration_days': duration,
+      };
+    }
+
     final success = await ref.read(authProvider.notifier).completeProfile(
       profileData: profileData,
       rigData: rigData,
+      isBuilder: isBuilder, 
+      travelRouteData: routeData,
     );
 
     if (!success || !mounted) return;
-
-    // 3. Update travel route if filled
-    if (_originLat != null && _destLat != null && _startDate != null) {
-      final duration = int.tryParse(_durationController.text) ?? 7;
-      try {
-        await ApiClient().patch(
-          '${AppConfig.usersEndpoint}/route',
-          data: {
-            'origin': {'lat': _originLat, 'lng': _originLng},
-            'destination': {'lat': _destLat, 'lng': _destLng},
-            'start_date': _startDate!.toIso8601String(),
-            'duration_days': duration,
-          },
-        );
-      } catch (_) {}
-    }
 
     // 4. Update distance preference
     try {
@@ -231,6 +234,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         '${AppConfig.usersEndpoint}/me',
         data: {
           'matching_profile': {
+             // ...
+             'intent': _selectedIntent, // Also update intent here if needed, but profile covers it
             'preferences': {
               'max_distance_km': _maxDistanceKm.round(),
             },
@@ -244,6 +249,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       context.pop();
     }
   }
+
 
   InputDecoration _inputDecoration(String label, {IconData? prefixIcon, Widget? suffixIcon}) {
     return InputDecoration(

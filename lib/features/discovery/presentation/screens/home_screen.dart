@@ -82,6 +82,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           centerTitle: true,
           actions: [
             IconButton(
+              icon: const Icon(Icons.auto_awesome, color: AppColors.primary),
+              onPressed: () => context.push('/ai-chat'),
+            ),
+            IconButton(
               icon: SvgPicture.asset(
                 'assets/icons/home/marketplace.svg',
                 width: 24,

@@ -202,6 +202,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     required Map<String, dynamic> rigData,
     bool isBuilder = false,
     Map<String, dynamic>? builderData,
+    Map<String, dynamic>? travelRouteData, // Added parameter
   }) async {
     state = state.copyWith(isLoading: true, error: null);
 
@@ -211,6 +212,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         rigData: rigData,
         isBuilder: isBuilder,
         builderData: builderData,
+        travelRouteData: travelRouteData, // Pass to repository
       );
 
       state = state.copyWith(

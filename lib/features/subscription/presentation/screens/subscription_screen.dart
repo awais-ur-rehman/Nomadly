@@ -5,6 +5,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../shared/providers/revenue_cat_provider.dart';
 import '../../../auth/providers/auth_provider.dart';
 import '../../../marketplace/presentation/screens/my_jobs_screen.dart';
+import '../../providers/subscription_provider.dart';
 
 class SubscriptionScreen extends ConsumerStatefulWidget {
   const SubscriptionScreen({super.key});
@@ -60,6 +61,13 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
     if (mounted) {
       setState(() => _isLoading = false);
       if (success) {
+        // Sync with backend to ensure DB is updated
+        try {
+          await ref.read(subscriptionRepositoryProvider).syncSubscription();
+        } catch (e) {
+          debugPrint('Sync subscription error: $e');
+        }
+
         // Refresh user data without resetting auth state to avoid router redirect
         await ref.read(authProvider.notifier).refreshUser();
         ref.invalidate(isProProvider); 
@@ -95,6 +103,11 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
     if (mounted) {
       setState(() => _isLoading = false);
       if (success) {
+        try {
+          await ref.read(subscriptionRepositoryProvider).syncSubscription();
+        } catch (e) {
+          debugPrint('Sync restore error: $e');
+        }
         ref.invalidate(authProvider);
         ref.invalidate(isProProvider);
         ScaffoldMessenger.of(context).showSnackBar(

@@ -148,6 +148,16 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
       case 2: // Nomad Setup
         return true;
       case 3: // Discovery
+        if (_originLat != null) {
+          if (_destLat == null) {
+            ToastService.showError('Please select a destination');
+            return false;
+          }
+          if (_startDate == null) {
+            ToastService.showError('Please select a departure date');
+            return false;
+          }
+        }
         return true;
       case 4: // Builder Opt-in
         return true;
@@ -237,6 +247,18 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
       }
     }
 
+    // 3. Prepare travel route data
+    Map<String, dynamic>? routeData;
+    if (_originLat != null && _destLat != null && _startDate != null) {
+      final duration = int.tryParse(_durationController.text) ?? 7;
+      routeData = {
+        'origin': {'lat': _originLat, 'lng': _originLng},
+        'destination': {'lat': _destLat, 'lng': _destLng},
+        'start_date': _startDate!.toUtc().toIso8601String(),
+        'duration_days': duration,
+      };
+    }
+
     final success = await ref.read(authProvider.notifier).completeProfile(
       profileData: profileData,
       rigData: rigData,
@@ -248,32 +270,24 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
         'portfolio_images': uploadedPortfolioUrls,
         'availability_status': 'available',
       } : null,
+      travelRouteData: routeData,
     );
 
     if (!success || !mounted) return;
 
-    // 3. Update travel route if user provided at least an origin
-    if (_originLat != null) {
-      final duration = int.tryParse(_durationController.text) ?? 7;
-      try {
-        final Map<String, dynamic> routeData = {
-          'origin': {'lat': _originLat, 'lng': _originLng},
-        };
-
-        if (_destLat != null) {
-          routeData['destination'] = {'lat': _destLat, 'lng': _destLng};
-        }
-        if (_startDate != null) {
-          routeData['start_date'] = _startDate!.toIso8601String();
-          routeData['duration_days'] = duration;
-        }
-
-        await ApiClient().patch(
-          '${AppConfig.usersEndpoint}/route',
-          data: routeData,
-        );
-      } catch (_) {}
-    }
+    // 4. Update distance preference
+    try {
+      await ApiClient().patch(
+        '${AppConfig.usersEndpoint}/me',
+        data: {
+          'matching_profile': {
+              'preferences': {
+                'max_distance_km': _maxDistanceKm.round(),
+              },
+          },
+        },
+      );
+    } catch (_) {}
 
     // 4. Update distance preference
     try {

@@ -51,6 +51,7 @@ import '../../features/trips/presentation/screens/my_trips_screen.dart';
 import '../../features/trips/presentation/screens/trip_detail_screen.dart';
 import '../../features/trips/presentation/screens/trip_discovery_screen.dart';
 import '../../shared/models/trip.dart';
+import '../../features/ai/presentation/screens/ai_chat_screen.dart';
 
 /// Listenable that notifies GoRouter when auth state changes
 class RouterListenable extends ChangeNotifier {
@@ -364,6 +365,11 @@ final routerProvider = Provider<GoRouter>((ref) {
           final trip = state.extra as Trip?;
           return TripDetailScreen(tripId: tripId, preloadedTrip: trip);
         },
+      ),
+      // AI Chat (Nomi)
+      GoRoute(
+        path: '/ai-chat',
+        builder: (context, state) => const AiChatScreen(),
       ),
     ],
   );

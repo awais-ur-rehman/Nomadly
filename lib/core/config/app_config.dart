@@ -23,6 +23,7 @@ class AppConfig {
   static const String safetyEndpoint = '/v1/safety';
   static const String inviteEndpoint = '/v1/invite';
   static const String verificationEndpoint = '/v1/verification';
+  static const String aiEndpoint = '/v1/ai';
   
   // Timeouts
   static const Duration connectTimeout = Duration(seconds: 30);
