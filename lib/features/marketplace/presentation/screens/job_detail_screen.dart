@@ -7,6 +7,7 @@ import 'package:nomadly/core/constants/app_colors.dart';
 import 'package:nomadly/core/constants/app_dimensions.dart';
 import 'package:nomadly/shared/models/job.dart';
 import 'package:nomadly/shared/services/toast_service.dart';
+import 'package:nomadly/features/auth/providers/auth_provider.dart';
 import 'package:nomadly/features/chat/providers/chat_provider.dart';
 import 'package:nomadly/features/marketplace/providers/marketplace_provider.dart';
 import 'package:nomadly/features/marketplace/presentation/widgets/job_application_bottom_sheet.dart';
@@ -25,6 +26,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
   Job? _job;
   bool _isLoading = false;
   bool _hasApplied = false;
+  String? _applicationStatus; // pending, interview, hired, rejected
 
   @override
   void initState() {
@@ -32,7 +34,23 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
     _job = widget.preloadedJob;
     if (_job == null) {
       _loadJob();
+    } else {
+      _checkApplicationStatus();
     }
+  }
+
+  Future<void> _checkApplicationStatus() async {
+    if (_isOwnJob()) return;
+    try {
+      final applications = await ref.read(marketplaceRepositoryProvider).getMyApplications();
+      final match = applications.where((a) => a.job?.id == widget.jobId).toList();
+      if (match.isNotEmpty && mounted) {
+        setState(() {
+          _hasApplied = true;
+          _applicationStatus = match.first.status;
+        });
+      }
+    } catch (_) {}
   }
 
   Future<void> _loadJob() async {
@@ -41,6 +59,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
       final job = await ref.read(marketplaceRepositoryProvider).getJob(widget.jobId);
       if (mounted) {
         setState(() => _job = job);
+        _checkApplicationStatus();
       }
     } catch (e) {
       if (mounted) {
@@ -134,6 +153,90 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
     if (result == true && mounted) {
       setState(() => _hasApplied = true);
     }
+  }
+
+  bool _isOwnJob() {
+    final currentUser = ref.read(authProvider).user;
+    if (currentUser == null || _job == null) return false;
+    final currentUserId = currentUser.id ?? currentUser.idSecondary;
+    final authorId = _job!.author.id ?? _job!.author.idSecondary;
+    return currentUserId != null && currentUserId == authorId;
+  }
+
+  Widget _buildActionButton(Job job) {
+    // If this is the user's own job, show "View Applications"
+    if (_isOwnJob()) {
+      return ElevatedButton(
+        onPressed: () => context.push('/my-jobs'),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.secondary,
+          foregroundColor: AppColors.white,
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          elevation: 0,
+        ),
+        child: const Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.people, size: 20),
+            SizedBox(width: 8),
+            Text(
+              'View Applications',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // For other users: Apply / Already Applied / Job Closed
+    return ElevatedButton(
+      onPressed: _isLoading || _hasApplied || job.status != 'open'
+          ? null
+          : _applyForJob,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: _hasApplied ? AppColors.textSecondary : AppColors.primary,
+        foregroundColor: _hasApplied ? AppColors.white : AppColors.obsidian,
+        disabledBackgroundColor: AppColors.obsidian,
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        elevation: 0,
+      ),
+      child: _isLoading
+          ? const SizedBox(
+              height: 20,
+              width: 20,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: AppColors.primary,
+              ),
+            )
+          : Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  _hasApplied ? Icons.check_circle : Icons.send,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  _hasApplied
+                      ? 'Already Applied'
+                      : job.status == 'open'
+                          ? 'Apply Now'
+                          : 'Job Closed',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+              ],
+            ),
+    );
   }
 
   @override
@@ -463,7 +566,34 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
       ),
       
       // Bottom Action Button
-      bottomNavigationBar: Container(
+      bottomNavigationBar: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Application status banner
+          if (_applicationStatus != null && !_isOwnJob())
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              color: _getStatusColor(_applicationStatus!).withValues(alpha: 0.15),
+              child: Row(
+                children: [
+                  Icon(
+                    _getStatusIcon(_applicationStatus!),
+                    color: _getStatusColor(_applicationStatus!),
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    _getStatusText(_applicationStatus!),
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: _getStatusColor(_applicationStatus!),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: AppColors.slate,
@@ -500,58 +630,48 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
                   ],
                 ),
               ),
-              // Action button (Apply or Contact)
+              // Action button — context-aware
               Expanded(
                 flex: 2,
-                child: ElevatedButton(
-                  onPressed: _isLoading || _hasApplied || job.status != 'open'
-                    ? null
-                    : _applyForJob,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _hasApplied ? AppColors.textSecondary : AppColors.primary,
-                    foregroundColor: _hasApplied ? AppColors.white : AppColors.obsidian,
-                    disabledBackgroundColor: AppColors.obsidian,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    elevation: 0,
-                  ),
-                  child: _isLoading
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: AppColors.primary,
-                          ),
-                        )
-                      : Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              _hasApplied ? Icons.check_circle : Icons.send,
-                              size: 20
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              _hasApplied
-                                ? 'Already Applied'
-                                : job.status == 'open' ? 'Apply Now' : 'Job Closed',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                              ),
-                            ),
-                          ],
-                        ),
-                ),
+                child: _buildActionButton(job),
               ),
             ],
           ),
         ),
       ),
+        ],
+      ),
     );
+  }
+
+  Color _getStatusColor(String status) {
+    switch (status) {
+      case 'hired': return Colors.green;
+      case 'interview': return Colors.blue;
+      case 'pending': return Colors.amber;
+      case 'rejected': return Colors.red;
+      default: return AppColors.textSecondary;
+    }
+  }
+
+  IconData _getStatusIcon(String status) {
+    switch (status) {
+      case 'hired': return Icons.check_circle;
+      case 'interview': return Icons.event;
+      case 'pending': return Icons.hourglass_empty;
+      case 'rejected': return Icons.cancel;
+      default: return Icons.info;
+    }
+  }
+
+  String _getStatusText(String status) {
+    switch (status) {
+      case 'hired': return 'You have been hired for this job!';
+      case 'interview': return 'You have been selected for an interview';
+      case 'pending': return 'Your application is under review';
+      case 'rejected': return 'Your application was not selected';
+      default: return 'Application status: $status';
+    }
   }
 }
 

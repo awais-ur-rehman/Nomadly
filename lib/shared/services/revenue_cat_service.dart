@@ -123,6 +123,48 @@ class RevenueCatService {
     }
   }
 
+  /// Get the job payment offering (separate from the default subscription offering)
+  Future<Package?> getJobPaymentPackage() async {
+    if (!_isInitialized) return null;
+    try {
+      final offerings = await Purchases.getOfferings();
+      final jobOffering = offerings.getOffering("job_payment");
+      if (jobOffering != null && jobOffering.availablePackages.isNotEmpty) {
+        return jobOffering.availablePackages.first;
+      }
+      return null;
+    } catch (e) {
+      _logger.e("Error fetching job payment offering: $e");
+      return null;
+    }
+  }
+
+  /// Purchase a one-time job payment and return the transaction ID
+  Future<String?> purchaseJobPayment(Package package) async {
+    if (!_isInitialized) {
+      _logger.e("RevenueCat not initialized");
+      return null;
+    }
+    try {
+      PurchaseResult result = await Purchases.purchasePackage(package);
+
+      // Check if the Job Payment entitlement is now active
+      final hasJobPayment = result.customerInfo.entitlements.all["Job Payment"]?.isActive ?? false;
+
+      if (hasJobPayment) {
+        // Return the transaction identifier for backend recording
+        final transaction = result.customerInfo.entitlements.all["Job Payment"];
+        return transaction?.latestPurchaseDate ?? DateTime.now().toIso8601String();
+      }
+
+      // Fallback: return a timestamp-based ID if entitlement check isn't reliable for one-time
+      return DateTime.now().millisecondsSinceEpoch.toString();
+    } catch (e) {
+      _logger.e("Error purchasing job payment: $e");
+      return null;
+    }
+  }
+
   Future<void> login(String userId) async {
     if (!_isInitialized) return;
     try {

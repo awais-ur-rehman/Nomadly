@@ -270,6 +270,58 @@ class MarketplaceRepository {
     }
   }
 
+  // Complete a job (mark as completed, create pending payment)
+  Future<Map<String, dynamic>?> completeJob(String jobId) async {
+    try {
+      final response = await _apiClient.post('/v1/jobs/$jobId/complete');
+      if (response.statusCode == 200) {
+        return response.data['data'] as Map<String, dynamic>?;
+      }
+      return null;
+    } on DioException catch (e) {
+      _logger.e('Complete job error: ${e.message}');
+      throw _handleError(e);
+    }
+  }
+
+  // Record a job payment after RevenueCat purchase
+  Future<Map<String, dynamic>?> recordJobPayment({
+    required String jobId,
+    required String transactionId,
+    required double amount,
+  }) async {
+    try {
+      final response = await _apiClient.post(
+        '/v1/jobs/$jobId/pay',
+        data: {
+          'transaction_id': transactionId,
+          'amount': amount,
+        },
+      );
+      if (response.statusCode == 200) {
+        return response.data['data'] as Map<String, dynamic>?;
+      }
+      return null;
+    } on DioException catch (e) {
+      _logger.e('Record job payment error: ${e.message}');
+      throw _handleError(e);
+    }
+  }
+
+  // Get payment status for a job
+  Future<Map<String, dynamic>?> getJobPayment(String jobId) async {
+    try {
+      final response = await _apiClient.get('/v1/jobs/$jobId/payment');
+      if (response.statusCode == 200) {
+        return response.data['data'] as Map<String, dynamic>?;
+      }
+      return null;
+    } on DioException catch (e) {
+      _logger.e('Get job payment error: ${e.message}');
+      return null;
+    }
+  }
+
   String _handleError(DioException error) {
     if (error.response != null) {
       final data = error.response!.data;
