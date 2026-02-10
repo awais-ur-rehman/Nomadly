@@ -5,6 +5,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../shared/services/toast_service.dart';
 import '../../../auth/providers/auth_provider.dart';
 import '../../providers/profile_provider.dart';
+import '../../../../shared/providers/revenue_cat_provider.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -72,6 +73,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   Widget build(BuildContext context) {
     final user = ref.watch(authProvider).user;
     final isPrivate = user?.isPrivate ?? false;
+    
+    final revenueCatAsync = ref.watch(isProProvider);
+    final localIsPro = revenueCatAsync.value ?? false;
+    final isPro = (user?.isPro ?? false) || localIsPro;
 
     return Scaffold(
       backgroundColor: AppColors.obsidian,
@@ -114,7 +119,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 _buildSettingsTile(
                   icon: Icons.workspace_premium_outlined,
                   title: 'Subscription',
-                  subtitle: user?.isPro == true ? 'Vantage Pro' : 'Free Plan',
+                  subtitle: isPro ? 'Vantage Pro' : 'Free Plan',
                   onTap: () => context.push('/subscription'),
                 ),
                 _buildSettingsTile(

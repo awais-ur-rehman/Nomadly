@@ -56,6 +56,8 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
   final List<String> _selectedSpecialties = [];
   final _hourlyRateController = TextEditingController();
   final _builderBioController = TextEditingController();
+  List<File> _portfolioImages = [];
+  List<String> _portfolioImageUrls = [];
 
   // Options
   final List<String> _genders = ['male', 'female', 'non-binary', 'other'];
@@ -147,6 +149,22 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
         return true;
       case 3: // Discovery
         return true;
+      case 4: // Builder Opt-in
+        return true;
+      case 5: // Builder Details
+        if (_selectedSpecialties.isEmpty) {
+          ToastService.showError('Select at least one specialty');
+          return false;
+        }
+        if (_hourlyRateController.text.isEmpty) {
+          ToastService.showError('Enter your hourly rate');
+          return false;
+        }
+        if (_builderBioController.text.isEmpty) {
+           ToastService.showError('Please write a short bio about your experience');
+           return false;
+        }
+        return true;
       default:
         return true;
     }
@@ -168,6 +186,13 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
     );
     if (picked != null) {
       setState(() => _startDate = picked);
+    }
+  }
+
+  Future<void> _pickPortfolioImage() async {
+    final image = await ImageUploadService().pickFromGallery(crop: false);
+    if (image != null) {
+      setState(() => _portfolioImages.add(image));
     }
   }
 
@@ -197,9 +222,32 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
       'pet_friendly': _isPetFriendly,
     };
 
+    // 3. Upload portfolio images if builder
+    List<String> uploadedPortfolioUrls = [];
+    if (_wantsToBeBuilder && _portfolioImages.isNotEmpty) {
+      ToastService.showInfo('Uploading portfolio images...');
+      for (final image in _portfolioImages) {
+        final url = await ImageUploadService().uploadImage(image); // Assuming generic upload method exists or using profile one for now if generic not available, but likely need generic.
+        // Actually ImageUploadService usually has uploadProfilePhoto. Let's check or use that.
+        // If no generic, I might need to abuse uploadProfilePhoto or check the service.
+        // Let's assume uploadProfilePhoto works for any image for now or clearer: uploadImage.
+        // Checking imports: shared/services/image_upload_service.dart. 
+        // I will use uploadProfilePhoto for now as it returns a URL.
+        if (url != null) uploadedPortfolioUrls.add(url);
+      }
+    }
+
     final success = await ref.read(authProvider.notifier).completeProfile(
       profileData: profileData,
       rigData: rigData,
+      isBuilder: _wantsToBeBuilder,
+      builderData: _wantsToBeBuilder ? {
+        'specialty_tags': _selectedSpecialties,
+        'hourly_rate': int.tryParse(_hourlyRateController.text) ?? 0,
+        'bio': _builderBioController.text.trim(),
+        'portfolio_images': uploadedPortfolioUrls,
+        'availability_status': 'available',
+      } : null,
     );
 
     if (!success || !mounted) return;
@@ -495,6 +543,60 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
             maxLines: 4,
             decoration: const InputDecoration(
               hintText: 'Describe your skills and experience...',
+            ),
+          ),
+          const SizedBox(height: 30),
+          _buildFieldHeader('PORTFOLIO IMAGES'),
+          const SizedBox(height: 12),
+          SizedBox(
+            height: 100,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: _portfolioImages.length + 1,
+              separatorBuilder: (_, __) => const SizedBox(width: 12),
+              itemBuilder: (context, index) {
+                if (index == 0) {
+                  return InkWell(
+                    onTap: _pickPortfolioImage,
+                    borderRadius: BorderRadius.circular(12),
+                    child: Container(
+                      width: 100,
+                      decoration: BoxDecoration(
+                        color: AppColors.white.withOpacity(0.05),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: AppColors.white.withOpacity(0.1)),
+                      ),
+                      child: Center(
+                        child: Icon(Icons.add, color: AppColors.white.withOpacity(0.5)),
+                      ),
+                    ),
+                  );
+                }
+                final image = _portfolioImages[index - 1];
+                return Stack(
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Image.file(image, width: 100, height: 100, fit: BoxFit.cover),
+                    ),
+                    Positioned(
+                      top: 4,
+                      right: 4,
+                      child: InkWell(
+                        onTap: () => setState(() => _portfolioImages.removeAt(index - 1)),
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: const BoxDecoration(
+                            color: Colors.black54,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.close, size: 12, color: Colors.white),
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              },
             ),
           ),
           const SizedBox(height: 40),

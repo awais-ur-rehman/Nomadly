@@ -200,6 +200,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
   Future<bool> completeProfile({
     required Map<String, dynamic> profileData,
     required Map<String, dynamic> rigData,
+    bool isBuilder = false,
+    Map<String, dynamic>? builderData,
   }) async {
     state = state.copyWith(isLoading: true, error: null);
 
@@ -207,6 +209,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
       final user = await _repository.completeProfile(
         profileData: profileData,
         rigData: rigData,
+        isBuilder: isBuilder,
+        builderData: builderData,
       );
 
       state = state.copyWith(

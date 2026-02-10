@@ -197,7 +197,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
                         ),
                         child: Text(
                           _selectedPackage != null
-                              ? 'Get ${_selectedPackage!.storeProduct.title} for ${_selectedPackage!.storeProduct.priceString}'
+                              ? 'Buy Now ${_selectedPackage!.storeProduct.priceString}'
                               : 'Select a Plan',
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,

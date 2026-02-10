@@ -158,6 +158,8 @@ class AuthRepository {
   Future<User> completeProfile({
     required Map<String, dynamic> profileData,
     required Map<String, dynamic> rigData,
+    bool isBuilder = false,
+    Map<String, dynamic>? builderData,
   }) async {
     try {
       final response = await _apiClient.post(
@@ -165,6 +167,8 @@ class AuthRepository {
         data: {
           'profile': profileData,
           'rig': rigData,
+          'is_builder': isBuilder,
+          if (builderData != null) 'builder_profile': builderData,
         },
       );
 
