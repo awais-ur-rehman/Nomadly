@@ -6,6 +6,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../shared/models/trip.dart';
 import '../../providers/trip_provider.dart';
+import '../../../auth/providers/auth_provider.dart';
 
 class TripDetailScreen extends ConsumerStatefulWidget {
   final String tripId;
@@ -60,8 +61,8 @@ class _TripDetailScreenState extends ConsumerState<TripDetailScreen> {
       );
     }
 
-    final trip = _trip;
-    if (trip == null) {
+    final rawTrip = _trip;
+    if (rawTrip == null) {
       return Scaffold(
         backgroundColor: AppColors.obsidian,
         appBar: AppBar(
@@ -73,6 +74,19 @@ class _TripDetailScreenState extends ConsumerState<TripDetailScreen> {
         ),
       );
     }
+
+    final currentUser = ref.watch(authProvider).user;
+    String? myStatus;
+    try {
+      final interest = rawTrip.interestedUsers.firstWhere((i) => i.user.uid == currentUser?.uid);
+      myStatus = interest.status;
+    } catch (_) {}
+
+    final trip = rawTrip.copyWith(
+      isCreator: rawTrip.creator.uid == currentUser?.uid,
+      isCompanion: rawTrip.companions.any((u) => u.uid == currentUser?.uid),
+      myInterestStatus: myStatus,
+    );
 
     return Scaffold(
       backgroundColor: AppColors.obsidian,
@@ -506,7 +520,7 @@ class _TripDetailScreenState extends ConsumerState<TripDetailScreen> {
         ),
         const SizedBox(height: 12),
         SizedBox(
-          height: 70,
+          height: 75,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             itemCount: trip.companions.length,
@@ -518,7 +532,7 @@ class _TripDetailScreenState extends ConsumerState<TripDetailScreen> {
                 child: Column(
                   children: [
                     CircleAvatar(
-                      radius: 24,
+                      radius: 20,
                       backgroundImage: user.profile?.photoUrl != null
                           ? NetworkImage(user.profile!.photoUrl!)
                           : null,
@@ -527,9 +541,15 @@ class _TripDetailScreenState extends ConsumerState<TripDetailScreen> {
                           : null,
                     ),
                     const SizedBox(height: 4),
-                    Text(
-                      user.profile?.name?.split(' ').first ?? 'User',
-                      style: const TextStyle(color: AppColors.white, fontSize: 11),
+                    SizedBox(
+                      width: 60,
+                      child: Text(
+                        user.profile?.name?.split(' ').first ?? 'User',
+                        style: const TextStyle(color: AppColors.white, fontSize: 11),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
+                      ),
                     ),
                   ],
                 ),
@@ -655,6 +675,7 @@ class _TripDetailScreenState extends ConsumerState<TripDetailScreen> {
 
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       backgroundColor: AppColors.slate,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
@@ -666,9 +687,10 @@ class _TripDetailScreenState extends ConsumerState<TripDetailScreen> {
           top: 20,
           bottom: MediaQuery.of(context).viewInsets.bottom + 20,
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
               'Send a message',
@@ -717,6 +739,7 @@ class _TripDetailScreenState extends ConsumerState<TripDetailScreen> {
               ),
             ),
           ],
+        ),
         ),
       ),
     );
