@@ -33,7 +33,7 @@ class SecureStorageService {
         _storage.write(key: _keyAccessToken, value: accessToken),
         _storage.write(key: _keyRefreshToken, value: refreshToken),
       ]);
-      _logger.d('Tokens saved successfully');
+      // _logger.d('Tokens saved successfully');
     } catch (e) {
       _logger.e('Error saving tokens: $e');
       rethrow;
@@ -64,7 +64,7 @@ class SecureStorageService {
         _storage.delete(key: _keyAccessToken),
         _storage.delete(key: _keyRefreshToken),
       ]);
-      _logger.d('Tokens deleted successfully');
+      // _logger.d('Tokens deleted successfully');
     } catch (e) {
       _logger.e('Error deleting tokens: $e');
       rethrow;
@@ -112,7 +112,7 @@ class SecureStorageService {
   Future<void> clearAll() async {
     try {
       await _storage.deleteAll();
-      _logger.d('All secure storage cleared');
+      // _logger.d('All secure storage cleared');
     } catch (e) {
       _logger.e('Error clearing secure storage: $e');
       rethrow;

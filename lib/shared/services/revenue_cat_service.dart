@@ -33,7 +33,7 @@ class RevenueCatService {
       PurchasesConfiguration configuration = PurchasesConfiguration(apiKey);
       await Purchases.configure(configuration);
       _isInitialized = true;
-      _logger.i("RevenueCat initialized successfully.");
+      // _logger.i("RevenueCat initialized successfully.");
 
     } catch (e) {
       _logger.e("Failed to initialize RevenueCat: $e");
@@ -96,14 +96,14 @@ class RevenueCatService {
       return false;
     }
     try {
-      _logger.i("Attempting to purchase package: ${package.identifier}");
+      // _logger.i("Attempting to purchase package: ${package.identifier}");
       PurchaseResult result = await Purchases.purchasePackage(package);
       
-      _logger.i("Purchase completed. CustomerInfo: ${result.customerInfo}");
-      _logger.i("Entitlements: ${result.customerInfo.entitlements.all}");
+      // _logger.i("Purchase completed. CustomerInfo: ${result.customerInfo}");
+      // _logger.i("Entitlements: ${result.customerInfo.entitlements.all}");
       
       final isPro = result.customerInfo.entitlements.all["Nomadly Pro"]?.isActive ?? false;
-      _logger.i("Is Pro Access Active? $isPro");
+      // _logger.i("Is Pro Access Active? $isPro");
       
       return isPro;
     } catch (e) {
@@ -127,7 +127,7 @@ class RevenueCatService {
     if (!_isInitialized) return;
     try {
       await Purchases.logIn(userId);
-      _logger.i("Logged in to RevenueCat with user ID: $userId");
+      // _logger.i("Logged in to RevenueCat with user ID: $userId");
     } catch (e) {
       _logger.e("Error logging in to RevenueCat: $e");
     }
@@ -137,7 +137,7 @@ class RevenueCatService {
     if (!_isInitialized) return;
     try {
       await Purchases.logOut();
-      _logger.i("Logged out from RevenueCat");
+      // _logger.i("Logged out from RevenueCat");
     } catch (e) {
       _logger.e("Error logging out from RevenueCat: $e");
     }

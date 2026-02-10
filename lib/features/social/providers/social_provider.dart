@@ -47,23 +47,23 @@ class SocialNotifier extends StateNotifier<SocialState> {
   Future<void> loadFeed({bool refresh = false}) async {
     state = state.copyWith(isLoading: true, error: null);
     try {
-      _logger.i('Loading feed...');
+      // _logger.i('Loading feed...');
       
       // Get current user ID for like state calculation
       final currentUserId = _ref.read(authProvider).user?.uid;
       
       final posts = await _repository.getHomeFeed(currentUserId: currentUserId);
-      _logger.i('Posts loaded: ${posts.length}');
+      // _logger.i('Posts loaded: ${posts.length}');
       
       final stories = await _repository.getActiveStories();
-      _logger.i('Stories loaded: ${stories.length}');
+      // _logger.i('Stories loaded: ${stories.length}');
 
       state = state.copyWith(
         isLoading: false,
         posts: posts,
         stories: stories,
       );
-      _logger.i('Feed state updated successfully');
+      // _logger.i('Feed state updated successfully');
     } catch (e, stackTrace) {
       _logger.e('Error loading feed: $e', error: e, stackTrace: stackTrace);
       state = state.copyWith(isLoading: false, error: e.toString());
@@ -108,11 +108,11 @@ class SocialNotifier extends StateNotifier<SocialState> {
 
   Future<void> createPost(String content, {List<String> photos = const []}) async {
     try {
-      _logger.i('Creating post...');
+      // _logger.i('Creating post...');
       await _repository.createPost(caption: content, photos: photos);
-      _logger.i('Post created, reloading feed...');
+      // _logger.i('Post created, reloading feed...');
       await loadFeed(refresh: true);
-      _logger.i('Feed reloaded after post creation');
+      // _logger.i('Feed reloaded after post creation');
     } catch (e, stackTrace) {
       _logger.e('Error creating post: $e', error: e, stackTrace: stackTrace);
       state = state.copyWith(error: e.toString());
@@ -132,11 +132,11 @@ class SocialNotifier extends StateNotifier<SocialState> {
 
   Future<void> createStory(String assetUrl, {required String type}) async {
     try {
-      _logger.i('Creating story...');
+      // _logger.i('Creating story...');
       await _repository.createStory(assetUrl, type);
-      _logger.i('Story created, reloading feed...');
+      // _logger.i('Story created, reloading feed...');
       await loadFeed(refresh: true);
-      _logger.i('Feed reloaded after story creation');
+      // _logger.i('Feed reloaded after story creation');
     } catch (e, stackTrace) {
       _logger.e('Error creating story: $e', error: e, stackTrace: stackTrace);
       state = state.copyWith(error: e.toString());

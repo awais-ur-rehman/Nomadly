@@ -89,10 +89,10 @@ class TripRepository {
   /// Get my created trips
   Future<List<Trip>> getMyTrips() async {
     try {
-      _logger.i('Fetching my trips from $_tripsEndpoint/mine');
+      // _logger.i('Fetching my trips from $_tripsEndpoint/mine');
       final response = await _apiClient.get('$_tripsEndpoint/mine');
 
-      _logger.i('My trips response: ${response.statusCode}, count: ${(response.data['data'] as List?)?.length ?? 0}');
+      // _logger.i('My trips response: ${response.statusCode}, count: ${(response.data['data'] as List?)?.length ?? 0}');
 
       if (response.statusCode == 200) {
         final List<dynamic> data = response.data['data'] ?? [];
@@ -133,7 +133,7 @@ class TripRepository {
     double radiusKm = 100,
   }) async {
     try {
-      _logger.i('Fetching nearby trips: lat=$latitude, lng=$longitude, radius=$radiusKm');
+      // _logger.i('Fetching nearby trips: lat=$latitude, lng=$longitude, radius=$radiusKm');
       final response = await _apiClient.get(
         '$_tripsEndpoint/nearby',
         queryParameters: {
@@ -143,7 +143,7 @@ class TripRepository {
         },
       );
 
-      _logger.i('Nearby trips response: ${response.statusCode}, count: ${(response.data['data'] as List?)?.length ?? 0}');
+      // _logger.i('Nearby trips response: ${response.statusCode}, count: ${(response.data['data'] as List?)?.length ?? 0}');
 
       if (response.statusCode == 200) {
         final List<dynamic> data = response.data['data'] ?? [];
