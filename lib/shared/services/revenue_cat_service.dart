@@ -54,7 +54,7 @@ class RevenueCatService {
     if (!_isInitialized) return false;
     try {
       CustomerInfo customerInfo = await Purchases.getCustomerInfo();
-      return customerInfo.entitlements.all["pro_access"]?.isActive ?? false;
+      return customerInfo.entitlements.all["Nomadly Pro"]?.isActive ?? false;
     } catch (e) {
       return false;
     }
@@ -73,9 +73,73 @@ class RevenueCatService {
     if (!_isInitialized) return;
     try {
         // presentPaywallIfNeeded relies on a specific entitlement identifier
-        await RevenueCatUI.presentPaywallIfNeeded("pro_access");
+        await RevenueCatUI.presentPaywallIfNeeded("Nomadly Pro");
     } catch (e) {
          _logger.e("Error showing paywall if needed: $e");
+    }
+  }
+
+  // Custom Paywall Methods
+  Future<Offerings?> getOfferings() async {
+    if (!_isInitialized) return null;
+    try {
+      return await Purchases.getOfferings();
+    } catch (e) {
+      _logger.e("Error fetching offerings: $e");
+      return null;
+    }
+  }
+
+  Future<bool> purchasePackage(Package package) async {
+    if (!_isInitialized) {
+      _logger.e("RevenueCat not initialized");
+      return false;
+    }
+    try {
+      _logger.i("Attempting to purchase package: ${package.identifier}");
+      PurchaseResult result = await Purchases.purchasePackage(package);
+      
+      _logger.i("Purchase completed. CustomerInfo: ${result.customerInfo}");
+      _logger.i("Entitlements: ${result.customerInfo.entitlements.all}");
+      
+      final isPro = result.customerInfo.entitlements.all["Nomadly Pro"]?.isActive ?? false;
+      _logger.i("Is Pro Access Active? $isPro");
+      
+      return isPro;
+    } catch (e) {
+      _logger.e("Error purchasing package: $e");
+      return false;
+    }
+  }
+
+  Future<bool> restorePurchases() async {
+    if (!_isInitialized) return false;
+    try {
+      CustomerInfo customerInfo = await Purchases.restorePurchases();
+      return customerInfo.entitlements.all["Nomadly Pro"]?.isActive ?? false;
+    } catch (e) {
+      _logger.e("Error restoring purchases: $e");
+      return false;
+    }
+  }
+
+  Future<void> login(String userId) async {
+    if (!_isInitialized) return;
+    try {
+      await Purchases.logIn(userId);
+      _logger.i("Logged in to RevenueCat with user ID: $userId");
+    } catch (e) {
+      _logger.e("Error logging in to RevenueCat: $e");
+    }
+  }
+
+  Future<void> logout() async {
+    if (!_isInitialized) return;
+    try {
+      await Purchases.logOut();
+      _logger.i("Logged out from RevenueCat");
+    } catch (e) {
+      _logger.e("Error logging out from RevenueCat: $e");
     }
   }
 }
