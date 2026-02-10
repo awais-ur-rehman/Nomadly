@@ -11,6 +11,7 @@ import 'package:nomadly/features/auth/providers/auth_provider.dart';
 import 'package:nomadly/features/chat/providers/chat_provider.dart';
 import 'package:nomadly/features/marketplace/providers/marketplace_provider.dart';
 import 'package:nomadly/features/marketplace/presentation/widgets/job_application_bottom_sheet.dart';
+import 'package:nomadly/shared/services/revenue_cat_service.dart';
 
 class JobDetailScreen extends ConsumerStatefulWidget {
   final String jobId;
@@ -155,6 +156,77 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
     }
   }
 
+  Future<void> _handleCompleteJob(Job job) async {
+    // 1. Confirm with user
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.slate,
+        title: Text(job.status == 'completed' ? 'Finalize Payment?' : 'Complete Job & Pay Fee?', 
+            style: const TextStyle(color: AppColors.white)),
+        content: const Text(
+          'Marking this job as completed requires a service fee of \$4.99 via Google Play. Proceed?',
+          style: TextStyle(color: AppColors.textSecondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel', style: TextStyle(color: AppColors.textSecondary)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Pay & Complete', style: TextStyle(color: AppColors.primary)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    setState(() => _isLoading = true);
+
+    try {
+      // 2. Initiate Backend Completion (only if not already completed)
+      if (job.status != 'completed') {
+        final paymentData = await ref.read(marketplaceRepositoryProvider).completeJob(job.id);
+        if (paymentData == null) {
+          throw Exception('Failed to initiate job completion');
+        }
+      }
+
+      // 3. Initiate RevenueCat Purchase
+      final package = await RevenueCatService().getJobPaymentPackage();
+      if (package != null) {
+        final transactionId = await RevenueCatService().purchaseJobPayment(package);
+
+        if (transactionId != null) {
+          // 4. Record Payment on Backend
+          await ref.read(marketplaceRepositoryProvider).recordJobPayment(
+            jobId: job.id,
+            transactionId: transactionId,
+            amount: 4.99,
+          );
+          
+          if (mounted) {
+            ToastService.showSuccess('Payment successful! Job completed.');
+            _loadJob(); // Refresh UI
+          }
+        } else {
+             ToastService.showError('Purchase cancelled or failed');
+             _loadJob(); // Refresh to show "Finalize Payment" button if status changed
+        }
+      } else {
+        ToastService.showError('Payment configuration error. Please contact support.');
+      }
+
+    } catch (e) {
+      if (mounted) ToastService.showError('Error completing job: $e');
+      _loadJob();
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
   bool _isOwnJob() {
     final currentUser = ref.read(authProvider).user;
     if (currentUser == null || _job == null) return false;
@@ -166,6 +238,49 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
   Widget _buildActionButton(Job job) {
     // If this is the user's own job, show "View Applications"
     if (_isOwnJob()) {
+      if (job.status == 'closed') {
+        return ElevatedButton(
+          onPressed: null,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.slate,
+            disabledBackgroundColor: AppColors.slate,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            padding: const EdgeInsets.symmetric(vertical: 16),
+          ),
+          child: const Text('Job Completed', style: TextStyle(color: AppColors.textSecondary, fontWeight: FontWeight.bold)),
+        );
+      }
+
+      if (job.status == 'completed') {
+         // Retry Payment State
+         return ElevatedButton(
+          onPressed: _isLoading ? null : () => _handleCompleteJob(job),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.warning,
+            foregroundColor: AppColors.obsidian,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            padding: const EdgeInsets.symmetric(vertical: 16),
+          ),
+          child: _isLoading 
+              ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation(AppColors.obsidian)))
+              : const Text('Finalize Payment', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+        );
+      }
+
+      if (job.status == 'in_progress') {
+        return ElevatedButton(
+          onPressed: _isLoading ? null : () => _handleCompleteJob(job),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.success,
+            foregroundColor: AppColors.obsidian,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            padding: const EdgeInsets.symmetric(vertical: 16),
+          ),
+          child: _isLoading 
+              ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation(AppColors.obsidian)))
+              : const Text('Complete Job', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+        );
+      }
       return ElevatedButton(
         onPressed: () => context.push('/my-jobs'),
         style: ElevatedButton.styleFrom(

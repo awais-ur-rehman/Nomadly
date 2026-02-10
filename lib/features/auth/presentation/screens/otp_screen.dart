@@ -173,6 +173,7 @@ class _OTPScreenState extends ConsumerState<OTPScreen> {
                         counterText: '',
                         filled: true,
                         fillColor: AppColors.white.withOpacity(0.05),
+                        contentPadding: EdgeInsets.zero, // Fix text clipping
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: BorderSide(color: AppColors.white.withOpacity(0.1)),
