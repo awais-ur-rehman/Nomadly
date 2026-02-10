@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -28,6 +29,8 @@ class ChatScreen extends ConsumerStatefulWidget {
 class _ChatScreenState extends ConsumerState<ChatScreen> {
   final _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  File? _selectedImage;
+  bool _isSendingImage = false;
 
   @override
   void initState() {
@@ -47,12 +50,39 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
   void _sendMessage() {
     final text = _messageController.text.trim();
-    if (text.isEmpty) return;
+    if (text.isEmpty && _selectedImage == null) return;
 
-    ref.read(activeChatProvider.notifier).sendMessage(text);
-    _messageController.clear();
-    // Scroll to bottom
-    // _scrollController.animateTo(0, duration: const Duration(milliseconds: 300), curve: Curves.easeOut);
+    if (_selectedImage != null) {
+      _sendSelectedImage();
+    } else {
+      ref.read(activeChatProvider.notifier).sendMessage(text);
+      _messageController.clear();
+    }
+  }
+
+  Future<void> _sendSelectedImage() async {
+    if (_selectedImage == null || _isSendingImage) return;
+
+    setState(() => _isSendingImage = true);
+
+    try {
+      await ref.read(activeChatProvider.notifier).sendImageMessage(_selectedImage!.path);
+      if (mounted) {
+        setState(() {
+          _selectedImage = null;
+          _isSendingImage = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isSendingImage = false);
+        ToastService.showError('Failed to send image');
+      }
+    }
+  }
+
+  void _clearSelectedImage() {
+    setState(() => _selectedImage = null);
   }
 
   void _showSafetySheet(BuildContext context) {
@@ -244,12 +274,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             ),
           ],
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.more_vert),
-            onPressed: () => _showSafetySheet(context),
-          ),
-        ],
+        actions: const [],
       ),
       body: Column(
         children: [
@@ -269,85 +294,151 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   ),
           ),
           
+          // Image Preview (if selected)
+          if (_selectedImage != null)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: AppColors.obsidian,
+                border: Border(
+                  top: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Stack(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Image.file(
+                          _selectedImage!,
+                          width: 60,
+                          height: 60,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                      Positioned(
+                        top: -4,
+                        right: -4,
+                        child: GestureDetector(
+                          onTap: _clearSelectedImage,
+                          child: Container(
+                            width: 22,
+                            height: 22,
+                            decoration: BoxDecoration(
+                              color: Colors.black.withValues(alpha: 0.7),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(Icons.close, color: Colors.white, size: 14),
+                          ),
+                        ),
+                      ),
+                      if (_isSendingImage)
+                        Positioned.fill(
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Colors.black.withValues(alpha: 0.5),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Center(
+                              child: SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: AppColors.primary,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    'Ready to send',
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.6),
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
           // Input Area
           Container(
-            padding: const EdgeInsets.all(8),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
-              color: AppColors.white,
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.shadow.withValues(alpha: 0.05),
-                  offset: const Offset(0, -2),
-                  blurRadius: 5,
-                ),
-              ],
+              color: AppColors.obsidian,
+              border: _selectedImage == null
+                  ? Border(top: BorderSide(color: Colors.white.withValues(alpha: 0.1)))
+                  : null,
             ),
             child: SafeArea(
               child: Row(
                 children: [
-                  IconButton(
-                    icon: const Icon(Icons.add, color: AppColors.primary),
-                    onPressed: () async {
+                  GestureDetector(
+                    onTap: () async {
                       final picker = ImagePicker();
                       final XFile? image = await picker.pickImage(source: ImageSource.gallery);
-                      
                       if (image != null) {
-                         // Send image
-                         // Ideally we should upload it first, getting a URL, then send message type 'image'
-                         // For now, let's assume the provider handles it or we send a placeholder text "[Image]"
-                         // Since backend implementation of file upload is outside P1 scope, we will verify this part carefully.
-                         // But wait, the audit said "Image sending in chat - No image sending capability".
-                         // We should implement basic sending.
-                         
-                         // If ActiveChatNotifier has a method for images, use it.
-                         // Let's check provider first? No, let's just implement the UI call and assume provider needs update if it doesn't support it.
-                         // But I didn't check provider for 'sendImage' method.
-                         // I will perform a safe implementation that calls a method I'll add or use generic sendMessage with type.
-                         
-                         // For now, just a Toast as placeholder if we can't do full upload logic without backend changes.
-                         // BUT, the plan says "Logic: pickImage and sendImage".
-                         // I will trigger a NotImplemented or basic implementation.
-                         
-                         ref.read(activeChatProvider.notifier).sendImageMessage(image.path);
+                        setState(() => _selectedImage = File(image.path));
                       }
                     },
-                  ),
-                  Expanded(
-                    child: TextField(
-                      controller: _messageController,
-                      decoration: InputDecoration(
-                        hintText: 'Type a message...',
-                        filled: true,
-                        fillColor: AppColors.greyExtraLight,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(20),
-                          borderSide: BorderSide.none,
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(20),
-                          borderSide: BorderSide.none,
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(20),
-                          borderSide: BorderSide.none,
-                        ),
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.15),
+                        shape: BoxShape.circle,
                       ),
-                      textCapitalization: TextCapitalization.sentences,
-                      onChanged: (text) {
-                         // Send typing indicator logic (throttle)
-                         if (text.isNotEmpty) {
-                           ref.read(activeChatProvider.notifier).sendTyping(true);
-                         } else {
-                           ref.read(activeChatProvider.notifier).sendTyping(false);
-                         }
-                      },
-                      onSubmitted: (_) => _sendMessage(),
+                      child: const Icon(Icons.add, color: AppColors.primary, size: 22),
                     ),
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.send, color: AppColors.primary),
-                    onPressed: _sendMessage,
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.transparent,
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+                      ),
+                      child: TextField(
+                        controller: _messageController,
+                        style: const TextStyle(color: AppColors.white, fontFamily: 'Inter'),
+                        decoration: InputDecoration(
+                          hintText: _selectedImage != null ? 'Add a caption...' : 'Type a message...',
+                          hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.4), fontSize: 15),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          border: InputBorder.none,
+                          enabledBorder: InputBorder.none,
+                          focusedBorder: InputBorder.none,
+                        ),
+                        textCapitalization: TextCapitalization.sentences,
+                        onChanged: (text) {
+                          if (text.isNotEmpty) {
+                            ref.read(activeChatProvider.notifier).sendTyping(true);
+                          } else {
+                            ref.read(activeChatProvider.notifier).sendTyping(false);
+                          }
+                        },
+                        onSubmitted: (_) => _sendMessage(),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  GestureDetector(
+                    onTap: _isSendingImage ? null : _sendMessage,
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: AppColors.primary,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.send, color: AppColors.white, size: 20),
+                    ),
                   ),
                 ],
               ),

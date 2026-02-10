@@ -31,6 +31,7 @@ mixin _$Activity {
   DateTime? get endTime => throw _privateConstructorUsedError;
   User get creator => throw _privateConstructorUsedError;
   List<User> get participants => throw _privateConstructorUsedError;
+  List<User> get pendingRequests => throw _privateConstructorUsedError;
   int get maxParticipants => throw _privateConstructorUsedError;
   String? get imageUrl => throw _privateConstructorUsedError;
 
@@ -59,6 +60,7 @@ abstract class $ActivityCopyWith<$Res> {
     DateTime? endTime,
     User creator,
     List<User> participants,
+    List<User> pendingRequests,
     int maxParticipants,
     String? imageUrl,
   });
@@ -91,6 +93,7 @@ class _$ActivityCopyWithImpl<$Res, $Val extends Activity>
     Object? endTime = freezed,
     Object? creator = null,
     Object? participants = null,
+    Object? pendingRequests = null,
     Object? maxParticipants = null,
     Object? imageUrl = freezed,
   }) {
@@ -131,6 +134,10 @@ class _$ActivityCopyWithImpl<$Res, $Val extends Activity>
             participants: null == participants
                 ? _value.participants
                 : participants // ignore: cast_nullable_to_non_nullable
+                      as List<User>,
+            pendingRequests: null == pendingRequests
+                ? _value.pendingRequests
+                : pendingRequests // ignore: cast_nullable_to_non_nullable
                       as List<User>,
             maxParticipants: null == maxParticipants
                 ? _value.maxParticipants
@@ -185,6 +192,7 @@ abstract class _$$ActivityImplCopyWith<$Res>
     DateTime? endTime,
     User creator,
     List<User> participants,
+    List<User> pendingRequests,
     int maxParticipants,
     String? imageUrl,
   });
@@ -218,6 +226,7 @@ class __$$ActivityImplCopyWithImpl<$Res>
     Object? endTime = freezed,
     Object? creator = null,
     Object? participants = null,
+    Object? pendingRequests = null,
     Object? maxParticipants = null,
     Object? imageUrl = freezed,
   }) {
@@ -259,6 +268,10 @@ class __$$ActivityImplCopyWithImpl<$Res>
             ? _value._participants
             : participants // ignore: cast_nullable_to_non_nullable
                   as List<User>,
+        pendingRequests: null == pendingRequests
+            ? _value._pendingRequests
+            : pendingRequests // ignore: cast_nullable_to_non_nullable
+                  as List<User>,
         maxParticipants: null == maxParticipants
             ? _value.maxParticipants
             : maxParticipants // ignore: cast_nullable_to_non_nullable
@@ -285,9 +298,11 @@ class _$ActivityImpl implements _Activity {
     this.endTime,
     required this.creator,
     final List<User> participants = const [],
+    final List<User> pendingRequests = const [],
     this.maxParticipants = 0,
     this.imageUrl,
-  }) : _participants = participants;
+  }) : _participants = participants,
+       _pendingRequests = pendingRequests;
 
   factory _$ActivityImpl.fromJson(Map<String, dynamic> json) =>
       _$$ActivityImplFromJson(json);
@@ -318,6 +333,15 @@ class _$ActivityImpl implements _Activity {
     return EqualUnmodifiableListView(_participants);
   }
 
+  final List<User> _pendingRequests;
+  @override
+  @JsonKey()
+  List<User> get pendingRequests {
+    if (_pendingRequests is EqualUnmodifiableListView) return _pendingRequests;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_pendingRequests);
+  }
+
   @override
   @JsonKey()
   final int maxParticipants;
@@ -326,7 +350,7 @@ class _$ActivityImpl implements _Activity {
 
   @override
   String toString() {
-    return 'Activity(id: $id, title: $title, description: $description, type: $type, location: $location, startTime: $startTime, endTime: $endTime, creator: $creator, participants: $participants, maxParticipants: $maxParticipants, imageUrl: $imageUrl)';
+    return 'Activity(id: $id, title: $title, description: $description, type: $type, location: $location, startTime: $startTime, endTime: $endTime, creator: $creator, participants: $participants, pendingRequests: $pendingRequests, maxParticipants: $maxParticipants, imageUrl: $imageUrl)';
   }
 
   @override
@@ -349,6 +373,10 @@ class _$ActivityImpl implements _Activity {
               other._participants,
               _participants,
             ) &&
+            const DeepCollectionEquality().equals(
+              other._pendingRequests,
+              _pendingRequests,
+            ) &&
             (identical(other.maxParticipants, maxParticipants) ||
                 other.maxParticipants == maxParticipants) &&
             (identical(other.imageUrl, imageUrl) ||
@@ -368,6 +396,7 @@ class _$ActivityImpl implements _Activity {
     endTime,
     creator,
     const DeepCollectionEquality().hash(_participants),
+    const DeepCollectionEquality().hash(_pendingRequests),
     maxParticipants,
     imageUrl,
   );
@@ -397,6 +426,7 @@ abstract class _Activity implements Activity {
     final DateTime? endTime,
     required final User creator,
     final List<User> participants,
+    final List<User> pendingRequests,
     final int maxParticipants,
     final String? imageUrl,
   }) = _$ActivityImpl;
@@ -422,6 +452,8 @@ abstract class _Activity implements Activity {
   User get creator;
   @override
   List<User> get participants;
+  @override
+  List<User> get pendingRequests;
   @override
   int get maxParticipants;
   @override

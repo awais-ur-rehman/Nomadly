@@ -13,8 +13,12 @@ class NotificationRepository {
     try {
       final response = await _apiClient.get('${AppConfig.baseUrl}/api/v1/notifications');
       if (response.statusCode == 200) {
-        final List<dynamic> data = response.data['data'];
-        return data.map((json) => AppNotification.fromJson(json)).toList();
+        // Backend returns { data: { notifications: [...], total: N, unreadCount: N } }
+        final responseData = response.data['data'];
+        final List<dynamic> notifications = responseData is List
+            ? responseData
+            : (responseData['notifications'] ?? []);
+        return notifications.map((json) => parseNotification(json)).toList();
       }
       return [];
     } on DioException catch (e) {
@@ -35,9 +39,23 @@ class NotificationRepository {
   // Mark all as read
   Future<void> markAllAsRead() async {
     try {
-      await _apiClient.patch('${AppConfig.baseUrl}/api/v1/notifications/read-all');
+      await _apiClient.post('${AppConfig.baseUrl}/api/v1/notifications/mark-all-read');
     } on DioException catch (e) {
       _logger.e('Mark all as read error: ${e.message}');
+    }
+  }
+
+  // Get unread count
+  Future<int> getUnreadCount() async {
+    try {
+      final response = await _apiClient.get('${AppConfig.baseUrl}/api/v1/notifications/unread-count');
+      if (response.statusCode == 200) {
+        return response.data['data']['count'] ?? 0;
+      }
+      return 0;
+    } on DioException catch (e) {
+      _logger.e('Get unread count error: ${e.message}');
+      return 0;
     }
   }
 }

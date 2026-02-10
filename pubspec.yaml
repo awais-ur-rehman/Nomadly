@@ -2,7 +2,7 @@ name: nomadly
 description: "Nomadly - A location-based social platform for digital nomads"
 publish_to: 'none'
 
-version: 1.0.0+1
+version: 1.0.0+3
 
 environment:
   sdk: ^3.10.7
@@ -107,6 +107,7 @@ flutter:
     - assets/icons/nav/
     - assets/icons/auth/
     - assets/icons/rigs/
+    - assets/icons/home/
 
   fonts:
     - family: Outfit

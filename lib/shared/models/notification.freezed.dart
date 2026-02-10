@@ -24,8 +24,7 @@ mixin _$AppNotification {
   String get id => throw _privateConstructorUsedError;
   String get title => throw _privateConstructorUsedError;
   String get body => throw _privateConstructorUsedError;
-  String get type =>
-      throw _privateConstructorUsedError; // 'match', 'message', 'activity', 'system'
+  String get type => throw _privateConstructorUsedError;
   DateTime get createdAt => throw _privateConstructorUsedError;
   bool get isRead => throw _privateConstructorUsedError;
   String? get data => throw _privateConstructorUsedError;
@@ -218,7 +217,6 @@ class _$AppNotificationImpl implements _AppNotification {
   final String body;
   @override
   final String type;
-  // 'match', 'message', 'activity', 'system'
   @override
   final DateTime createdAt;
   @override
@@ -290,7 +288,7 @@ abstract class _AppNotification implements AppNotification {
   @override
   String get body;
   @override
-  String get type; // 'match', 'message', 'activity', 'system'
+  String get type;
   @override
   DateTime get createdAt;
   @override

@@ -2,14 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-import 'package:share_plus/share_plus.dart';
+import 'package:share_plus/share_plus.dart' show SharePlus, ShareParams;
 import 'package:nomadly/core/constants/app_colors.dart';
 import 'package:nomadly/core/constants/app_dimensions.dart';
 import 'package:nomadly/shared/models/job.dart';
 import 'package:nomadly/shared/services/toast_service.dart';
+import 'package:nomadly/features/auth/providers/auth_provider.dart';
 import 'package:nomadly/features/chat/providers/chat_provider.dart';
 import 'package:nomadly/features/marketplace/providers/marketplace_provider.dart';
 import 'package:nomadly/features/marketplace/presentation/widgets/job_application_bottom_sheet.dart';
+import 'package:nomadly/shared/services/revenue_cat_service.dart';
 
 class JobDetailScreen extends ConsumerStatefulWidget {
   final String jobId;
@@ -25,6 +27,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
   Job? _job;
   bool _isLoading = false;
   bool _hasApplied = false;
+  String? _applicationStatus; // pending, interview, hired, rejected
 
   @override
   void initState() {
@@ -32,7 +35,23 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
     _job = widget.preloadedJob;
     if (_job == null) {
       _loadJob();
+    } else {
+      _checkApplicationStatus();
     }
+  }
+
+  Future<void> _checkApplicationStatus() async {
+    if (_isOwnJob()) return;
+    try {
+      final applications = await ref.read(marketplaceRepositoryProvider).getMyApplications();
+      final match = applications.where((a) => a.job?.id == widget.jobId).toList();
+      if (match.isNotEmpty && mounted) {
+        setState(() {
+          _hasApplied = true;
+          _applicationStatus = match.first.status;
+        });
+      }
+    } catch (_) {}
   }
 
   Future<void> _loadJob() async {
@@ -41,6 +60,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
       final job = await ref.read(marketplaceRepositoryProvider).getJob(widget.jobId);
       if (mounted) {
         setState(() => _job = job);
+        _checkApplicationStatus();
       }
     } catch (e) {
       if (mounted) {
@@ -136,22 +156,239 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
     }
   }
 
+  Future<void> _handleCompleteJob(Job job) async {
+    // 1. Confirm with user
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.slate,
+        title: Text(job.status == 'completed' ? 'Finalize Payment?' : 'Complete Job & Pay Fee?', 
+            style: const TextStyle(color: AppColors.white)),
+        content: const Text(
+          'Marking this job as completed requires a service fee of \$4.99 via Google Play. Proceed?',
+          style: TextStyle(color: AppColors.textSecondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel', style: TextStyle(color: AppColors.textSecondary)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Pay & Complete', style: TextStyle(color: AppColors.primary)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    setState(() => _isLoading = true);
+
+    try {
+      // 2. Initiate Backend Completion (only if not already completed)
+      if (job.status != 'completed') {
+        final paymentData = await ref.read(marketplaceRepositoryProvider).completeJob(job.id);
+        if (paymentData == null) {
+          throw Exception('Failed to initiate job completion');
+        }
+      }
+
+      // 3. Initiate RevenueCat Purchase
+      final package = await RevenueCatService().getJobPaymentPackage();
+      if (package != null) {
+        final transactionId = await RevenueCatService().purchaseJobPayment(package);
+
+        if (transactionId != null) {
+          // 4. Record Payment on Backend
+          await ref.read(marketplaceRepositoryProvider).recordJobPayment(
+            jobId: job.id,
+            transactionId: transactionId,
+            amount: 4.99,
+          );
+          
+          if (mounted) {
+            ToastService.showSuccess('Payment successful! Job completed.');
+            _loadJob(); // Refresh UI
+          }
+        } else {
+             ToastService.showError('Purchase cancelled or failed');
+             _loadJob(); // Refresh to show "Finalize Payment" button if status changed
+        }
+      } else {
+        ToastService.showError('Payment configuration error. Please contact support.');
+      }
+
+    } catch (e) {
+      if (mounted) ToastService.showError('Error completing job: $e');
+      _loadJob();
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  bool _isOwnJob() {
+    final currentUser = ref.read(authProvider).user;
+    if (currentUser == null || _job == null) return false;
+    final currentUserId = currentUser.id ?? currentUser.idSecondary;
+    final authorId = _job!.author.id ?? _job!.author.idSecondary;
+    return currentUserId != null && currentUserId == authorId;
+  }
+
+  Widget _buildActionButton(Job job) {
+    // If this is the user's own job, show "View Applications"
+    if (_isOwnJob()) {
+      if (job.status == 'closed') {
+        return ElevatedButton(
+          onPressed: null,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.slate,
+            disabledBackgroundColor: AppColors.slate,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            padding: const EdgeInsets.symmetric(vertical: 16),
+          ),
+          child: const Text('Job Completed', style: TextStyle(color: AppColors.textSecondary, fontWeight: FontWeight.bold)),
+        );
+      }
+
+      if (job.status == 'completed') {
+         // Retry Payment State
+         return ElevatedButton(
+          onPressed: _isLoading ? null : () => _handleCompleteJob(job),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.warning,
+            foregroundColor: AppColors.obsidian,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            padding: const EdgeInsets.symmetric(vertical: 16),
+          ),
+          child: _isLoading 
+              ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation(AppColors.obsidian)))
+              : const Text('Finalize Payment', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+        );
+      }
+
+      if (job.status == 'in_progress') {
+        return ElevatedButton(
+          onPressed: _isLoading ? null : () => _handleCompleteJob(job),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.success,
+            foregroundColor: AppColors.obsidian,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            padding: const EdgeInsets.symmetric(vertical: 16),
+          ),
+          child: _isLoading 
+              ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation(AppColors.obsidian)))
+              : const Text('Complete Job', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+        );
+      }
+      return ElevatedButton(
+        onPressed: () => context.push('/my-jobs'),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.secondary,
+          foregroundColor: AppColors.white,
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          elevation: 0,
+        ),
+        child: const Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.people, size: 20),
+            SizedBox(width: 8),
+            Text(
+              'View Applications',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // For other users: Apply / Already Applied / Job Closed
+    return ElevatedButton(
+      onPressed: _isLoading || _hasApplied || job.status != 'open'
+          ? null
+          : _applyForJob,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: _hasApplied ? AppColors.textSecondary : AppColors.primary,
+        foregroundColor: _hasApplied ? AppColors.white : AppColors.obsidian,
+        disabledBackgroundColor: AppColors.obsidian,
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        elevation: 0,
+      ),
+      child: _isLoading
+          ? const SizedBox(
+              height: 20,
+              width: 20,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: AppColors.primary,
+              ),
+            )
+          : Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  _hasApplied ? Icons.check_circle : Icons.send,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  _hasApplied
+                      ? 'Already Applied'
+                      : job.status == 'open'
+                          ? 'Apply Now'
+                          : 'Job Closed',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+              ],
+            ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading && _job == null) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return Scaffold(
+        backgroundColor: AppColors.obsidian,
+        body: const Center(
+          child: CircularProgressIndicator(color: AppColors.primary),
+        ),
+      );
     }
 
     final job = _job;
     if (job == null) {
-      return const Scaffold(body: Center(child: Text('Job not found')));
+      return Scaffold(
+        backgroundColor: AppColors.obsidian,
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.work_off, size: 64, color: AppColors.textSecondary),
+              const SizedBox(height: 16),
+              const Text(
+                'Job not found',
+                style: TextStyle(color: AppColors.white, fontSize: 18),
+              ),
+            ],
+          ),
+        ),
+      );
     }
 
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: isDark ? Colors.grey[900] : AppColors.background,
+      backgroundColor: AppColors.obsidian,
       body: CustomScrollView(
         slivers: [
           // App Bar with Hero Image/Gradient
@@ -167,7 +404,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
                     end: Alignment.bottomRight,
                     colors: [
                       AppColors.primary,
-                      AppColors.primary.withOpacity(0.8),
+                      AppColors.primary.withValues(alpha: 0.8),
                       AppColors.secondary,
                     ],
                   ),
@@ -200,10 +437,10 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
               icon: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.2),
+                  color: Colors.black.withValues(alpha: 0.3),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.arrow_back, color: Colors.white, size: 20),
+                child: const Icon(Icons.arrow_back, color: AppColors.white, size: 20),
               ),
               onPressed: () => context.pop(),
             ),
@@ -212,15 +449,17 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
                 icon: Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.2),
+                    color: Colors.black.withValues(alpha: 0.3),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.share, color: Colors.white, size: 20),
+                  child: const Icon(Icons.share, color: AppColors.white, size: 20),
                 ),
                 onPressed: () {
-                  Share.share(
-                    'Check out this job: ${job.title} on Nomadly!\nBudget: \$${job.budget.toStringAsFixed(0)}\nCategory: ${job.category}',
-                    subject: 'Job Opportunity: ${job.title}',
+                  SharePlus.instance.share(
+                    ShareParams(
+                      text: 'Check out this job: ${job.title} on Nomadly!\nBudget: \$${job.budget.toStringAsFixed(0)}\nCategory: ${job.category}',
+                      subject: 'Job Opportunity: ${job.title}',
+                    ),
                   );
                 },
               ),
@@ -233,9 +472,9 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
             child: Transform.translate(
               offset: const Offset(0, -24),
               child: Container(
-                decoration: BoxDecoration(
-                  color: isDark ? Colors.grey[900] : AppColors.background,
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                decoration: const BoxDecoration(
+                  color: AppColors.obsidian,
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
                 ),
                 child: Padding(
                   padding: const EdgeInsets.all(AppDimensions.paddingM),
@@ -265,12 +504,12 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
                       // Posted date
                       Row(
                         children: [
-                          Icon(Icons.access_time, size: 16, color: Colors.grey[600]),
+                          const Icon(Icons.access_time, size: 16, color: AppColors.textSecondary),
                           const SizedBox(width: 4),
                           Text(
                             'Posted ${_formatDate(job.createdAt)}',
                             style: theme.textTheme.bodySmall?.copyWith(
-                              color: Colors.grey[600],
+                              color: AppColors.textSecondary,
                             ),
                           ),
                         ],
@@ -309,9 +548,9 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                         decoration: BoxDecoration(
-                          color: AppColors.primary.withOpacity(0.1),
+                          color: AppColors.primary.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: AppColors.primary.withOpacity(0.2)),
+                          border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
@@ -332,39 +571,33 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
                       const SizedBox(height: 24),
 
                       // Description
-                      _SectionTitle(title: 'Description'),
+                      const _SectionTitle(title: 'Description'),
                       const SizedBox(height: 8),
                       Container(
                         width: double.infinity,
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: isDark ? Colors.grey[800] : AppColors.backgroundSecondary,
+                          color: AppColors.slate,
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
                           job.description,
                           style: theme.textTheme.bodyLarge?.copyWith(
                             height: 1.6,
+                            color: AppColors.textSecondary,
                           ),
                         ),
                       ),
                       const SizedBox(height: 24),
 
                       // Posted By Section
-                      _SectionTitle(title: 'Posted By'),
+                      const _SectionTitle(title: 'Posted By'),
                       const SizedBox(height: 12),
                       Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: isDark ? Colors.grey[800] : Colors.white,
+                          color: AppColors.slate,
                           borderRadius: BorderRadius.circular(16),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.05),
-                              blurRadius: 10,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
                         ),
                         child: Row(
                           children: [
@@ -388,10 +621,14 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
                                 children: [
                                   Row(
                                     children: [
-                                      Text(
-                                        job.author.profile?.name ?? job.author.username ?? 'Unknown',
-                                        style: theme.textTheme.titleMedium?.copyWith(
-                                          fontWeight: FontWeight.bold,
+                                      Flexible(
+                                        child: Text(
+                                          job.author.profile?.name ?? job.author.username ?? 'Unknown',
+                                          style: theme.textTheme.titleMedium?.copyWith(
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                          overflow: TextOverflow.ellipsis,
+                                          maxLines: 1,
                                         ),
                                       ),
                                       if (job.author.nomadId?.verified == true) ...[
@@ -402,23 +639,31 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
                                   ),
                                   const SizedBox(height: 2),
                                   Text(
-                                    '@${job.author.username}',
+                                    '@${job.author.username ?? 'unknown'}',
                                     style: theme.textTheme.bodySmall?.copyWith(
-                                      color: Colors.grey[600],
+                                      color: AppColors.textSecondary,
                                     ),
+                                    overflow: TextOverflow.ellipsis,
+                                    maxLines: 1,
                                   ),
                                 ],
                               ),
                             ),
-                            OutlinedButton(
-                              onPressed: () => context.push('/user/${job.author.id}', extra: job.author),
-                              style: OutlinedButton.styleFrom(
-                                side: const BorderSide(color: AppColors.primary),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
+                            TextButton(
+                              onPressed: () {
+                                final authorId = job.author.uid;
+                                if (authorId.isNotEmpty) {
+                                  context.push('/user/$authorId');
+                                }
+                              },
+                              style: TextButton.styleFrom(
+                                foregroundColor: AppColors.primary,
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                               ),
-                              child: const Text('View Profile'),
+                              child: const Text(
+                                'View Profile',
+                                style: TextStyle(fontWeight: FontWeight.w600),
+                              ),
                             ),
                           ],
                         ),
@@ -436,13 +681,40 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
       ),
       
       // Bottom Action Button
-      bottomNavigationBar: Container(
+      bottomNavigationBar: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Application status banner
+          if (_applicationStatus != null && !_isOwnJob())
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              color: _getStatusColor(_applicationStatus!).withValues(alpha: 0.15),
+              child: Row(
+                children: [
+                  Icon(
+                    _getStatusIcon(_applicationStatus!),
+                    color: _getStatusColor(_applicationStatus!),
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    _getStatusText(_applicationStatus!),
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: _getStatusColor(_applicationStatus!),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isDark ? Colors.grey[850] : Colors.white,
+          color: AppColors.slate,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
+              color: Colors.black.withValues(alpha: 0.3),
               blurRadius: 10,
               offset: const Offset(0, -2),
             ),
@@ -459,7 +731,9 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
                   children: [
                     Text(
                       job.budgetType == 'fixed' ? 'Fixed Price' : 'Hourly Rate',
-                      style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey),
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
                     ),
                     Text(
                       '\$${job.budget.toStringAsFixed(0)}${job.budgetType == 'hourly' ? '/hr' : ''}',
@@ -471,57 +745,48 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
                   ],
                 ),
               ),
-              // Action button (Apply or Contact)
+              // Action button — context-aware
               Expanded(
                 flex: 2,
-                child: ElevatedButton(
-                  onPressed: _isLoading || _hasApplied || job.status != 'open' 
-                    ? null 
-                    : _applyForJob,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _hasApplied ? Colors.grey : AppColors.primary,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    elevation: 0,
-                  ),
-                  child: _isLoading
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                          ),
-                        )
-                      : Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              _hasApplied ? Icons.check_circle : Icons.send, 
-                              size: 20
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              _hasApplied 
-                                ? 'Already Applied' 
-                                : job.status == 'open' ? 'Apply Now' : 'Job Closed',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                              ),
-                            ),
-                          ],
-                        ),
-                ),
+                child: _buildActionButton(job),
               ),
             ],
           ),
         ),
       ),
+        ],
+      ),
     );
+  }
+
+  Color _getStatusColor(String status) {
+    switch (status) {
+      case 'hired': return Colors.green;
+      case 'interview': return Colors.blue;
+      case 'pending': return Colors.amber;
+      case 'rejected': return Colors.red;
+      default: return AppColors.textSecondary;
+    }
+  }
+
+  IconData _getStatusIcon(String status) {
+    switch (status) {
+      case 'hired': return Icons.check_circle;
+      case 'interview': return Icons.event;
+      case 'pending': return Icons.hourglass_empty;
+      case 'rejected': return Icons.cancel;
+      default: return Icons.info;
+    }
+  }
+
+  String _getStatusText(String status) {
+    switch (status) {
+      case 'hired': return 'You have been hired for this job!';
+      case 'interview': return 'You have been selected for an interview';
+      case 'pending': return 'Your application is under review';
+      case 'rejected': return 'Your application was not selected';
+      default: return 'Application status: $status';
+    }
   }
 }
 
@@ -535,7 +800,9 @@ class _SectionTitle extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       title,
-      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+      style: const TextStyle(
+        color: AppColors.white,
+        fontSize: 18,
         fontWeight: FontWeight.bold,
         letterSpacing: 0.5,
       ),
@@ -551,31 +818,31 @@ class _StatusBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     Color color;
     IconData icon;
-    
+
     switch (status.toLowerCase()) {
       case 'open':
-        color = Colors.green;
+        color = AppColors.success;
         icon = Icons.check_circle;
         break;
       case 'in_progress':
-        color = Colors.orange;
+        color = AppColors.warning;
         icon = Icons.pending;
         break;
       case 'closed':
-        color = Colors.red;
+        color = AppColors.error;
         icon = Icons.cancel;
         break;
       default:
-        color = Colors.grey;
+        color = AppColors.textSecondary;
         icon = Icons.help;
     }
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -613,20 +880,11 @@ class _InfoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isDark ? Colors.grey[800] : Colors.white,
+        color: AppColors.slate,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -636,7 +894,7 @@ class _InfoCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: iconColor.withOpacity(0.1),
+                  color: iconColor.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(icon, size: 20, color: iconColor),
@@ -644,8 +902,8 @@ class _InfoCard extends StatelessWidget {
               const SizedBox(width: 8),
               Text(
                 title,
-                style: TextStyle(
-                  color: Colors.grey[600],
+                style: const TextStyle(
+                  color: AppColors.textSecondary,
                   fontSize: 12,
                 ),
               ),
@@ -654,15 +912,17 @@ class _InfoCard extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             value,
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+            style: const TextStyle(
+              color: AppColors.white,
+              fontSize: 20,
               fontWeight: FontWeight.bold,
             ),
           ),
           const SizedBox(height: 2),
           Text(
             subtitle,
-            style: TextStyle(
-              color: Colors.grey[500],
+            style: const TextStyle(
+              color: AppColors.textSecondary,
               fontSize: 12,
             ),
           ),

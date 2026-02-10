@@ -15,6 +15,218 @@ final _privateConstructorUsedError = UnsupportedError(
   'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models',
 );
 
+UserSubscription _$UserSubscriptionFromJson(Map<String, dynamic> json) {
+  return _UserSubscription.fromJson(json);
+}
+
+/// @nodoc
+mixin _$UserSubscription {
+  String get status => throw _privateConstructorUsedError;
+  String get plan => throw _privateConstructorUsedError;
+  @JsonKey(name: 'expires_at')
+  DateTime? get expiresAt => throw _privateConstructorUsedError;
+
+  /// Serializes this UserSubscription to a JSON map.
+  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
+
+  /// Create a copy of UserSubscription
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  $UserSubscriptionCopyWith<UserSubscription> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $UserSubscriptionCopyWith<$Res> {
+  factory $UserSubscriptionCopyWith(
+    UserSubscription value,
+    $Res Function(UserSubscription) then,
+  ) = _$UserSubscriptionCopyWithImpl<$Res, UserSubscription>;
+  @useResult
+  $Res call({
+    String status,
+    String plan,
+    @JsonKey(name: 'expires_at') DateTime? expiresAt,
+  });
+}
+
+/// @nodoc
+class _$UserSubscriptionCopyWithImpl<$Res, $Val extends UserSubscription>
+    implements $UserSubscriptionCopyWith<$Res> {
+  _$UserSubscriptionCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  /// Create a copy of UserSubscription
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? status = null,
+    Object? plan = null,
+    Object? expiresAt = freezed,
+  }) {
+    return _then(
+      _value.copyWith(
+            status: null == status
+                ? _value.status
+                : status // ignore: cast_nullable_to_non_nullable
+                      as String,
+            plan: null == plan
+                ? _value.plan
+                : plan // ignore: cast_nullable_to_non_nullable
+                      as String,
+            expiresAt: freezed == expiresAt
+                ? _value.expiresAt
+                : expiresAt // ignore: cast_nullable_to_non_nullable
+                      as DateTime?,
+          )
+          as $Val,
+    );
+  }
+}
+
+/// @nodoc
+abstract class _$$UserSubscriptionImplCopyWith<$Res>
+    implements $UserSubscriptionCopyWith<$Res> {
+  factory _$$UserSubscriptionImplCopyWith(
+    _$UserSubscriptionImpl value,
+    $Res Function(_$UserSubscriptionImpl) then,
+  ) = __$$UserSubscriptionImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call({
+    String status,
+    String plan,
+    @JsonKey(name: 'expires_at') DateTime? expiresAt,
+  });
+}
+
+/// @nodoc
+class __$$UserSubscriptionImplCopyWithImpl<$Res>
+    extends _$UserSubscriptionCopyWithImpl<$Res, _$UserSubscriptionImpl>
+    implements _$$UserSubscriptionImplCopyWith<$Res> {
+  __$$UserSubscriptionImplCopyWithImpl(
+    _$UserSubscriptionImpl _value,
+    $Res Function(_$UserSubscriptionImpl) _then,
+  ) : super(_value, _then);
+
+  /// Create a copy of UserSubscription
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? status = null,
+    Object? plan = null,
+    Object? expiresAt = freezed,
+  }) {
+    return _then(
+      _$UserSubscriptionImpl(
+        status: null == status
+            ? _value.status
+            : status // ignore: cast_nullable_to_non_nullable
+                  as String,
+        plan: null == plan
+            ? _value.plan
+            : plan // ignore: cast_nullable_to_non_nullable
+                  as String,
+        expiresAt: freezed == expiresAt
+            ? _value.expiresAt
+            : expiresAt // ignore: cast_nullable_to_non_nullable
+                  as DateTime?,
+      ),
+    );
+  }
+}
+
+/// @nodoc
+@JsonSerializable()
+class _$UserSubscriptionImpl implements _UserSubscription {
+  const _$UserSubscriptionImpl({
+    this.status = 'active',
+    this.plan = 'free',
+    @JsonKey(name: 'expires_at') this.expiresAt,
+  });
+
+  factory _$UserSubscriptionImpl.fromJson(Map<String, dynamic> json) =>
+      _$$UserSubscriptionImplFromJson(json);
+
+  @override
+  @JsonKey()
+  final String status;
+  @override
+  @JsonKey()
+  final String plan;
+  @override
+  @JsonKey(name: 'expires_at')
+  final DateTime? expiresAt;
+
+  @override
+  String toString() {
+    return 'UserSubscription(status: $status, plan: $plan, expiresAt: $expiresAt)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$UserSubscriptionImpl &&
+            (identical(other.status, status) || other.status == status) &&
+            (identical(other.plan, plan) || other.plan == plan) &&
+            (identical(other.expiresAt, expiresAt) ||
+                other.expiresAt == expiresAt));
+  }
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  int get hashCode => Object.hash(runtimeType, status, plan, expiresAt);
+
+  /// Create a copy of UserSubscription
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$UserSubscriptionImplCopyWith<_$UserSubscriptionImpl> get copyWith =>
+      __$$UserSubscriptionImplCopyWithImpl<_$UserSubscriptionImpl>(
+        this,
+        _$identity,
+      );
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$$UserSubscriptionImplToJson(this);
+  }
+}
+
+abstract class _UserSubscription implements UserSubscription {
+  const factory _UserSubscription({
+    final String status,
+    final String plan,
+    @JsonKey(name: 'expires_at') final DateTime? expiresAt,
+  }) = _$UserSubscriptionImpl;
+
+  factory _UserSubscription.fromJson(Map<String, dynamic> json) =
+      _$UserSubscriptionImpl.fromJson;
+
+  @override
+  String get status;
+  @override
+  String get plan;
+  @override
+  @JsonKey(name: 'expires_at')
+  DateTime? get expiresAt;
+
+  /// Create a copy of UserSubscription
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  _$$UserSubscriptionImplCopyWith<_$UserSubscriptionImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
 User _$UserFromJson(Map<String, dynamic> json) {
   return _User.fromJson(json);
 }
@@ -52,6 +264,7 @@ mixin _$User {
   bool get isFollowing => throw _privateConstructorUsedError;
   bool get followsMe => throw _privateConstructorUsedError;
   bool get isFollowingPending => throw _privateConstructorUsedError;
+  UserSubscription? get subscription => throw _privateConstructorUsedError;
   @JsonKey(name: 'created_at')
   DateTime? get createdAt => throw _privateConstructorUsedError;
   @JsonKey(name: 'updated_at')
@@ -93,6 +306,7 @@ abstract class $UserCopyWith<$Res> {
     bool isFollowing,
     bool followsMe,
     bool isFollowingPending,
+    UserSubscription? subscription,
     @JsonKey(name: 'created_at') DateTime? createdAt,
     @JsonKey(name: 'updated_at') DateTime? updatedAt,
   });
@@ -103,6 +317,7 @@ abstract class $UserCopyWith<$Res> {
   $NomadIdCopyWith<$Res>? get nomadId;
   $VerificationCopyWith<$Res>? get verification;
   $MatchingProfileCopyWith<$Res>? get matchingProfile;
+  $UserSubscriptionCopyWith<$Res>? get subscription;
 }
 
 /// @nodoc
@@ -141,6 +356,7 @@ class _$UserCopyWithImpl<$Res, $Val extends User>
     Object? isFollowing = null,
     Object? followsMe = null,
     Object? isFollowingPending = null,
+    Object? subscription = freezed,
     Object? createdAt = freezed,
     Object? updatedAt = freezed,
   }) {
@@ -230,6 +446,10 @@ class _$UserCopyWithImpl<$Res, $Val extends User>
                 ? _value.isFollowingPending
                 : isFollowingPending // ignore: cast_nullable_to_non_nullable
                       as bool,
+            subscription: freezed == subscription
+                ? _value.subscription
+                : subscription // ignore: cast_nullable_to_non_nullable
+                      as UserSubscription?,
             createdAt: freezed == createdAt
                 ? _value.createdAt
                 : createdAt // ignore: cast_nullable_to_non_nullable
@@ -326,6 +546,20 @@ class _$UserCopyWithImpl<$Res, $Val extends User>
       return _then(_value.copyWith(matchingProfile: value) as $Val);
     });
   }
+
+  /// Create a copy of User
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $UserSubscriptionCopyWith<$Res>? get subscription {
+    if (_value.subscription == null) {
+      return null;
+    }
+
+    return $UserSubscriptionCopyWith<$Res>(_value.subscription!, (value) {
+      return _then(_value.copyWith(subscription: value) as $Val);
+    });
+  }
 }
 
 /// @nodoc
@@ -358,6 +592,7 @@ abstract class _$$UserImplCopyWith<$Res> implements $UserCopyWith<$Res> {
     bool isFollowing,
     bool followsMe,
     bool isFollowingPending,
+    UserSubscription? subscription,
     @JsonKey(name: 'created_at') DateTime? createdAt,
     @JsonKey(name: 'updated_at') DateTime? updatedAt,
   });
@@ -374,6 +609,8 @@ abstract class _$$UserImplCopyWith<$Res> implements $UserCopyWith<$Res> {
   $VerificationCopyWith<$Res>? get verification;
   @override
   $MatchingProfileCopyWith<$Res>? get matchingProfile;
+  @override
+  $UserSubscriptionCopyWith<$Res>? get subscription;
 }
 
 /// @nodoc
@@ -409,6 +646,7 @@ class __$$UserImplCopyWithImpl<$Res>
     Object? isFollowing = null,
     Object? followsMe = null,
     Object? isFollowingPending = null,
+    Object? subscription = freezed,
     Object? createdAt = freezed,
     Object? updatedAt = freezed,
   }) {
@@ -498,6 +736,10 @@ class __$$UserImplCopyWithImpl<$Res>
             ? _value.isFollowingPending
             : isFollowingPending // ignore: cast_nullable_to_non_nullable
                   as bool,
+        subscription: freezed == subscription
+            ? _value.subscription
+            : subscription // ignore: cast_nullable_to_non_nullable
+                  as UserSubscription?,
         createdAt: freezed == createdAt
             ? _value.createdAt
             : createdAt // ignore: cast_nullable_to_non_nullable
@@ -536,6 +778,7 @@ class _$UserImpl extends _User {
     this.isFollowing = false,
     this.followsMe = false,
     this.isFollowingPending = false,
+    this.subscription,
     @JsonKey(name: 'created_at') this.createdAt,
     @JsonKey(name: 'updated_at') this.updatedAt,
   }) : super._();
@@ -601,6 +844,8 @@ class _$UserImpl extends _User {
   @JsonKey()
   final bool isFollowingPending;
   @override
+  final UserSubscription? subscription;
+  @override
   @JsonKey(name: 'created_at')
   final DateTime? createdAt;
   @override
@@ -609,7 +854,7 @@ class _$UserImpl extends _User {
 
   @override
   String toString() {
-    return 'User(idSecondary: $idSecondary, id: $id, email: $email, username: $username, phone: $phone, profile: $profile, rig: $rig, travelRoute: $travelRoute, isBuilder: $isBuilder, isPrivate: $isPrivate, nomadId: $nomadId, verification: $verification, matchingProfile: $matchingProfile, invitedBy: $invitedBy, inviteCount: $inviteCount, isActive: $isActive, followerCount: $followerCount, followingCount: $followingCount, isFollowing: $isFollowing, followsMe: $followsMe, isFollowingPending: $isFollowingPending, createdAt: $createdAt, updatedAt: $updatedAt)';
+    return 'User(idSecondary: $idSecondary, id: $id, email: $email, username: $username, phone: $phone, profile: $profile, rig: $rig, travelRoute: $travelRoute, isBuilder: $isBuilder, isPrivate: $isPrivate, nomadId: $nomadId, verification: $verification, matchingProfile: $matchingProfile, invitedBy: $invitedBy, inviteCount: $inviteCount, isActive: $isActive, followerCount: $followerCount, followingCount: $followingCount, isFollowing: $isFollowing, followsMe: $followsMe, isFollowingPending: $isFollowingPending, subscription: $subscription, createdAt: $createdAt, updatedAt: $updatedAt)';
   }
 
   @override
@@ -653,6 +898,8 @@ class _$UserImpl extends _User {
                 other.followsMe == followsMe) &&
             (identical(other.isFollowingPending, isFollowingPending) ||
                 other.isFollowingPending == isFollowingPending) &&
+            (identical(other.subscription, subscription) ||
+                other.subscription == subscription) &&
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt) &&
             (identical(other.updatedAt, updatedAt) ||
@@ -684,6 +931,7 @@ class _$UserImpl extends _User {
     isFollowing,
     followsMe,
     isFollowingPending,
+    subscription,
     createdAt,
     updatedAt,
   ]);
@@ -725,6 +973,7 @@ abstract class _User extends User {
     final bool isFollowing,
     final bool followsMe,
     final bool isFollowingPending,
+    final UserSubscription? subscription,
     @JsonKey(name: 'created_at') final DateTime? createdAt,
     @JsonKey(name: 'updated_at') final DateTime? updatedAt,
   }) = _$UserImpl;
@@ -784,6 +1033,8 @@ abstract class _User extends User {
   bool get followsMe;
   @override
   bool get isFollowingPending;
+  @override
+  UserSubscription? get subscription;
   @override
   @JsonKey(name: 'created_at')
   DateTime? get createdAt;

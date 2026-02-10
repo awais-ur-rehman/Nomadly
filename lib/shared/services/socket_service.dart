@@ -17,7 +17,7 @@ class SocketService {
   // Initialize and connect to Socket.IO server
   Future<void> connect() async {
     if (_socket?.connected == true) {
-      _logger.d('Socket already connected');
+      // _logger.d('Socket already connected');
       return;
     }
 
@@ -43,7 +43,7 @@ class SocketService {
       _setupListeners();
       _socket!.connect();
 
-      _logger.d('Socket connection initiated');
+      // _logger.d('Socket connection initiated');
     } catch (e) {
       _logger.e('Error connecting to socket: $e');
     }
@@ -52,7 +52,7 @@ class SocketService {
   // Setup default event listeners
   void _setupListeners() {
     _socket?.on('connect', (_) {
-      _logger.d('Socket connected');
+      // _logger.d('Socket connected');
     });
 
     _socket?.on('disconnect', (_) {
@@ -73,7 +73,7 @@ class SocketService {
     _socket?.disconnect();
     _socket?.dispose();
     _socket = null;
-    _logger.d('Socket disconnected and disposed');
+    // _logger.d('Socket disconnected and disposed');
   }
 
   // Join a chat conversation
@@ -84,7 +84,7 @@ class SocketService {
     }
 
     _socket!.emit('join_chat', conversationId);
-    _logger.d('Joined chat: $conversationId');
+    // _logger.d('Joined chat: $conversationId');
   }
 
   // Leave a chat conversation
@@ -92,7 +92,7 @@ class SocketService {
     if (!isConnected) return;
 
     _socket!.emit('leave_chat', conversationId);
-    _logger.d('Left chat: $conversationId');
+    // _logger.d('Left chat: $conversationId');
   }
 
   // Send a message
@@ -112,7 +112,7 @@ class SocketService {
       'messageType': messageType,
     });
 
-    _logger.d('Message sent to conversation: $conversationId');
+    // _logger.d('Message sent to conversation: $conversationId');
   }
 
   // Send typing indicator
@@ -133,7 +133,7 @@ class SocketService {
     if (!isConnected) return;
 
     _socket!.emit('mark_read', conversationId);
-    _logger.d('Marked messages as read: $conversationId');
+    // _logger.d('Marked messages as read: $conversationId');
   }
 
   // Listen for incoming messages

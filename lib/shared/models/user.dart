@@ -19,6 +19,18 @@ part 'user.freezed.dart';
 part 'user.g.dart';
 
 @freezed
+class UserSubscription with _$UserSubscription {
+  const factory UserSubscription({
+    @Default('active') String status,
+    @Default('free') String plan,
+    @JsonKey(name: 'expires_at') DateTime? expiresAt,
+  }) = _UserSubscription;
+
+  factory UserSubscription.fromJson(Map<String, dynamic> json) =>
+      _$UserSubscriptionFromJson(json);
+}
+
+@freezed
 class User with _$User {
   const User._();
 
@@ -44,6 +56,7 @@ class User with _$User {
     @Default(false) bool isFollowing,
     @Default(false) bool followsMe,
     @Default(false) bool isFollowingPending,
+    UserSubscription? subscription,
     @JsonKey(name: 'created_at') DateTime? createdAt,
     @JsonKey(name: 'updated_at') DateTime? updatedAt,
   }) = _User;
@@ -55,6 +68,12 @@ class User with _$User {
 
   /// Human-readable badge name for display.
   String get verificationBadge => verification?.badge ?? 'none';
+
+  /// Check if user has active Pro subscription.
+  bool get isPro => subscription?.plan == 'vantage_pro' && subscription?.status == 'active';
+
+  /// Get the subscription plan name for display.
+  String get planName => isPro ? 'Vantage Pro' : 'Free';
 
   factory User.fromJson(Map<String, dynamic> json) => _$UserFromJson(json);
 }

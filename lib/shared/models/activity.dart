@@ -17,6 +17,7 @@ class Activity with _$Activity {
     DateTime? endTime,
     required User creator,
     @Default([]) List<User> participants,
+    @Default([]) List<User> pendingRequests,
     @Default(0) int maxParticipants,
     String? imageUrl,
   }) = _Activity;

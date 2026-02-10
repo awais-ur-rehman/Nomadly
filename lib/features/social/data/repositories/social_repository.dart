@@ -25,7 +25,7 @@ class SocialRepository {
 
       if (response.statusCode == 200) {
         final List<dynamic> data = response.data['data']['posts'] ?? [];
-        _logger.i('Parsing ${data.length} posts...');
+        // _logger.i('Parsing ${data.length} posts...');
         final posts = <Post>[];
         for (int i = 0; i < data.length; i++) {
           try {
@@ -45,7 +45,7 @@ class SocialRepository {
             _logger.e('Post JSON: ${data[i]}');
           }
         }
-        _logger.i('Successfully parsed ${posts.length} out of ${data.length} posts');
+        // _logger.i('Successfully parsed ${posts.length} out of ${data.length} posts');
         return posts;
       }
       return [];
@@ -157,9 +157,9 @@ class SocialRepository {
     try {
       final response = await _apiClient.get('$_storiesEndpoint/active');
       if (response.statusCode == 200) {
-        _logger.i('Stories response: ${response.data}');
+        // _logger.i('Stories response: ${response.data}');
         final List<dynamic> data = response.data['data'] ?? [];
-        _logger.i('Stories data length: ${data.length}');
+        // _logger.i('Stories data length: ${data.length}');
         return data.map((json) {
           try {
             return StoryBundle.fromJson(json);
@@ -207,6 +207,21 @@ class SocialRepository {
       return [];
     } on DioException catch (e) {
       _logger.e('Get my stories error: ${e.message}');
+      return [];
+    }
+  }
+
+  // Get User Stories (GET /api/v1/stories/user/:userId)
+  Future<List<Story>> getUserStories(String userId) async {
+    try {
+      final response = await _apiClient.get('$_storiesEndpoint/user/$userId');
+      if (response.statusCode == 200) {
+        final List<dynamic> data = response.data['data']['stories'] ?? response.data['data'] ?? [];
+        return data.map((json) => Story.fromJson(json)).toList();
+      }
+      return [];
+    } on DioException catch (e) {
+      _logger.e('Get user stories error: ${e.message}');
       return [];
     }
   }

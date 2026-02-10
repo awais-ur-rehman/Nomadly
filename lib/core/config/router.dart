@@ -24,6 +24,10 @@ import '../../features/marketplace/presentation/screens/marketplace_screen.dart'
 import '../../features/marketplace/presentation/screens/builder_detail_screen.dart';
 import '../../features/marketplace/presentation/screens/create_job_screen.dart';
 import '../../features/marketplace/presentation/screens/job_detail_screen.dart';
+import '../../features/marketplace/presentation/screens/my_applications_screen.dart';
+import '../../features/marketplace/presentation/screens/my_jobs_screen.dart';
+import '../../features/marketplace/presentation/screens/job_applications_screen.dart';
+import '../../features/marketplace/presentation/screens/my_consultations_screen.dart';
 import '../../shared/models/builder.dart';
 import '../../shared/models/job.dart';
 import '../../features/social/presentation/screens/notifications_screen.dart';
@@ -33,6 +37,7 @@ import '../../features/auth/providers/auth_provider.dart';
 import '../../features/activities/presentation/screens/activity_detail_screen.dart';
 import '../../features/activities/presentation/screens/create_activity_screen.dart';
 import '../../features/activities/presentation/screens/activities_list_screen.dart';
+import '../../features/activities/presentation/screens/my_activities_screen.dart';
 import '../../features/profile/presentation/screens/builder_setup_screen.dart';
 import '../../shared/models/user.dart';
 import '../../shared/models/activity.dart'; // Import Activity model
@@ -41,6 +46,11 @@ import '../../features/map/presentation/screens/location_picker_screen.dart';
 import '../../features/safety/presentation/screens/blocked_users_screen.dart';
 import '../../features/invite/presentation/screens/invite_screen.dart';
 import '../../features/verification/presentation/screens/verification_screen.dart';
+import '../../features/subscription/presentation/screens/subscription_screen.dart';
+import '../../features/trips/presentation/screens/my_trips_screen.dart';
+import '../../features/trips/presentation/screens/trip_detail_screen.dart';
+import '../../features/trips/presentation/screens/trip_discovery_screen.dart';
+import '../../shared/models/trip.dart';
 
 /// Listenable that notifies GoRouter when auth state changes
 class RouterListenable extends ChangeNotifier {
@@ -222,6 +232,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/activities',
         builder: (context, state) => const ActivitiesListScreen(),
       ),
+      // My Activities
+      GoRoute(
+        path: '/my-activities',
+        builder: (context, state) => const MyActivitiesScreen(),
+      ),
 
       // Create Post
       GoRoute(
@@ -278,6 +293,29 @@ final routerProvider = Provider<GoRouter>((ref) {
           return JobDetailScreen(jobId: id, preloadedJob: job);
         },
       ),
+      // Job Applications (for job authors)
+      GoRoute(
+        path: '/job/:id/applications',
+        builder: (context, state) {
+          final jobId = state.pathParameters['id']!;
+          return JobApplicationsScreen(jobId: jobId);
+        },
+      ),
+      // My Applications
+      GoRoute(
+        path: '/my-applications',
+        builder: (context, state) => const MyApplicationsScreen(),
+      ),
+      // My Posted Jobs
+      GoRoute(
+        path: '/my-jobs',
+        builder: (context, state) => const MyJobsScreen(),
+      ),
+      // My Consultations
+      GoRoute(
+        path: '/my-consultations',
+        builder: (context, state) => const MyConsultationsScreen(),
+      ),
       // Location Picker (returns LatLng via pop)
       GoRoute(
         path: '/location-picker',
@@ -302,6 +340,30 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/verification',
         builder: (context, state) => const VerificationScreen(),
+      ),
+      // Subscription
+      GoRoute(
+        path: '/subscription',
+        builder: (context, state) => const SubscriptionScreen(),
+      ),
+      // My Trip (legacy user travel_route)
+      GoRoute(
+        path: '/my-trip',
+        builder: (context, state) => const MyTripsScreen(),
+      ),
+      // Trip Discovery
+      GoRoute(
+        path: '/discover-trips',
+        builder: (context, state) => const TripDiscoveryScreen(),
+      ),
+      // Trip Detail
+      GoRoute(
+        path: '/trip/:id',
+        builder: (context, state) {
+          final tripId = state.pathParameters['id']!;
+          final trip = state.extra as Trip?;
+          return TripDetailScreen(tripId: tripId, preloadedTrip: trip);
+        },
       ),
     ],
   );

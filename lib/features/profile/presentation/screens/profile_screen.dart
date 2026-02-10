@@ -5,7 +5,6 @@ import 'package:nomadly/features/auth/providers/auth_provider.dart';
 import 'package:nomadly/features/social/providers/social_provider.dart';
 import 'package:nomadly/shared/models/user.dart';
 import 'package:nomadly/features/profile/presentation/widgets/profile_view_base.dart';
-import 'package:nomadly/core/constants/app_dimensions.dart';
 import 'package:nomadly/core/constants/app_colors.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
@@ -41,47 +40,96 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final user = ref.watch(authProvider).user;
 
     if (user == null) {
-      return const Center(child: CircularProgressIndicator());
+      return const Scaffold(
+        backgroundColor: AppColors.obsidian,
+        body: Center(child: CircularProgressIndicator(color: AppColors.primary)),
+      );
     }
 
     final profile = user.profile;
     if (profile == null) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Text('Profile not completed'),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () => context.push('/profile-setup'),
-              child: const Text('Complete Profile'),
+      return Scaffold(
+        backgroundColor: AppColors.obsidian,
+        body: SafeArea(
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.person_outline,
+                  size: 80,
+                  color: Colors.white.withValues(alpha: 0.3),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Profile not completed',
+                  style: TextStyle(
+                    color: AppColors.white,
+                    fontSize: 18,
+                    fontFamily: 'Outfit',
+                  ),
+                ),
+                const SizedBox(height: 24),
+                ElevatedButton(
+                  onPressed: () => context.push('/profile-setup'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text(
+                    'Complete Profile',
+                    style: TextStyle(fontFamily: 'Outfit', fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       );
     }
 
-    return ProfileViewBase(
-      user: user,
-      posts: _posts,
-      isPostsLoading: _loadingPosts,
-      isOwnProfile: true,
-      onRefresh: _loadPosts,
-      onFollowersTap: () {
-        context.push('/profile/${user.uid}/connections?tab=0');
-      },
-      onFollowingTap: () {
-        context.push('/profile/${user.uid}/connections?tab=1');
-      },
-      banner: !user.isBuilder ? _buildMarketplaceBanner() : null,
-      headerButtons: SizedBox(
-        width: double.infinity,
-        child: OutlinedButton(
-          onPressed: () => context.push('/edit-profile'),
-          style: OutlinedButton.styleFrom(
-            padding: const EdgeInsets.symmetric(vertical: 8),
+    return Scaffold(
+      backgroundColor: AppColors.obsidian,
+      body: SafeArea(
+        child: ProfileViewBase(
+          user: user,
+          posts: _posts,
+          isPostsLoading: _loadingPosts,
+          isOwnProfile: true,
+          onRefresh: _loadPosts,
+          onFollowersTap: () {
+            context.push('/profile/${user.uid}/connections?tab=0');
+          },
+          onFollowingTap: () {
+            context.push('/profile/${user.uid}/connections?tab=1');
+          },
+          onSettingsTap: () => context.push('/settings'),
+          banner: !user.isBuilder ? _buildMarketplaceBanner() : null,
+          headerButtons: SizedBox(
+            width: double.infinity,
+            child: OutlinedButton(
+              onPressed: () => context.push('/edit-profile'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.white,
+                side: BorderSide(color: Colors.white.withValues(alpha: 0.3)),
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: const Text(
+                'Edit Profile',
+                style: TextStyle(
+                  fontFamily: 'Outfit',
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
           ),
-          child: const Text('Edit Profile'),
         ),
       ),
     );
@@ -89,21 +137,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
   Widget _buildMarketplaceBanner() {
     return Container(
-      padding: const EdgeInsets.all(AppDimensions.paddingL),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [AppColors.primary, AppColors.primary.withOpacity(0.8)],
+          colors: [AppColors.primary, AppColors.primary.withValues(alpha: 0.8)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primary.withOpacity(0.3),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -118,14 +159,19 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   color: Colors.white,
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
+                  fontFamily: 'Outfit',
                 ),
               ),
             ],
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'Offer your skills to the community and earn while you travel.',
-            style: TextStyle(color: Colors.white, fontSize: 13),
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.9),
+              fontSize: 13,
+              fontFamily: 'Inter',
+            ),
           ),
           const SizedBox(height: 16),
           SizedBox(
@@ -136,12 +182,18 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 backgroundColor: Colors.white,
                 foregroundColor: AppColors.primary,
                 elevation: 0,
-                minimumSize: const Size(0, 40),
+                minimumSize: const Size(0, 44),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              child: const Text('Get Started'),
+              child: const Text(
+                'Get Started',
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontFamily: 'Outfit',
+                ),
+              ),
             ),
           ),
         ],

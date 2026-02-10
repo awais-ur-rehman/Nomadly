@@ -3,6 +3,7 @@ import 'package:logger/logger.dart';
 import '../data/models/auth_response.dart';
 import '../data/repositories/auth_repository.dart';
 import '../../../../shared/models/user.dart';
+import '../../../../shared/services/revenue_cat_service.dart';
 import '../../../../shared/services/toast_service.dart';
 
 // Auth Repository Provider
@@ -60,6 +61,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
         state = state.copyWith(isLoading: true);
         try {
           final user = await _repository.getMe();
+          // Identify user in RevenueCat
+          await RevenueCatService().login(user.uid);
+          
           state = state.copyWith(
             user: user,
             isAuthenticated: true,
@@ -129,6 +133,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
         code: code,
       );
 
+      // Identify user in RevenueCat
+      await RevenueCatService().login(response.user.uid);
+
       state = state.copyWith(
         isLoading: false,
         user: response.user,
@@ -170,6 +177,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
         email: email,
         password: password,
       );
+
+      // Identify user in RevenueCat
+      await RevenueCatService().login(response.user.uid);
 
       state = state.copyWith(
         isLoading: false,
@@ -256,6 +266,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
   // Logout
   Future<void> logout() async {
     try {
+      // Logout from RevenueCat
+      await RevenueCatService().logout();
+      
       await _repository.logout();
       state = AuthState(); // Reset to initial state
       ToastService.showSuccess('Logged out successfully');

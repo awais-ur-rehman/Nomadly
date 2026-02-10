@@ -23,6 +23,11 @@ _$ActivityImpl _$$ActivityImplFromJson(Map<String, dynamic> json) =>
               ?.map((e) => User.fromJson(e as Map<String, dynamic>))
               .toList() ??
           const [],
+      pendingRequests:
+          (json['pendingRequests'] as List<dynamic>?)
+              ?.map((e) => User.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          const [],
       maxParticipants: (json['maxParticipants'] as num?)?.toInt() ?? 0,
       imageUrl: json['imageUrl'] as String?,
     );
@@ -38,6 +43,7 @@ Map<String, dynamic> _$$ActivityImplToJson(_$ActivityImpl instance) =>
       'endTime': instance.endTime?.toIso8601String(),
       'creator': instance.creator,
       'participants': instance.participants,
+      'pendingRequests': instance.pendingRequests,
       'maxParticipants': instance.maxParticipants,
       'imageUrl': instance.imageUrl,
     };

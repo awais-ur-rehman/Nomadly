@@ -31,51 +31,51 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
     final isOwnProfile = currentUser?.uid == widget.userId;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.obsidian,
       appBar: AppBar(
         title: Text(
           profileState.user?.username ?? '',
           style: const TextStyle(
-            color: Colors.black,
+            color: AppColors.white,
             fontWeight: FontWeight.w600,
           ),
         ),
-        backgroundColor: Colors.white,
-        iconTheme: const IconThemeData(color: Colors.black),
+        backgroundColor: AppColors.obsidian,
+        iconTheme: const IconThemeData(color: AppColors.white),
         elevation: 0,
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
-          child: Container(
-            color: Colors.grey[300],
-            height: 1,
-          ),
+          child: Container(color: AppColors.slate, height: 1),
         ),
       ),
       body: profileState.isLoading && profileState.user == null
           ? const Center(child: CircularProgressIndicator())
           : profileState.error != null
-              ? Center(child: Text('Error: ${profileState.error}'))
-              : profileState.user == null
-                  ? const Center(child: Text('User not found'))
-                  : ProfileViewBase(
-                      user: profileState.user!,
-                      posts: profileState.posts,
-                      isPostsLoading: profileState.isLoading,
-                      isOwnProfile: isOwnProfile,
-                      canViewContent: profileState.canViewPosts,
-                      onRefresh: () => ref.read(userProfileProvider.notifier).loadUserProfile(widget.userId),
-                      headerButtons: isOwnProfile
-                          ? null
-                          : SizedBox(
-                              width: double.infinity,
-                              height: 44,
-                              child: _ProfileFollowButton(
-                                userId: widget.userId,
-                                isFollowing: profileState.user!.isFollowing,
-                                isFollowingPending: profileState.user!.isFollowingPending,
-                              ),
-                            ),
+          ? Center(child: Text('Error: ${profileState.error}'))
+          : profileState.user == null
+          ? const Center(child: Text('User not found'))
+          : ProfileViewBase(
+              user: profileState.user!,
+              posts: profileState.posts,
+              isPostsLoading: profileState.isLoading,
+              isOwnProfile: isOwnProfile,
+              canViewContent: profileState.canViewPosts,
+              onRefresh: () => ref
+                  .read(userProfileProvider.notifier)
+                  .loadUserProfile(widget.userId),
+              headerButtons: isOwnProfile
+                  ? null
+                  : SizedBox(
+                      width: double.infinity,
+                      height: 44,
+                      child: _ProfileFollowButton(
+                        userId: widget.userId,
+                        isFollowing: profileState.user!.isFollowing,
+                        isFollowingPending:
+                            profileState.user!.isFollowingPending,
+                      ),
                     ),
+            ),
     );
   }
 }
@@ -119,9 +119,7 @@ class _ProfileFollowButton extends ConsumerWidget {
         backgroundColor: buttonColor,
         elevation: 0,
         padding: const EdgeInsets.symmetric(horizontal: 8),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
       child: FittedBox(
         fit: BoxFit.scaleDown,

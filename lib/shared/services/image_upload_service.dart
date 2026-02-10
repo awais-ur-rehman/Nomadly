@@ -125,7 +125,7 @@ class ImageUploadService {
 
       if (response.statusCode == 201) {
         final imageUrl = response.data['data']['url'] as String;
-        _logger.d('Image uploaded successfully: $imageUrl');
+        // _logger.d('Image uploaded successfully: $imageUrl');
         return imageUrl;
       }
 

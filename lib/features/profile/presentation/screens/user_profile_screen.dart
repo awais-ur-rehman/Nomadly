@@ -1,19 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 import '../../../../core/constants/app_colors.dart';
-import '../../../../core/constants/app_dimensions.dart';
 import '../../../../shared/models/user.dart';
-import '../../../../shared/models/post.dart';
 import '../../../../shared/services/toast_service.dart';
 import '../../providers/profile_provider.dart';
 import '../../../chat/providers/chat_provider.dart';
 import '../../../social/providers/social_provider.dart';
 import '../../../safety/providers/safety_provider.dart';
 import '../../../matching/providers/matching_provider.dart';
-import '../widgets/verification_badge.dart';
 
 class UserProfileScreen extends ConsumerStatefulWidget {
   final String userId;
@@ -58,26 +53,61 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
     final isLoading = state.isLoading && user == null;
 
     if (isLoading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return const Scaffold(
+        backgroundColor: AppColors.obsidian,
+        body: Center(child: CircularProgressIndicator(color: AppColors.primary)),
+      );
     }
+
     if (user == null) {
       return Scaffold(
-        appBar: AppBar(),
-        body: Center(child: Text(state.error ?? 'User not found')),
+        backgroundColor: AppColors.obsidian,
+        appBar: AppBar(backgroundColor: Colors.transparent, elevation: 0),
+        body: Center(
+          child: Text(
+            state.error ?? 'User not found',
+            style: const TextStyle(color: AppColors.white, fontFamily: 'Inter'),
+          ),
+        ),
       );
     }
 
     final profile = user.profile;
     if (profile == null) {
-      return Scaffold(appBar: AppBar(), body: const Center(child: Text('Profile not found')));
+      return Scaffold(
+        backgroundColor: AppColors.obsidian,
+        appBar: AppBar(backgroundColor: Colors.transparent, elevation: 0),
+        body: const Center(
+          child: Text(
+            'Profile not found',
+            style: TextStyle(color: AppColors.white, fontFamily: 'Inter'),
+          ),
+        ),
+      );
     }
 
     return Scaffold(
+      backgroundColor: AppColors.obsidian,
       appBar: AppBar(
-        title: Text(user.username != null ? '@${user.username}' : (profile.name ?? 'User')),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: AppColors.white),
+          onPressed: () => context.pop(),
+        ),
+        title: Text(
+          user.username ?? profile.name ?? 'User',
+          style: const TextStyle(
+            fontFamily: 'Outfit',
+            fontWeight: FontWeight.w600,
+            fontSize: 18,
+            color: AppColors.white,
+          ),
+        ),
+        centerTitle: true,
         actions: [
           IconButton(
-            icon: const Icon(Icons.more_vert),
+            icon: const Icon(Icons.more_vert, color: AppColors.white),
             onPressed: () => _showSafetySheet(context, user),
           ),
         ],
@@ -87,9 +117,10 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
           ref.read(userProfileProvider.notifier).loadUserProfile(widget.userId);
           await _loadPosts();
         },
+        color: AppColors.primary,
         child: CustomScrollView(
           slivers: [
-            SliverToBoxAdapter(child: _buildHeader(user, profile)),
+            SliverToBoxAdapter(child: _buildProfileContent(user, profile)),
             SliverToBoxAdapter(child: _buildPostGridHeader()),
             _buildPostGrid(),
           ],
@@ -98,223 +129,361 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
     );
   }
 
-  Widget _buildHeader(User user, profile) {
+  Widget _buildProfileContent(User user, Profile profile) {
     final rig = user.rig;
     final route = user.travelRoute;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingL),
+      padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: 16),
+          const SizedBox(height: 8),
 
-          // Photo + Stats
-          Row(
-            children: [
-              Container(
-                width: 86,
-                height: 86,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: AppColors.primary.withOpacity(0.2), width: 2),
-                ),
-                child: ClipOval(
-                  child: profile.photoUrl != null && profile.photoUrl!.isNotEmpty
-                      ? CachedNetworkImage(imageUrl: profile.photoUrl!, fit: BoxFit.cover)
-                      : const Icon(Icons.person, size: 40, color: AppColors.grey),
-                ),
+          // Profile Photo
+          Container(
+            width: 100,
+            height: 100,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: AppColors.primary.withValues(alpha: 0.3),
+                width: 3,
               ),
-              const SizedBox(width: 24),
-              Expanded(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    _buildStat('Posts', '${_posts.length}'),
-                    _buildStat('Followers', '${user.followerCount}', onTap: () {
-                      context.push('/profile/${user.uid}/connections?tab=0');
-                    }),
-                    _buildStat('Following', '${user.followingCount}', onTap: () {
-                      context.push('/profile/${user.uid}/connections?tab=1');
-                    }),
-                  ],
-                ),
-              ),
-            ],
+            ),
+            child: ClipOval(
+              child: profile.photoUrl != null && profile.photoUrl!.isNotEmpty
+                  ? Image.network(profile.photoUrl!, fit: BoxFit.cover)
+                  : Container(
+                      color: AppColors.slate,
+                      child: const Icon(Icons.person, size: 45, color: AppColors.grey),
+                    ),
+            ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
 
-          // Name + badge
+          // Name + Badge
           Row(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text(profile.name ?? 'User', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-              if (profile.age != null)
-                Text(', ${profile.age}', style: const TextStyle(fontSize: 16)),
+              Text(
+                profile.name ?? 'User',
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  fontFamily: 'Outfit',
+                  color: AppColors.white,
+                ),
+              ),
               if (user.verificationLevel > 0) ...[
-                const SizedBox(width: 6),
-                VerificationBadge(level: user.verificationLevel),
+                const SizedBox(width: 8),
+                Icon(Icons.verified, color: AppColors.primary, size: 20),
               ],
             ],
           ),
+          const SizedBox(height: 20),
 
-          // Bio
-          if (profile.bio != null && profile.bio!.isNotEmpty) ...[
-            const SizedBox(height: 4),
-            Text(profile.bio!, style: const TextStyle(fontSize: 14, height: 1.4)),
-          ],
-
-          // Rig one-liner
-          if (rig != null && (rig.type != null || rig.crewType != null)) ...[
-            const SizedBox(height: 6),
-            _infoLine(Icons.directions_car, _rigSummary(rig)),
-          ],
-
-          // Trip one-liner
-          if (route != null && route.destination != null) ...[
-            const SizedBox(height: 4),
-            _infoLine(Icons.place, _tripSummary(route)),
-          ],
-
-          // Hobby chips
-          if (profile.hobbies.isNotEmpty) ...[
-            const SizedBox(height: 10),
-            Wrap(
-              spacing: 6,
-              runSpacing: 6,
-              children: profile.hobbies.map<Widget>((h) => Chip(
-                label: Text(h, style: const TextStyle(fontSize: 12)),
-                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                visualDensity: VisualDensity.compact,
-                backgroundColor: AppColors.primaryExtraLight,
-                labelStyle: const TextStyle(color: AppColors.primary),
-              )).toList(),
-            ),
-          ],
-
-          const SizedBox(height: 12),
-
-          // Follow + Message buttons
+          // Stats Row
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              Expanded(
-                child: _FollowButton(user: user, ref: ref),
+              _buildStatItem('${_posts.length}', 'Posts'),
+              GestureDetector(
+                onTap: () => context.push('/profile/${user.uid}/connections?tab=0'),
+                child: _buildStatItem(_formatCount(user.followerCount), 'Followers'),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: () async {
-                    final convo = await ref.read(chatListProvider.notifier).createConversation(user.uid);
-                    if (convo != null && context.mounted) {
-                      context.push('/chat/${convo.id}', extra: user);
-                    }
-                  },
-                  icon: const Icon(Icons.chat_bubble_outline, size: 18),
-                  label: const Text('Message'),
-                  style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 8)),
-                ),
+              GestureDetector(
+                onTap: () => context.push('/profile/${user.uid}/connections?tab=1'),
+                child: _buildStatItem(_formatCount(user.followingCount), 'Following'),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 20),
 
-          // Join Caravan Button (Core Phase 2 Feature)
-          if (route != null && route.destination != null) ...[
-            Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: () => ref.read(matchingProvider.notifier).requestJoinCaravan(user.uid),
-                  icon: const Icon(Icons.group_add_outlined),
-                  label: const Text('Request to Join Caravan'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.secondary,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                ),
+          // Bio
+          if (profile.bio != null && profile.bio!.isNotEmpty) ...[
+            Text(
+              profile.bio!,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.white.withValues(alpha: 0.8),
+                height: 1.5,
+                fontFamily: 'Inter',
               ),
             ),
+            const SizedBox(height: 16),
           ],
-          const SizedBox(height: 8),
+
+          // Info chips
+          _buildCompactInfo(rig, route),
+
+          // Hobbies (max 3)
+          if (profile.hobbies.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            _buildHobbiesRow(profile.hobbies),
+          ],
+
+          const SizedBox(height: 20),
+
+          // Action Buttons
+          _buildActionButtons(user, route),
+
+          const SizedBox(height: 16),
         ],
       ),
     );
   }
 
-  Widget _infoLine(IconData icon, String text) {
-    return Row(
+  Widget _buildStatItem(String value, String label) {
+    return Column(
       children: [
-        Icon(icon, size: 16, color: AppColors.textSecondary),
-        const SizedBox(width: 6),
-        Expanded(
-          child: Text(text, style: const TextStyle(fontSize: 13, color: AppColors.textSecondary), maxLines: 1, overflow: TextOverflow.ellipsis),
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            fontFamily: 'Outfit',
+            color: AppColors.white,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 13,
+            color: Colors.white.withValues(alpha: 0.6),
+            fontFamily: 'Inter',
+          ),
         ),
       ],
     );
   }
 
-  String _rigSummary(rig) {
-    final parts = <String>[];
-    if (rig.type != null) parts.add(rig.type![0].toUpperCase() + rig.type!.substring(1));
-    if (rig.crewType != null) {
-      final crew = (rig.crewType as String).replaceAll('_', ' ');
-      parts.add(crew[0].toUpperCase() + crew.substring(1));
+  String _formatCount(int count) {
+    if (count >= 1000000) {
+      return '${(count / 1000000).toStringAsFixed(1)}M';
+    } else if (count >= 1000) {
+      return '${(count / 1000).toStringAsFixed(1)}K';
     }
-    if (rig.petFriendly) parts.add('+ Pet');
-    return parts.join(' · ');
+    return count.toString();
   }
 
-  String _tripSummary(route) {
-    String text = '';
-    if (route.origin != null) {
-      text += '${route.origin.latitude.toStringAsFixed(1)},${route.origin.longitude.toStringAsFixed(1)}';
+  Widget _buildCompactInfo(Rig? rig, TravelRoute? route) {
+    final infoParts = <Widget>[];
+
+    if (rig != null && rig.type != null) {
+      infoParts.add(_buildInfoChip(Icons.directions_car_outlined, _formatRigType(rig.type!)));
     }
-    if (route.destination != null) {
-      if (text.isNotEmpty) text += ' → ';
-      text += '${route.destination.latitude.toStringAsFixed(1)},${route.destination.longitude.toStringAsFixed(1)}';
+
+    if (route != null && route.destination != null) {
+      infoParts.add(_buildInfoChip(Icons.route_outlined, 'On the Road'));
     }
-    if (route.startDate != null) {
-      text += ' · ${DateFormat.MMMd().format(route.startDate!)}';
-    }
-    return text;
+
+    if (infoParts.isEmpty) return const SizedBox.shrink();
+
+    return Wrap(
+      alignment: WrapAlignment.center,
+      spacing: 8,
+      runSpacing: 8,
+      children: infoParts,
+    );
+  }
+
+  String _formatRigType(String type) {
+    return type.split('_').map((word) =>
+      word.isNotEmpty ? '${word[0].toUpperCase()}${word.substring(1)}' : ''
+    ).join(' ');
+  }
+
+  Widget _buildInfoChip(IconData icon, String text) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: AppColors.slate,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: AppColors.primary),
+          const SizedBox(width: 6),
+          Text(
+            text,
+            style: TextStyle(
+              fontSize: 13,
+              color: Colors.white.withValues(alpha: 0.8),
+              fontFamily: 'Inter',
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHobbiesRow(List<String> hobbies) {
+    final displayHobbies = hobbies.take(3).toList();
+    final remainingCount = hobbies.length - 3;
+
+    return Wrap(
+      alignment: WrapAlignment.center,
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        ...displayHobbies.map((hobby) => Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          decoration: BoxDecoration(
+            color: AppColors.primary.withValues(alpha: 0.15),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Text(
+            hobby,
+            style: const TextStyle(
+              fontSize: 13,
+              color: AppColors.primary,
+              fontWeight: FontWeight.w500,
+              fontFamily: 'Inter',
+            ),
+          ),
+        )),
+        if (remainingCount > 0)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(
+              '+$remainingCount',
+              style: TextStyle(
+                fontSize: 13,
+                color: Colors.white.withValues(alpha: 0.6),
+                fontWeight: FontWeight.w500,
+                fontFamily: 'Inter',
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildActionButtons(User user, TravelRoute? route) {
+    return Column(
+      children: [
+        Row(
+          children: [
+            Expanded(child: _FollowButton(user: user, ref: ref)),
+            const SizedBox(width: 12),
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: () async {
+                  final convo = await ref.read(chatListProvider.notifier).createConversation(user.uid);
+                  if (convo != null && mounted) {
+                    context.push('/chat/${convo.id}', extra: user);
+                  }
+                },
+                icon: const Icon(Icons.chat_bubble_outline, size: 18),
+                label: const Text('Message'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.white,
+                  side: BorderSide(color: Colors.white.withValues(alpha: 0.3)),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            ),
+          ],
+        ),
+        if (route != null && route.destination != null) ...[
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () => ref.read(matchingProvider.notifier).requestJoinCaravan(user.uid),
+              icon: const Icon(Icons.group_add_outlined, size: 20),
+              label: const Text('Request to Join Caravan'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.accent,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
   }
 
   Widget _buildPostGridHeader() {
-    return const Column(
-      children: [
-        Divider(height: 1),
-        Padding(padding: EdgeInsets.symmetric(vertical: 8), child: Icon(Icons.grid_on, color: AppColors.textPrimary)),
-        Divider(height: 1),
-      ],
+    return Container(
+      decoration: BoxDecoration(
+        border: Border(
+          top: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+          bottom: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+        ),
+      ),
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      child: const Icon(Icons.grid_on, color: AppColors.white, size: 24),
     );
   }
 
   Widget _buildPostGrid() {
     if (_loadingPosts) {
-      return const SliverFillRemaining(child: Center(child: CircularProgressIndicator()));
-    }
-    if (_posts.isEmpty) {
       return const SliverFillRemaining(
-        hasScrollBody: false,
-        child: Center(child: Padding(padding: EdgeInsets.only(top: 40), child: Text('No posts yet', style: TextStyle(color: AppColors.grey)))),
+        child: Center(child: CircularProgressIndicator(color: AppColors.primary)),
       );
     }
+
+    if (_posts.isEmpty) {
+      return SliverFillRemaining(
+        hasScrollBody: false,
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.camera_alt_outlined, size: 60, color: Colors.white.withValues(alpha: 0.3)),
+              const SizedBox(height: 16),
+              Text(
+                'No posts yet',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.white.withValues(alpha: 0.6),
+                  fontFamily: 'Inter',
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return SliverGrid(
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 3, crossAxisSpacing: 2, mainAxisSpacing: 2),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        crossAxisSpacing: 2,
+        mainAxisSpacing: 2,
+      ),
       delegate: SliverChildBuilderDelegate(
         (context, index) {
           final post = _posts[index];
           return GestureDetector(
             onTap: () => context.push('/post/${post.id}', extra: post),
             child: post.photos.isNotEmpty
-                ? CachedNetworkImage(imageUrl: post.photos.first, fit: BoxFit.cover, placeholder: (_, __) => Container(color: AppColors.greyExtraLight))
+                ? Image.network(post.photos.first, fit: BoxFit.cover)
                 : Container(
-                    color: AppColors.greyExtraLight,
+                    color: AppColors.slate,
                     alignment: Alignment.center,
                     padding: const EdgeInsets.all(8),
-                    child: Text(post.caption, maxLines: 3, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 11)),
+                    child: Text(
+                      post.caption,
+                      maxLines: 4,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Colors.white.withValues(alpha: 0.7),
+                      ),
+                    ),
                   ),
           );
         },
@@ -323,41 +492,54 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
     );
   }
 
-  Widget _buildStat(String label, String value, {VoidCallback? onTap}) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Column(
-        children: [
-          Text(value, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 2),
-          Text(label, style: const TextStyle(fontSize: 13, color: AppColors.textSecondary)),
-        ],
-      ),
-    );
-  }
-
   void _showSafetySheet(BuildContext context, User user) {
     showModalBottomSheet(
       context: context,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      backgroundColor: AppColors.slate,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
       builder: (ctx) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(width: 40, height: 4, margin: const EdgeInsets.only(top: 12, bottom: 16), decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2))),
+            Container(
+              width: 40,
+              height: 4,
+              margin: const EdgeInsets.only(top: 12, bottom: 8),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.3),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
             ListTile(
               leading: const Icon(Icons.block, color: Colors.red),
-              title: const Text('Block User'),
+              title: const Text('Block User', style: TextStyle(color: AppColors.white, fontFamily: 'Inter')),
+              subtitle: Text(
+                "They won't be able to contact you",
+                style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontFamily: 'Inter', fontSize: 13),
+              ),
               onTap: () async {
                 Navigator.pop(ctx);
                 final confirmed = await showDialog<bool>(
                   context: context,
                   builder: (c) => AlertDialog(
-                    title: const Text('Block User?'),
-                    content: const Text('They won\'t be able to see your profile or message you.'),
+                    backgroundColor: AppColors.slate,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    title: const Text('Block User?', style: TextStyle(color: AppColors.white, fontFamily: 'Outfit')),
+                    content: Text(
+                      "They won't be able to see your profile or message you.",
+                      style: TextStyle(color: Colors.white.withValues(alpha: 0.8), fontFamily: 'Inter'),
+                    ),
                     actions: [
-                      TextButton(onPressed: () => Navigator.pop(c, false), child: const Text('Cancel')),
-                      TextButton(onPressed: () => Navigator.pop(c, true), child: const Text('Block', style: TextStyle(color: Colors.red))),
+                      TextButton(
+                        onPressed: () => Navigator.pop(c, false),
+                        child: Text('Cancel', style: TextStyle(color: Colors.white.withValues(alpha: 0.6))),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.pop(c, true),
+                        child: const Text('Block', style: TextStyle(color: Colors.red)),
+                      ),
                     ],
                   ),
                 );
@@ -365,20 +547,24 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
                   final ok = await ref.read(safetyProvider.notifier).blockUser(user.uid);
                   if (mounted) {
                     ok ? ToastService.showSuccess('User blocked') : ToastService.showError('Failed to block');
-                    if (ok) context.pop();
+                    if (ok && mounted) context.pop();
                   }
                 }
               },
             ),
             ListTile(
               leading: const Icon(Icons.flag_outlined, color: Colors.orange),
-              title: const Text('Report User'),
+              title: const Text('Report User', style: TextStyle(color: AppColors.white, fontFamily: 'Inter')),
+              subtitle: Text(
+                "Let us know what's wrong",
+                style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontFamily: 'Inter', fontSize: 13),
+              ),
               onTap: () {
                 Navigator.pop(ctx);
                 _showReportDialog(context, user.uid);
               },
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 16),
           ],
         ),
       ),
@@ -402,39 +588,74 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDialogState) => AlertDialog(
-          title: const Text('Report User'),
+          backgroundColor: AppColors.slate,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Text('Report User', style: TextStyle(color: AppColors.white, fontFamily: 'Outfit')),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Select a reason:'),
+                Text(
+                  'Select a reason:',
+                  style: TextStyle(color: Colors.white.withValues(alpha: 0.8), fontFamily: 'Inter'),
+                ),
                 const SizedBox(height: 8),
                 ...reasons.map((r) => RadioListTile<String>(
                   value: r.$1,
                   groupValue: selectedReason,
-                  title: Text(r.$2, style: const TextStyle(fontSize: 14)),
+                  title: Text(r.$2, style: const TextStyle(fontSize: 14, color: AppColors.white, fontFamily: 'Inter')),
                   dense: true,
                   contentPadding: EdgeInsets.zero,
+                  activeColor: AppColors.primary,
                   onChanged: (v) => setDialogState(() => selectedReason = v),
                 )),
                 const SizedBox(height: 8),
                 TextField(
                   controller: descController,
                   maxLines: 2,
-                  decoration: const InputDecoration(hintText: 'Additional details (optional)', border: OutlineInputBorder(), isDense: true),
+                  style: const TextStyle(color: AppColors.white, fontFamily: 'Inter'),
+                  decoration: InputDecoration(
+                    hintText: 'Additional details (optional)',
+                    hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.4), fontFamily: 'Inter'),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: const BorderSide(color: AppColors.primary),
+                    ),
+                    isDense: true,
+                  ),
                 ),
               ],
             ),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text('Cancel', style: TextStyle(color: Colors.white.withValues(alpha: 0.6))),
+            ),
             TextButton(
               onPressed: () async {
-                if (selectedReason == null) { ToastService.showError('Select a reason'); return; }
+                if (selectedReason == null) {
+                  ToastService.showError('Select a reason');
+                  return;
+                }
                 Navigator.pop(ctx);
-                final ok = await ref.read(safetyProvider.notifier).reportUser(userId, selectedReason!, description: descController.text.trim());
-                if (mounted) ok ? ToastService.showSuccess('Report submitted') : ToastService.showError('Failed to submit report');
+                final ok = await ref.read(safetyProvider.notifier).reportUser(
+                  userId,
+                  selectedReason!,
+                  description: descController.text.trim(),
+                );
+                if (mounted) {
+                  ok ? ToastService.showSuccess('Report submitted') : ToastService.showError('Failed to submit report');
+                }
               },
               child: const Text('Submit', style: TextStyle(color: Colors.red)),
             ),
@@ -466,20 +687,33 @@ class _FollowButton extends StatelessWidget {
     }
 
     return ElevatedButton(
-      onPressed: isPending ? null : () {
-        if (isFollowing) {
-          ref.read(userProfileProvider.notifier).unfollowUser();
-        } else {
-          ref.read(userProfileProvider.notifier).followUser();
-        }
-      },
+      onPressed: isPending
+          ? null
+          : () {
+              if (isFollowing) {
+                ref.read(userProfileProvider.notifier).unfollowUser();
+              } else {
+                ref.read(userProfileProvider.notifier).followUser();
+              }
+            },
       style: ElevatedButton.styleFrom(
-        backgroundColor: isFollowing || isPending ? AppColors.greyExtraLight : AppColors.primary,
-        foregroundColor: isFollowing || isPending ? AppColors.textPrimary : Colors.white,
-        padding: const EdgeInsets.symmetric(vertical: 8),
+        backgroundColor: isFollowing || isPending ? AppColors.slate : AppColors.primary,
+        foregroundColor: AppColors.white,
+        disabledBackgroundColor: AppColors.slate,
+        disabledForegroundColor: Colors.white.withValues(alpha: 0.5),
+        padding: const EdgeInsets.symmetric(vertical: 12),
         elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: isFollowing || isPending
+              ? BorderSide(color: Colors.white.withValues(alpha: 0.2))
+              : BorderSide.none,
+        ),
       ),
-      child: Text(label),
+      child: Text(
+        label,
+        style: const TextStyle(fontWeight: FontWeight.w600, fontFamily: 'Outfit'),
+      ),
     );
   }
 }

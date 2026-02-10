@@ -5,12 +5,10 @@ import 'package:go_router/go_router.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/constants/app_colors.dart';
-import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/config/app_config.dart';
 import '../../../../shared/services/image_upload_service.dart';
 import '../../../../shared/services/toast_service.dart';
 import '../../../../shared/services/api_client.dart';
-import 'package:latlong2/latlong.dart';
 import '../../../auth/providers/auth_provider.dart';
 
 class EditProfileScreen extends ConsumerStatefulWidget {
@@ -49,13 +47,13 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   late TextEditingController _durationController;
   double _maxDistanceKm = 150;
 
-  // Options
+  // Options - must match backend enum values
   final _genders = ['male', 'female', 'non-binary', 'other'];
   final _intents = ['friends', 'dating', 'both'];
   final _rigTypes = [
-    'sprinter', 'skoolie', 'suv', 'truck_camper', 'rv', 'car', 'other'
+    'van', 'bus', 'truck', 'car', 'rv', 'sprinter', 'skoolie', 'suv', 'truck_camper', 'other'
   ];
-  final _crewTypes = ['solo', 'couple', 'family', 'friends'];
+  final _crewTypes = ['solo', 'couple', 'family', 'friends', 'with_pets'];
   final _hobbies = [
     'Hiking', 'Surfing', 'Yoga', 'Climbing', 'Photography', 'Music',
     'Cooking', 'Reading', 'Gaming', 'Coding', 'Art', 'Travel', 'Vanlife',
@@ -75,12 +73,21 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     _ageController = TextEditingController(text: profile?.age?.toString() ?? '');
     _bioController = TextEditingController(text: profile?.bio ?? '');
 
-    _selectedGender = profile?.gender ?? 'male';
-    _selectedHobbies = List.from(profile?.hobbies ?? []);
-    _selectedIntent = profile?.intent ?? 'friends';
+    // Validate dropdown values exist in options list
+    final gender = profile?.gender ?? 'male';
+    _selectedGender = _genders.contains(gender) ? gender : 'other';
 
-    _selectedRigType = rig?.type ?? 'sprinter';
-    _selectedCrewType = rig?.crewType ?? 'solo';
+    _selectedHobbies = List.from(profile?.hobbies ?? []);
+
+    final intent = profile?.intent ?? 'friends';
+    _selectedIntent = _intents.contains(intent) ? intent : 'friends';
+
+    final rigType = rig?.type ?? 'van';
+    _selectedRigType = _rigTypes.contains(rigType) ? rigType : 'other';
+
+    final crewType = rig?.crewType ?? 'solo';
+    _selectedCrewType = _crewTypes.contains(crewType) ? crewType : 'solo';
+
     _isPetFriendly = rig?.petFriendly ?? false;
 
     // Travel route
@@ -129,6 +136,17 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       initialDate: _startDate ?? DateTime.now().add(const Duration(days: 1)),
       firstDate: DateTime.now(),
       lastDate: DateTime.now().add(const Duration(days: 365)),
+      builder: (context, child) {
+        return Theme(
+          data: ThemeData.dark().copyWith(
+            colorScheme: const ColorScheme.dark(
+              primary: AppColors.primary,
+              surface: AppColors.slate,
+            ),
+          ),
+          child: child!,
+        );
+      },
     );
     if (picked != null) setState(() => _startDate = picked);
   }
@@ -227,27 +245,82 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     }
   }
 
+  InputDecoration _inputDecoration(String label, {IconData? prefixIcon, Widget? suffixIcon}) {
+    return InputDecoration(
+      labelText: label,
+      labelStyle: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontFamily: 'Inter'),
+      prefixIcon: prefixIcon != null ? Icon(prefixIcon, color: Colors.white.withValues(alpha: 0.5)) : null,
+      suffixIcon: suffixIcon,
+      filled: true,
+      fillColor: AppColors.slate,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide.none,
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: AppColors.primary),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Colors.red),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isLoading = ref.watch(authProvider).isLoading;
 
     return Scaffold(
+      backgroundColor: AppColors.obsidian,
       appBar: AppBar(
-        title: const Text('Edit Profile'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: AppColors.white),
+          onPressed: () => context.pop(),
+        ),
+        title: const Text(
+          'Edit Profile',
+          style: TextStyle(
+            color: AppColors.white,
+            fontFamily: 'Outfit',
+            fontWeight: FontWeight.w600,
+            fontSize: 18,
+          ),
+        ),
+        centerTitle: true,
         actions: [
-          TextButton(
-            onPressed: isLoading ? null : _saveProfile,
-            child: isLoading
-                ? const SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2))
-                : const Text('Save'),
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: TextButton(
+              onPressed: isLoading ? null : _saveProfile,
+              child: isLoading
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+                    )
+                  : const Text(
+                      'Save',
+                      style: TextStyle(
+                        color: AppColors.primary,
+                        fontFamily: 'Outfit',
+                        fontWeight: FontWeight.w600,
+                        fontSize: 16,
+                      ),
+                    ),
+            ),
           ),
         ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(AppDimensions.paddingL),
+        padding: const EdgeInsets.all(20),
         child: Form(
           key: _formKey,
           child: Column(
@@ -259,223 +332,286 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   onTap: _pickImage,
                   child: Stack(
                     children: [
-                      CircleAvatar(
-                        radius: 60,
-                        backgroundColor: AppColors.greyExtraLight,
-                        backgroundImage: _newProfileImage != null
-                            ? FileImage(_newProfileImage!)
-                            : (_currentPhotoUrl != null
-                                    ? CachedNetworkImageProvider(_currentPhotoUrl!)
-                                    : null)
-                                as ImageProvider?,
-                        child: (_newProfileImage == null &&
-                                _currentPhotoUrl == null)
-                            ? const Icon(Icons.camera_alt,
-                                size: 40, color: AppColors.grey)
-                            : null,
+                      Container(
+                        width: 120,
+                        height: 120,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: AppColors.primary.withValues(alpha: 0.3), width: 3),
+                        ),
+                        child: ClipOval(
+                          child: _newProfileImage != null
+                              ? Image.file(_newProfileImage!, fit: BoxFit.cover)
+                              : (_currentPhotoUrl != null
+                                  ? CachedNetworkImage(
+                                      imageUrl: _currentPhotoUrl!,
+                                      fit: BoxFit.cover,
+                                      placeholder: (_, __) => Container(color: AppColors.slate),
+                                    )
+                                  : Container(
+                                      color: AppColors.slate,
+                                      child: Icon(
+                                        Icons.camera_alt,
+                                        size: 40,
+                                        color: Colors.white.withValues(alpha: 0.5),
+                                      ),
+                                    )),
+                        ),
                       ),
                       Positioned(
                         bottom: 0,
                         right: 0,
-                        child: CircleAvatar(
-                          radius: 16,
-                          backgroundColor: AppColors.primary,
-                          child: const Icon(Icons.edit,
-                              size: 16, color: AppColors.white),
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: const BoxDecoration(
+                            color: AppColors.primary,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.edit, size: 18, color: AppColors.white),
                         ),
                       ),
                     ],
                   ),
                 ),
               ),
-              const SizedBox(height: AppDimensions.paddingL),
+              const SizedBox(height: 32),
 
-              // ─── Basic Info
-              _sectionTitle('Basic Info'),
-              const SizedBox(height: AppDimensions.paddingS),
+              // Basic Info Section
+              _buildSectionTitle('Basic Info'),
+              const SizedBox(height: 12),
               TextFormField(
                 controller: _nameController,
-                decoration: const InputDecoration(
-                    labelText: 'Name', border: OutlineInputBorder()),
+                style: const TextStyle(color: AppColors.white, fontFamily: 'Inter'),
+                decoration: _inputDecoration('Name'),
                 validator: (v) => v!.isEmpty ? 'Enter name' : null,
               ),
-              const SizedBox(height: AppDimensions.paddingS),
+              const SizedBox(height: 12),
               TextFormField(
                 controller: _ageController,
-                decoration: const InputDecoration(
-                    labelText: 'Age', border: OutlineInputBorder()),
+                style: const TextStyle(color: AppColors.white, fontFamily: 'Inter'),
+                decoration: _inputDecoration('Age'),
                 keyboardType: TextInputType.number,
                 validator: (v) => v!.isEmpty ? 'Enter age' : null,
               ),
-              const SizedBox(height: AppDimensions.paddingS),
+              const SizedBox(height: 12),
               DropdownButtonFormField<String>(
                 value: _selectedGender,
-                decoration: const InputDecoration(
-                    labelText: 'Gender', border: OutlineInputBorder()),
-                items: _genders
-                    .map((g) => DropdownMenuItem(
-                        value: g, child: Text(g.toUpperCase())))
-                    .toList(),
+                dropdownColor: AppColors.slate,
+                style: const TextStyle(color: AppColors.white, fontFamily: 'Inter'),
+                decoration: _inputDecoration('Gender'),
+                items: _genders.map((g) => DropdownMenuItem(
+                  value: g,
+                  child: Text(_capitalize(g)),
+                )).toList(),
                 onChanged: (val) => setState(() => _selectedGender = val!),
               ),
 
-              const SizedBox(height: AppDimensions.paddingL),
-              _sectionTitle('Bio'),
-              const SizedBox(height: AppDimensions.paddingS),
+              const SizedBox(height: 24),
+              _buildSectionTitle('Bio'),
+              const SizedBox(height: 12),
               TextFormField(
                 controller: _bioController,
                 maxLines: 4,
-                decoration: const InputDecoration(
-                  labelText: 'About Me',
-                  alignLabelWithHint: true,
-                  border: OutlineInputBorder(),
-                ),
+                style: const TextStyle(color: AppColors.white, fontFamily: 'Inter'),
+                decoration: _inputDecoration('About Me'),
               ),
 
-              // ─── Rig
-              const SizedBox(height: AppDimensions.paddingL),
-              _sectionTitle('Rig & Crew'),
-              const SizedBox(height: AppDimensions.paddingS),
+              // Rig Section
+              const SizedBox(height: 24),
+              _buildSectionTitle('Rig & Crew'),
+              const SizedBox(height: 12),
               DropdownButtonFormField<String>(
                 value: _selectedRigType,
-                decoration: const InputDecoration(
-                    labelText: 'Rig Type', border: OutlineInputBorder()),
-                items: _rigTypes
-                    .map((t) => DropdownMenuItem(
-                        value: t,
-                        child: Text(t.replaceAll('_', ' ').toUpperCase())))
-                    .toList(),
+                dropdownColor: AppColors.slate,
+                style: const TextStyle(color: AppColors.white, fontFamily: 'Inter'),
+                decoration: _inputDecoration('Rig Type'),
+                items: _rigTypes.map((t) => DropdownMenuItem(
+                  value: t,
+                  child: Text(_capitalize(t.replaceAll('_', ' '))),
+                )).toList(),
                 onChanged: (val) => setState(() => _selectedRigType = val!),
               ),
-              const SizedBox(height: AppDimensions.paddingS),
+              const SizedBox(height: 12),
               DropdownButtonFormField<String>(
                 value: _selectedCrewType,
-                decoration: const InputDecoration(
-                    labelText: 'Crew Type', border: OutlineInputBorder()),
-                items: _crewTypes
-                    .map((c) => DropdownMenuItem(
-                        value: c, child: Text(c.toUpperCase())))
-                    .toList(),
+                dropdownColor: AppColors.slate,
+                style: const TextStyle(color: AppColors.white, fontFamily: 'Inter'),
+                decoration: _inputDecoration('Crew Type'),
+                items: _crewTypes.map((c) => DropdownMenuItem(
+                  value: c,
+                  child: Text(_capitalize(c)),
+                )).toList(),
                 onChanged: (val) => setState(() => _selectedCrewType = val!),
               ),
-              SwitchListTile(
-                title: const Text('Pet Friendly'),
-                contentPadding: EdgeInsets.zero,
+              const SizedBox(height: 12),
+              _buildSwitchRow(
+                title: 'Pet Friendly',
                 value: _isPetFriendly,
                 onChanged: (val) => setState(() => _isPetFriendly = val),
               ),
 
-              // ─── Travel Route
-              const SizedBox(height: AppDimensions.paddingL),
-              _sectionTitle('Travel Route'),
-              const SizedBox(height: AppDimensions.paddingS),
+              // Travel Route Section
+              const SizedBox(height: 24),
+              _buildSectionTitle('Travel Route'),
+              const SizedBox(height: 12),
               TextField(
                 controller: _originNameController,
-                decoration: InputDecoration(
-                  labelText: 'Current location',
-                  border: const OutlineInputBorder(),
-                  prefixIcon: const Icon(Icons.my_location),
+                style: const TextStyle(color: AppColors.white, fontFamily: 'Inter'),
+                decoration: _inputDecoration(
+                  'Current Location',
+                  prefixIcon: Icons.my_location,
                   suffixIcon: IconButton(
-                    icon: const Icon(Icons.map_outlined),
+                    icon: Icon(Icons.map_outlined, color: Colors.white.withValues(alpha: 0.5)),
                     onPressed: () => _openLocationPicker(isOrigin: true),
                   ),
                 ),
                 readOnly: true,
                 onTap: () => _openLocationPicker(isOrigin: true),
               ),
-              const SizedBox(height: AppDimensions.paddingS),
+              const SizedBox(height: 12),
               TextField(
                 controller: _destNameController,
-                decoration: InputDecoration(
-                  labelText: 'Destination',
-                  border: const OutlineInputBorder(),
-                  prefixIcon: const Icon(Icons.place),
+                style: const TextStyle(color: AppColors.white, fontFamily: 'Inter'),
+                decoration: _inputDecoration(
+                  'Destination',
+                  prefixIcon: Icons.place,
                   suffixIcon: IconButton(
-                    icon: const Icon(Icons.map_outlined),
+                    icon: Icon(Icons.map_outlined, color: Colors.white.withValues(alpha: 0.5)),
                     onPressed: () => _openLocationPicker(isOrigin: false),
                   ),
                 ),
                 readOnly: true,
                 onTap: () => _openLocationPicker(isOrigin: false),
               ),
-              const SizedBox(height: AppDimensions.paddingS),
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: const Icon(Icons.calendar_today),
-                title: Text(
-                  _startDate != null
-                      ? 'Starts ${DateFormat.yMMMd().format(_startDate!)}'
-                      : 'Start date',
-                ),
-                trailing: const Icon(Icons.chevron_right),
+              const SizedBox(height: 12),
+              GestureDetector(
                 onTap: _pickStartDate,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  decoration: BoxDecoration(
+                    color: AppColors.slate,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.calendar_today, color: Colors.white.withValues(alpha: 0.5)),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          _startDate != null
+                              ? 'Starts ${DateFormat.yMMMd().format(_startDate!)}'
+                              : 'Select start date',
+                          style: TextStyle(
+                            color: _startDate != null ? AppColors.white : Colors.white.withValues(alpha: 0.6),
+                            fontFamily: 'Inter',
+                          ),
+                        ),
+                      ),
+                      Icon(Icons.chevron_right, color: Colors.white.withValues(alpha: 0.3)),
+                    ],
+                  ),
+                ),
               ),
+              const SizedBox(height: 12),
               TextField(
                 controller: _durationController,
-                decoration: const InputDecoration(
-                  labelText: 'Trip duration (days)',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.timelapse),
-                ),
+                style: const TextStyle(color: AppColors.white, fontFamily: 'Inter'),
+                decoration: _inputDecoration('Trip duration (days)', prefixIcon: Icons.timelapse),
                 keyboardType: TextInputType.number,
               ),
 
-              // ─── Distance
-              const SizedBox(height: AppDimensions.paddingL),
-              _sectionTitle('Search Distance'),
-              Slider(
-                value: _maxDistanceKm,
-                min: 25,
-                max: 500,
-                divisions: 19,
-                label: '${_maxDistanceKm.round()} km',
-                onChanged: (val) => setState(() => _maxDistanceKm = val),
+              // Search Distance Section
+              const SizedBox(height: 24),
+              _buildSectionTitle('Search Distance'),
+              const SizedBox(height: 8),
+              SliderTheme(
+                data: SliderThemeData(
+                  activeTrackColor: AppColors.primary,
+                  inactiveTrackColor: Colors.white.withValues(alpha: 0.1),
+                  thumbColor: AppColors.primary,
+                  overlayColor: AppColors.primary.withValues(alpha: 0.2),
+                  valueIndicatorColor: AppColors.primary,
+                  valueIndicatorTextStyle: const TextStyle(color: AppColors.white, fontFamily: 'Inter'),
+                ),
+                child: Slider(
+                  value: _maxDistanceKm,
+                  min: 25,
+                  max: 500,
+                  divisions: 19,
+                  label: '${_maxDistanceKm.round()} km',
+                  onChanged: (val) => setState(() => _maxDistanceKm = val),
+                ),
               ),
               Center(
-                child: Text('${_maxDistanceKm.round()} km',
-                    style: const TextStyle(fontWeight: FontWeight.w600)),
+                child: Text(
+                  '${_maxDistanceKm.round()} km',
+                  style: const TextStyle(
+                    color: AppColors.white,
+                    fontWeight: FontWeight.w600,
+                    fontFamily: 'Outfit',
+                    fontSize: 16,
+                  ),
+                ),
               ),
 
-              // ─── Intent
-              const SizedBox(height: AppDimensions.paddingL),
-              _sectionTitle('Intent'),
-              const SizedBox(height: AppDimensions.paddingS),
+              // Intent Section
+              const SizedBox(height: 24),
+              _buildSectionTitle('Looking For'),
+              const SizedBox(height: 12),
               DropdownButtonFormField<String>(
                 value: _selectedIntent,
-                decoration: const InputDecoration(
-                    labelText: 'Looking for', border: OutlineInputBorder()),
-                items: _intents
-                    .map((i) => DropdownMenuItem(
-                        value: i, child: Text(i.toUpperCase())))
-                    .toList(),
+                dropdownColor: AppColors.slate,
+                style: const TextStyle(color: AppColors.white, fontFamily: 'Inter'),
+                decoration: _inputDecoration('Intent'),
+                items: _intents.map((i) => DropdownMenuItem(
+                  value: i,
+                  child: Text(_capitalize(i)),
+                )).toList(),
                 onChanged: (val) => setState(() => _selectedIntent = val!),
               ),
 
-              // ─── Hobbies
-              const SizedBox(height: AppDimensions.paddingL),
-              _sectionTitle('Hobbies'),
-              const SizedBox(height: AppDimensions.paddingS),
+              // Hobbies Section
+              const SizedBox(height: 24),
+              _buildSectionTitle('Hobbies'),
+              const SizedBox(height: 12),
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
                 children: _hobbies.map((hobby) {
                   final isSelected = _selectedHobbies.contains(hobby);
-                  return FilterChip(
-                    label: Text(hobby),
-                    selected: isSelected,
-                    onSelected: (selected) {
+                  return GestureDetector(
+                    onTap: () {
                       setState(() {
-                        if (selected) {
-                          _selectedHobbies.add(hobby);
-                        } else {
+                        if (isSelected) {
                           _selectedHobbies.remove(hobby);
+                        } else {
+                          _selectedHobbies.add(hobby);
                         }
                       });
                     },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: isSelected ? AppColors.primary.withValues(alpha: 0.2) : AppColors.slate,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: isSelected ? AppColors.primary : Colors.white.withValues(alpha: 0.1),
+                        ),
+                      ),
+                      child: Text(
+                        hobby,
+                        style: TextStyle(
+                          color: isSelected ? AppColors.primary : Colors.white.withValues(alpha: 0.8),
+                          fontFamily: 'Inter',
+                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                        ),
+                      ),
+                    ),
                   );
                 }).toList(),
               ),
-              const SizedBox(height: AppDimensions.paddingXL),
+              const SizedBox(height: 40),
             ],
           ),
         ),
@@ -483,14 +619,56 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     );
   }
 
-  Widget _sectionTitle(String title) {
+  Widget _buildSectionTitle(String title) {
     return Text(
       title,
       style: const TextStyle(
-        fontSize: 18,
-        fontWeight: FontWeight.bold,
+        fontSize: 16,
+        fontWeight: FontWeight.w600,
         color: AppColors.primary,
+        fontFamily: 'Outfit',
       ),
     );
+  }
+
+  Widget _buildSwitchRow({
+    required String title,
+    required bool value,
+    required ValueChanged<bool> onChanged,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: AppColors.slate,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(
+              color: AppColors.white,
+              fontFamily: 'Inter',
+              fontSize: 16,
+            ),
+          ),
+          Switch(
+            value: value,
+            onChanged: onChanged,
+            activeColor: AppColors.primary,
+            activeTrackColor: AppColors.primary.withValues(alpha: 0.3),
+            inactiveThumbColor: Colors.white.withValues(alpha: 0.5),
+            inactiveTrackColor: Colors.white.withValues(alpha: 0.1),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _capitalize(String text) {
+    if (text.isEmpty) return text;
+    return text[0].toUpperCase() + text.substring(1);
   }
 }

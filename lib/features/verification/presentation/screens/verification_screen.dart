@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
-import '../../../../core/constants/app_dimensions.dart';
 import '../../../../shared/models/verification.dart';
 import '../../../../shared/services/toast_service.dart';
 import '../../../../shared/services/image_upload_service.dart';
@@ -30,27 +30,57 @@ class _VerificationScreenState extends ConsumerState<VerificationScreen> {
     final v = state.verification;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Verification')),
+      backgroundColor: AppColors.obsidian,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: AppColors.white),
+          onPressed: () => context.pop(),
+        ),
+        title: const Text(
+          'Verification',
+          style: TextStyle(
+            color: AppColors.white,
+            fontFamily: 'Outfit',
+            fontWeight: FontWeight.w600,
+            fontSize: 18,
+          ),
+        ),
+        centerTitle: true,
+      ),
       body: state.isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
           : v == null
               ? Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Text('Unable to load verification status'),
+                      Text(
+                        'Unable to load verification status',
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.7),
+                          fontFamily: 'Inter',
+                        ),
+                      ),
                       const SizedBox(height: 16),
                       ElevatedButton(
                         onPressed: () => ref.read(verificationProvider.notifier).loadStatus(),
-                        child: const Text('Retry'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        child: const Text('Retry', style: TextStyle(fontFamily: 'Outfit')),
                       ),
                     ],
                   ),
                 )
               : RefreshIndicator(
                   onRefresh: () => ref.read(verificationProvider.notifier).loadStatus(),
+                  color: AppColors.primary,
                   child: ListView(
-                    padding: const EdgeInsets.all(AppDimensions.paddingL),
+                    padding: const EdgeInsets.all(20),
                     children: [
                       _buildHeader(v),
                       const SizedBox(height: 24),
@@ -68,25 +98,37 @@ class _VerificationScreenState extends ConsumerState<VerificationScreen> {
   }
 
   Widget _buildHeader(Verification v) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          children: [
-            VerificationBadge(level: v.level, size: 48, showLabel: true),
-            const SizedBox(height: 12),
-            Text(
-              'Level ${v.level} / 5',
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: AppColors.slate,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+      ),
+      child: Column(
+        children: [
+          VerificationBadge(level: v.level, size: 48, showLabel: true),
+          const SizedBox(height: 12),
+          Text(
+            'Level ${v.level} / 5',
+            style: const TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              fontFamily: 'Outfit',
+              color: AppColors.white,
             ),
-            const SizedBox(height: 4),
-            Text(
-              _levelDescription(v.level),
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.grey[600]),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            _levelDescription(v.level),
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.6),
+              fontFamily: 'Inter',
+              fontSize: 14,
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -106,16 +148,25 @@ class _VerificationScreenState extends ConsumerState<VerificationScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('VERIFICATION PROGRESS', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.textSecondary)),
-        const SizedBox(height: 8),
+        Text(
+          'VERIFICATION PROGRESS',
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: Colors.white.withValues(alpha: 0.4),
+            fontFamily: 'Outfit',
+            letterSpacing: 1.2,
+          ),
+        ),
+        const SizedBox(height: 12),
         ClipRRect(
           borderRadius: BorderRadius.circular(8),
           child: LinearProgressIndicator(
             value: level / 5,
             minHeight: 12,
-            backgroundColor: AppColors.greyExtraLight,
+            backgroundColor: AppColors.slate,
             valueColor: AlwaysStoppedAnimation<Color>(
-              level >= 4 ? Colors.amber.shade700 : level >= 2 ? Colors.blue : Colors.grey,
+              level >= 4 ? Colors.amber.shade700 : level >= 2 ? AppColors.primary : Colors.grey,
             ),
           ),
         ),
@@ -155,9 +206,7 @@ class _VerificationScreenState extends ConsumerState<VerificationScreen> {
           : pending
               ? const Icon(Icons.hourglass_top, color: Colors.orange)
               : null,
-      action: (!verified && !pending)
-          ? () => _showPhoneDialog()
-          : null,
+      action: (!verified && !pending) ? () => _showPhoneDialog() : null,
       actionLabel: 'Submit',
     );
   }
@@ -181,9 +230,7 @@ class _VerificationScreenState extends ConsumerState<VerificationScreen> {
                   ? 'Your selfie is being reviewed'
                   : 'Take a selfie to verify your identity',
       trailing: verified ? const Icon(Icons.check_circle, color: Colors.green) : null,
-      action: (!verified && !pending)
-          ? () => _submitSelfie()
-          : null,
+      action: (!verified && !pending) ? () => _submitSelfie() : null,
       actionLabel: rejected ? 'Resubmit' : 'Submit',
     );
   }
@@ -233,9 +280,7 @@ class _VerificationScreenState extends ConsumerState<VerificationScreen> {
                   ? 'Your document is being reviewed'
                   : 'Upload a government-issued ID',
       trailing: verified ? const Icon(Icons.check_circle, color: Colors.green) : null,
-      action: (!verified && !pending)
-          ? () => _showIdDocDialog()
-          : null,
+      action: (!verified && !pending) ? () => _showIdDocDialog() : null,
       actionLabel: rejected ? 'Resubmit' : 'Submit',
     );
   }
@@ -245,18 +290,33 @@ class _VerificationScreenState extends ConsumerState<VerificationScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Submit Phone Number'),
+        backgroundColor: AppColors.slate,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text(
+          'Submit Phone Number',
+          style: TextStyle(color: AppColors.white, fontFamily: 'Outfit'),
+        ),
         content: TextField(
           controller: controller,
           keyboardType: TextInputType.phone,
-          decoration: const InputDecoration(
+          style: const TextStyle(color: AppColors.white, fontFamily: 'Inter'),
+          decoration: InputDecoration(
             hintText: '+1 234 567 8900',
-            border: OutlineInputBorder(),
-            prefixIcon: Icon(Icons.phone),
+            hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.4)),
+            filled: true,
+            fillColor: AppColors.obsidian,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
+            prefixIcon: Icon(Icons.phone, color: Colors.white.withValues(alpha: 0.5)),
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('Cancel', style: TextStyle(color: Colors.white.withValues(alpha: 0.6))),
+          ),
           TextButton(
             onPressed: () async {
               final phone = controller.text.trim();
@@ -265,7 +325,7 @@ class _VerificationScreenState extends ConsumerState<VerificationScreen> {
               final ok = await ref.read(verificationProvider.notifier).submitPhone(phone);
               if (mounted) ok ? ToastService.showSuccess('Phone submitted for review') : ToastService.showError('Failed to submit');
             },
-            child: const Text('Submit'),
+            child: const Text('Submit', style: TextStyle(color: AppColors.primary, fontFamily: 'Outfit')),
           ),
         ],
       ),
@@ -297,25 +357,37 @@ class _VerificationScreenState extends ConsumerState<VerificationScreen> {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDialogState) => AlertDialog(
-          title: const Text('Submit ID Document'),
+          backgroundColor: AppColors.slate,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Text(
+            'Submit ID Document',
+            style: TextStyle(color: AppColors.white, fontFamily: 'Outfit'),
+          ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Document type:'),
+              Text(
+                'Document type:',
+                style: TextStyle(color: Colors.white.withValues(alpha: 0.8), fontFamily: 'Inter'),
+              ),
               const SizedBox(height: 8),
               ...docTypes.map((t) => RadioListTile<String>(
                 value: t.$1,
                 groupValue: selectedType,
-                title: Text(t.$2, style: const TextStyle(fontSize: 14)),
+                title: Text(t.$2, style: const TextStyle(fontSize: 14, color: AppColors.white, fontFamily: 'Inter')),
                 dense: true,
                 contentPadding: EdgeInsets.zero,
+                activeColor: AppColors.primary,
                 onChanged: (v) => setDialogState(() => selectedType = v),
               )),
             ],
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text('Cancel', style: TextStyle(color: Colors.white.withValues(alpha: 0.6))),
+            ),
             TextButton(
               onPressed: () async {
                 if (selectedType == null) { ToastService.showError('Select a document type'); return; }
@@ -331,7 +403,7 @@ class _VerificationScreenState extends ConsumerState<VerificationScreen> {
                   ToastService.showError('Failed to upload document');
                 }
               },
-              child: const Text('Upload & Submit'),
+              child: const Text('Upload & Submit', style: TextStyle(color: AppColors.primary, fontFamily: 'Outfit')),
             ),
           ],
         ),
@@ -363,44 +435,79 @@ class _StepCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
+    return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(icon, color: AppColors.primary),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-                      const SizedBox(height: 2),
-                      Text(status, style: TextStyle(fontSize: 13, color: statusColor, fontWeight: FontWeight.w600)),
-                    ],
-                  ),
-                ),
-                if (trailing != null) trailing!,
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(subtitle, style: TextStyle(fontSize: 13, color: Colors.grey[600])),
-            if (action != null) ...[
-              const SizedBox(height: 12),
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton(
-                  onPressed: action,
-                  child: Text(actionLabel ?? 'Submit'),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.slate,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, color: AppColors.primary),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        fontFamily: 'Outfit',
+                        color: AppColors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      status,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: statusColor,
+                        fontWeight: FontWeight.w600,
+                        fontFamily: 'Inter',
+                      ),
+                    ),
+                  ],
                 ),
               ),
+              if (trailing != null) trailing!,
             ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            subtitle,
+            style: TextStyle(
+              fontSize: 13,
+              color: Colors.white.withValues(alpha: 0.6),
+              fontFamily: 'Inter',
+            ),
+          ),
+          if (action != null) ...[
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton(
+                onPressed: action,
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.primary,
+                  side: const BorderSide(color: AppColors.primary),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+                child: Text(
+                  actionLabel ?? 'Submit',
+                  style: const TextStyle(fontFamily: 'Outfit', fontWeight: FontWeight.w600),
+                ),
+              ),
+            ),
           ],
-        ),
+        ],
       ),
     );
   }

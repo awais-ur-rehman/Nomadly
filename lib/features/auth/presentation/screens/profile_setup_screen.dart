@@ -22,8 +22,8 @@ class ProfileSetupScreen extends ConsumerStatefulWidget {
 
 class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
   final PageController _pageController = PageController();
-  int _currentStep = 0;
-  final int _totalSteps = 4;
+  int _currentStep = 0; 
+  int _totalSteps = 5; 
 
   // Form State
   File? _profileImage;
@@ -50,6 +50,12 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
 
   // Distance preference
   double _maxDistanceKm = 150;
+
+  // Builder Profile state
+  bool _wantsToBeBuilder = false;
+  final List<String> _selectedSpecialties = [];
+  final _hourlyRateController = TextEditingController();
+  final _builderBioController = TextEditingController();
 
   // Options
   final List<String> _genders = ['male', 'female', 'non-binary', 'other'];
@@ -241,6 +247,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
+    final isKeyboardOpen = MediaQuery.of(context).viewInsets.bottom > 0;
 
     return Scaffold(
       backgroundColor: AppColors.obsidian,
@@ -291,26 +298,30 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                   _buildSocialIdentitySection(), // 1
                   _buildNomadSetupSection(), // 2
                   _buildDiscoverySection(), // 3
+                  _buildBuilderOptInStep(),
+                  if (_wantsToBeBuilder) _buildBuilderDetailStep(),
                 ],
               ),
             ),
 
-            Padding(
-              padding: const EdgeInsets.all(30),
-              child: SizedBox(
-                width: double.infinity,
-                height: 64,
-                child: ElevatedButton(
-                  onPressed: authState.isLoading ? null : _nextStep,
-                  child: authState.isLoading && _currentStep == _totalSteps - 1
-                      ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: AppColors.white, strokeWidth: 2))
-                      : Text(
-                          _currentStep == _totalSteps - 1 ? 'GET STARTED' : 'CONTINUE',
-                          style: const TextStyle(letterSpacing: 2),
-                        ),
+            if (!isKeyboardOpen)
+              Padding(
+                padding: const EdgeInsets.all(AppDimensions.paddingL),
+                child: SizedBox(
+                  width: double.infinity,
+                  height: AppDimensions.buttonHeightL,
+                  child: ElevatedButton(
+                    onPressed: authState.isLoading ? null : _nextStep,
+                    child: authState.isLoading && _currentStep == _totalSteps - 1
+                        ? const CircularProgressIndicator(color: AppColors.white)
+                        : Text(
+                            (_currentStep == _totalSteps - 1 || (_currentStep == 8 && !_wantsToBeBuilder))
+                                ? AppStrings.finish
+                                : AppStrings.continue_,
+                          ),
+                  ),
                 ),
               ),
-            ),
           ],
         ),
       ),
@@ -318,6 +329,179 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
   }
 
   // ─── Section Builders ──────────────────────────────────────────
+
+  Widget _buildBuilderOptInStep() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 30),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: 20),
+          const Text(
+            'Marketplace',
+            style: TextStyle(
+              fontFamily: 'Outfit',
+              fontSize: 32,
+              fontWeight: FontWeight.w800,
+              color: AppColors.white,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Do you have skills to offer the community?',
+            style: TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 16,
+              color: AppColors.white.withOpacity(0.5),
+              height: 1.5,
+            ),
+          ),
+          const SizedBox(height: 40),
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: AppColors.white.withOpacity(0.05),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: AppColors.primary.withOpacity(0.5)),
+            ),
+            child: Column(
+              children: [
+                const Icon(Icons.handyman_outlined, size: 48, color: AppColors.primary),
+                const SizedBox(height: 16),
+                const Text(
+                  'Join the Builder Network',
+                  style: TextStyle(
+                    fontFamily: 'Outfit',
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.white,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Offer services like repairs, installs, or upgrades to other nomads.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: AppColors.white.withOpacity(0.6),
+                    fontSize: 14,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text(
+                    'Yes, I want to be a Builder',
+                    style: TextStyle(
+                      fontFamily: 'Outfit',
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.white,
+                    ),
+                  ),
+                  value: _wantsToBeBuilder,
+                  activeColor: AppColors.primary,
+                  onChanged: (val) {
+                    setState(() {
+                      _wantsToBeBuilder = val;
+                      _totalSteps = val ? 6 : 5; // Adjust total steps dynamically
+                    });
+                  },
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBuilderDetailStep() {
+    final specialties = [
+      'Solar Install', 'Plumbing', 'Electrical', 'Carpentry', 'Mechanic', 'Welding', 'Insulation', 'Flooring', 'Custom'
+    ];
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 30),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: 20),
+          const Text(
+            'Builder Details',
+            style: TextStyle(
+              fontFamily: 'Outfit',
+              fontSize: 32,
+              fontWeight: FontWeight.w800,
+              color: AppColors.white,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Tell us about your expertise.',
+            style: TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 16,
+              color: AppColors.white.withOpacity(0.5),
+              height: 1.5,
+            ),
+          ),
+          const SizedBox(height: 40),
+          
+          _buildFieldHeader('SPECIALTIES'),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: specialties.map((spec) {
+              final isSelected = _selectedSpecialties.contains(spec);
+              return FilterChip(
+                label: Text(spec),
+                selected: isSelected,
+                onSelected: (selected) {
+                  setState(() {
+                    if (selected) _selectedSpecialties.add(spec);
+                    else _selectedSpecialties.remove(spec);
+                  });
+                },
+                selectedColor: AppColors.primary,
+                backgroundColor: AppColors.white.withOpacity(0.05),
+                labelStyle: TextStyle(
+                  color: isSelected ? AppColors.white : AppColors.white.withOpacity(0.6),
+                  fontWeight: FontWeight.w600,
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10), side: BorderSide.none),
+                showCheckmark: false,
+              );
+            }).toList(),
+          ),
+          
+          const SizedBox(height: 30),
+          _buildFieldHeader('HOURLY RATE (\$)'),
+          const SizedBox(height: 8),
+          TextField(
+            controller: _hourlyRateController,
+            keyboardType: TextInputType.number,
+            decoration: const InputDecoration(
+              hintText: 'e.g. 50',
+              prefixText: '\$ ',
+            ),
+          ),
+
+          const SizedBox(height: 30),
+          _buildFieldHeader('EXPERIENCE / BIO'),
+          const SizedBox(height: 8),
+          TextField(
+            controller: _builderBioController,
+            maxLines: 4,
+            decoration: const InputDecoration(
+              hintText: 'Describe your skills and experience...',
+            ),
+          ),
+          const SizedBox(height: 40),
+        ],
+      ),
+    );
+  }
 
   Widget _buildEssentialsSection() {
     return SingleChildScrollView(

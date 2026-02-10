@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
-import '../../../../core/constants/app_dimensions.dart';
 import '../../../../shared/services/toast_service.dart';
 import '../../../auth/providers/auth_provider.dart';
 import '../../providers/invite_provider.dart';
@@ -31,49 +31,99 @@ class _InviteScreenState extends ConsumerState<InviteScreen> {
     final inviteCount = user?.inviteCount ?? 0;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Invite Codes')),
+      backgroundColor: AppColors.obsidian,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: AppColors.white),
+          onPressed: () => context.pop(),
+        ),
+        title: const Text(
+          'Invite Codes',
+          style: TextStyle(
+            color: AppColors.white,
+            fontFamily: 'Outfit',
+            fontWeight: FontWeight.w600,
+            fontSize: 18,
+          ),
+        ),
+        centerTitle: true,
+      ),
       body: state.isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
           : RefreshIndicator(
               onRefresh: () async {
                 await ref.read(inviteProvider.notifier).loadCodes();
                 await ref.read(inviteProvider.notifier).loadTree();
               },
+              color: AppColors.primary,
               child: ListView(
-                padding: const EdgeInsets.all(AppDimensions.paddingL),
+                padding: const EdgeInsets.all(20),
                 children: [
                   // Header card
-                  Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(20),
-                      child: Column(
-                        children: [
-                          const Icon(Icons.card_giftcard, size: 48, color: AppColors.primary),
-                          const SizedBox(height: 12),
-                          const Text(
-                            'Invite Friends to Nomadly',
-                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: AppColors.slate,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                    ),
+                    child: Column(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withValues(alpha: 0.15),
+                            shape: BoxShape.circle,
                           ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Nomadly is invite-only. Share your codes with fellow nomads.',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(color: Colors.grey[600]),
+                          child: const Icon(
+                            Icons.card_giftcard,
+                            size: 40,
+                            color: AppColors.primary,
                           ),
-                          const SizedBox(height: 16),
-                          Text(
+                        ),
+                        const SizedBox(height: 16),
+                        const Text(
+                          'Invite Friends to Nomadly',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            fontFamily: 'Outfit',
+                            color: AppColors.white,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Nomadly is invite-only. Share your codes with fellow nomads.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.6),
+                            fontFamily: 'Inter',
+                            fontSize: 14,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
                             '$inviteCount invites remaining',
                             style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
                               color: AppColors.primary,
+                              fontFamily: 'Outfit',
                             ),
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 20),
 
                   // Generate button
                   SizedBox(
@@ -90,39 +140,65 @@ class _InviteScreenState extends ConsumerState<InviteScreen> {
                               }
                             },
                       icon: const Icon(Icons.add),
-                      label: const Text('Generate New Code'),
+                      label: const Text(
+                        'Generate New Code',
+                        style: TextStyle(fontFamily: 'Outfit', fontWeight: FontWeight.w600),
+                      ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,
                         foregroundColor: Colors.white,
+                        disabledBackgroundColor: AppColors.slate,
+                        disabledForegroundColor: Colors.white.withValues(alpha: 0.3),
                         padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 28),
 
                   // My Codes
-                  const Text(
+                  Text(
                     'MY CODES',
-                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.textSecondary),
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white.withValues(alpha: 0.4),
+                      fontFamily: 'Outfit',
+                      letterSpacing: 1.2,
+                    ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 12),
 
                   if (state.codes.isEmpty)
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 24),
-                      child: Center(child: Text('No invite codes yet', style: TextStyle(color: AppColors.grey))),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 24),
+                      child: Center(
+                        child: Text(
+                          'No invite codes yet',
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.5),
+                            fontFamily: 'Inter',
+                          ),
+                        ),
+                      ),
                     )
                   else
                     ...state.codes.map((code) => _buildCodeTile(code)),
 
                   // Invite Tree
                   if (state.tree != null && state.tree!.isNotEmpty) ...[
-                    const SizedBox(height: 24),
-                    const Text(
+                    const SizedBox(height: 28),
+                    Text(
                       'INVITE TREE',
-                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.textSecondary),
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white.withValues(alpha: 0.4),
+                        fontFamily: 'Outfit',
+                        letterSpacing: 1.2,
+                      ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 12),
                     _buildTreeSection(state.tree!),
                   ],
                 ],
@@ -138,48 +214,68 @@ class _InviteScreenState extends ConsumerState<InviteScreen> {
     final maxUses = code['max_uses'] as int? ?? 1;
     final codeId = code['_id'] as String? ?? '';
 
-    return Card(
+    return Container(
       margin: const EdgeInsets.only(bottom: 8),
-      child: ListTile(
-        leading: Icon(
-          isActive ? Icons.confirmation_number : Icons.block,
-          color: isActive ? AppColors.primary : AppColors.grey,
-        ),
-        title: Text(
-          codeStr,
-          style: TextStyle(
-            fontWeight: FontWeight.w600,
-            fontFamily: 'monospace',
-            color: isActive ? AppColors.textPrimary : AppColors.grey,
-            decoration: isActive ? null : TextDecoration.lineThrough,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.slate,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            isActive ? Icons.confirmation_number : Icons.block,
+            color: isActive ? AppColors.primary : Colors.white.withValues(alpha: 0.3),
           ),
-        ),
-        subtitle: Text('Used $useCount / $maxUses'),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (isActive) ...[
-              IconButton(
-                icon: const Icon(Icons.copy, size: 20),
-                onPressed: () {
-                  Clipboard.setData(ClipboardData(text: codeStr));
-                  ToastService.showSuccess('Code copied!');
-                },
-              ),
-              IconButton(
-                icon: const Icon(Icons.delete_outline, size: 20, color: Colors.red),
-                onPressed: () async {
-                  final ok = await ref.read(inviteProvider.notifier).revokeCode(codeId);
-                  if (mounted) {
-                    ok
-                        ? ToastService.showSuccess('Code revoked')
-                        : ToastService.showError('Failed to revoke');
-                  }
-                },
-              ),
-            ],
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  codeStr,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontFamily: 'monospace',
+                    fontSize: 16,
+                    color: isActive ? AppColors.white : Colors.white.withValues(alpha: 0.3),
+                    decoration: isActive ? null : TextDecoration.lineThrough,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Used $useCount / $maxUses',
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.5),
+                    fontSize: 13,
+                    fontFamily: 'Inter',
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (isActive) ...[
+            IconButton(
+              icon: Icon(Icons.copy, size: 20, color: Colors.white.withValues(alpha: 0.7)),
+              onPressed: () {
+                Clipboard.setData(ClipboardData(text: codeStr));
+                ToastService.showSuccess('Code copied!');
+              },
+            ),
+            IconButton(
+              icon: const Icon(Icons.delete_outline, size: 20, color: Colors.red),
+              onPressed: () async {
+                final ok = await ref.read(inviteProvider.notifier).revokeCode(codeId);
+                if (mounted) {
+                  ok
+                      ? ToastService.showSuccess('Code revoked')
+                      : ToastService.showError('Failed to revoke');
+                }
+              },
+            ),
           ],
-        ),
+        ],
       ),
     );
   }
@@ -187,9 +283,17 @@ class _InviteScreenState extends ConsumerState<InviteScreen> {
   Widget _buildTreeSection(Map<String, dynamic> tree) {
     final invitees = tree['invitees'] as List? ?? [];
     if (invitees.isEmpty) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 16),
-        child: Center(child: Text('No one invited yet', style: TextStyle(color: AppColors.grey))),
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        child: Center(
+          child: Text(
+            'No one invited yet',
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.5),
+              fontFamily: 'Inter',
+            ),
+          ),
+        ),
       );
     }
 
@@ -200,13 +304,52 @@ class _InviteScreenState extends ConsumerState<InviteScreen> {
             ? DateTime.tryParse(invitee['created_at'].toString())
             : null;
 
-        return ListTile(
-          leading: const CircleAvatar(child: Icon(Icons.person_outline)),
-          title: Text(name),
-          subtitle: date != null
-              ? Text('Joined ${date.month}/${date.day}/${date.year}')
-              : null,
-          dense: true,
+        return Container(
+          margin: const EdgeInsets.only(bottom: 8),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: AppColors.slate,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.person_outline, color: AppColors.primary, size: 20),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      name,
+                      style: const TextStyle(
+                        color: AppColors.white,
+                        fontFamily: 'Outfit',
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    if (date != null)
+                      Text(
+                        'Joined ${date.month}/${date.day}/${date.year}',
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.5),
+                          fontSize: 12,
+                          fontFamily: 'Inter',
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         );
       }).toList(),
     );

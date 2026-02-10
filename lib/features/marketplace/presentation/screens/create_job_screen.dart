@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:nomadly/core/constants/app_colors.dart';
 import 'package:nomadly/core/constants/app_dimensions.dart';
 import 'package:nomadly/features/marketplace/providers/marketplace_provider.dart';
+import 'package:nomadly/features/subscription/presentation/widgets/upgrade_dialog.dart';
 import 'package:nomadly/shared/providers/revenue_cat_provider.dart';
 
 class CreateJobScreen extends ConsumerStatefulWidget {
@@ -18,13 +19,26 @@ class _CreateJobScreenState extends ConsumerState<CreateJobScreen> {
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _budgetController = TextEditingController();
-  
+
   String _selectedCategory = 'mechanical';
   String _budgetType = 'fixed';
   bool _isRemote = false;
+  bool _isLoading = false;
 
-  final List<String> _categories = [
-    'mechanical', 'electrical', 'solar', 'plumbing', 'woodwork', 'general', 'cleaning', 'remote_work'
+  // Location state
+  double? _latitude;
+  double? _longitude;
+  String? _locationName;
+
+  final List<Map<String, dynamic>> _categories = [
+    {'value': 'mechanical', 'label': 'Mechanical', 'icon': '🔧'},
+    {'value': 'electrical', 'label': 'Electrical', 'icon': '⚡'},
+    {'value': 'solar', 'label': 'Solar', 'icon': '☀️'},
+    {'value': 'plumbing', 'label': 'Plumbing', 'icon': '🔧'},
+    {'value': 'woodwork', 'label': 'Woodwork', 'icon': '🪵'},
+    {'value': 'general', 'label': 'General', 'icon': '🛠️'},
+    {'value': 'cleaning', 'label': 'Cleaning', 'icon': '🧹'},
+    {'value': 'remote_work', 'label': 'Remote Work', 'icon': '💻'},
   ];
 
   @override
@@ -34,13 +48,9 @@ class _CreateJobScreenState extends ConsumerState<CreateJobScreen> {
   }
 
   Future<void> _checkProStatus() async {
-    // Proactive check: If user isn't pro, they might need to see the paywall
-    // This is a "Soft check" to guide the user before they fill a whole form
     final isPro = await ref.read(revenueCatServiceProvider).isPro();
-    if (!isPro) {
-      // We could show a banner or snackbar here instead of a hard blocking paywall
-      // to allow them to fill the form but know they'll need to upgrade.
-      // For now, let's just log or show a minor hint.
+    if (!isPro && mounted) {
+      // Show a subtle hint that they have limited posts on free tier
     }
   }
 
@@ -52,11 +62,23 @@ class _CreateJobScreenState extends ConsumerState<CreateJobScreen> {
     super.dispose();
   }
 
+  Future<void> _pickLocation() async {
+    final result = await context.push<Map<String, dynamic>>('/location-picker');
+    if (result != null && mounted) {
+      setState(() {
+        _latitude = result['lat'] as double?;
+        _longitude = result['lng'] as double?;
+        _locationName = result['name'] as String? ?? 'Selected Location';
+      });
+    }
+  }
+
   Future<void> _submit() async {
-    if (_formKey.currentState!.validate()) {
-      // TODO: Get current location or allow user to pick
-      // For MVP, use hardcoded or current user location if available in provider
-      // Simulating location for now
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isLoading = true);
+
+    try {
       final jobData = {
         'title': _titleController.text.trim(),
         'description': _descriptionController.text.trim(),
@@ -65,73 +87,209 @@ class _CreateJobScreenState extends ConsumerState<CreateJobScreen> {
         'budget_type': _budgetType,
         'is_remote': _isRemote,
         'location': {
-          'lat': 40.7128, // Mock NY
-          'lng': -74.0060,
+          'lat': _latitude ?? 40.7128,
+          'lng': _longitude ?? -74.0060,
         }
       };
 
-      try {
-        await ref.read(marketplaceProvider.notifier).createJob(jobData);
-        if (mounted) context.pop();
-      } catch (e) {
-        // Check for 403 or specific message
-        if (e.toString().contains("Upgrade to Pro") || e.toString().contains("403")) {
-          // Show Paywall
-          await ref.read(revenueCatServiceProvider).showPaywallIfNeeded();
-        }
-        // Provider already shows error toast
+      await ref.read(marketplaceProvider.notifier).createJob(jobData);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Job posted successfully!'),
+            backgroundColor: AppColors.success,
+          ),
+        );
+        context.pop();
       }
+    } catch (e) {
+      final errorMsg = e.toString();
+      if (errorMsg.contains('limit') || errorMsg.contains('Upgrade') || errorMsg.contains('403')) {
+        // Show upgrade dialog for limit errors
+        if (mounted) {
+          final upgraded = await showUpgradeDialog(
+            context,
+            ref,
+            title: 'Weekly Limit Reached',
+            message: 'You\'ve used all 3 free job posts this week. Upgrade to Vantage Pro for unlimited posting.',
+            feature: 'job posts',
+          );
+          if (upgraded) {
+            // Retry after successful upgrade
+            _submit();
+          }
+        }
+      } else {
+        // Show generic error
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to post job: ${e.toString()}'),
+              backgroundColor: AppColors.error,
+            ),
+          );
+        }
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  InputDecoration _buildInputDecoration({
+    required String label,
+    String? hint,
+    Widget? prefixIcon,
+    String? prefixText,
+    bool alignLabelWithHint = false,
+  }) {
+    return InputDecoration(
+      labelText: label,
+      hintText: hint,
+      prefixIcon: prefixIcon,
+      prefixText: prefixText,
+      alignLabelWithHint: alignLabelWithHint,
+      labelStyle: const TextStyle(color: AppColors.textSecondary),
+      hintStyle: TextStyle(color: AppColors.textSecondary.withValues(alpha: 0.7)),
+      prefixStyle: const TextStyle(color: AppColors.white),
+      filled: true,
+      fillColor: AppColors.slate,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: AppColors.divider),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: AppColors.divider),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: AppColors.primary, width: 2),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: AppColors.error),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: AppColors.error, width: 2),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.obsidian,
       appBar: AppBar(
-        title: const Text('Post a Need'),
+        backgroundColor: AppColors.obsidian,
+        elevation: 0,
+        title: const Text(
+          'Post a Need',
+          style: TextStyle(
+            color: AppColors.white,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        iconTheme: const IconThemeData(color: AppColors.white),
       ),
       body: Form(
         key: _formKey,
         child: ListView(
           padding: const EdgeInsets.all(AppDimensions.paddingM),
           children: [
+            // Title
             TextFormField(
               controller: _titleController,
-              decoration: const InputDecoration(labelText: 'Job Title', hintText: 'e.g. Solar Panel Installation Help'),
+              style: const TextStyle(color: AppColors.white),
+              decoration: _buildInputDecoration(
+                label: 'Job Title',
+                hint: 'e.g. Solar Panel Installation Help',
+              ),
               validator: (v) {
                 if (v == null || v.isEmpty) return 'Required';
                 if (v.length < 5) return 'Min 5 characters';
                 return null;
               },
             ),
-            const SizedBox(height: 16),
-            DropdownButtonFormField<String>(
-              value: _selectedCategory,
-              decoration: const InputDecoration(labelText: 'Category'),
-              items: _categories.map((c) => DropdownMenuItem(value: c, child: Text(c.toUpperCase()))).toList(),
-              onChanged: (v) => setState(() => _selectedCategory = v!),
+            const SizedBox(height: 20),
+
+            // Category
+            Text(
+              'Category',
+              style: TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: _categories.map((cat) {
+                final isSelected = _selectedCategory == cat['value'];
+                return GestureDetector(
+                  onTap: () => setState(() => _selectedCategory = cat['value']),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: isSelected ? AppColors.primary : AppColors.slate,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: isSelected ? AppColors.primary : AppColors.divider,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(cat['icon'], style: const TextStyle(fontSize: 16)),
+                        const SizedBox(width: 6),
+                        Text(
+                          cat['label'],
+                          style: TextStyle(
+                            color: isSelected ? AppColors.obsidian : AppColors.white,
+                            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 20),
+
+            // Budget Row
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
+                  flex: 2,
                   child: TextFormField(
                     controller: _budgetController,
-                    decoration: const InputDecoration(labelText: 'Budget', prefixText: '\$'),
+                    style: const TextStyle(color: AppColors.white),
+                    decoration: _buildInputDecoration(
+                      label: 'Budget',
+                      prefixText: '\$ ',
+                    ),
                     keyboardType: TextInputType.number,
                     validator: (v) {
                       if (v == null || v.isEmpty) return 'Required';
                       final n = double.tryParse(v);
-                      if (n == null || n <= 0) return 'Invalid amount';
+                      if (n == null || n <= 0) return 'Invalid';
                       return null;
                     },
                   ),
                 ),
-                const SizedBox(width: 16),
+                const SizedBox(width: 12),
                 Expanded(
+                  flex: 2,
                   child: DropdownButtonFormField<String>(
-                    value: _budgetType,
-                    decoration: const InputDecoration(labelText: 'Type'),
+                    value: _budgetType, // Using value for controlled state
+                    style: const TextStyle(color: AppColors.white),
+                    dropdownColor: AppColors.slate,
+                    decoration: _buildInputDecoration(label: 'Type'),
                     items: const [
                       DropdownMenuItem(value: 'fixed', child: Text('Fixed Price')),
                       DropdownMenuItem(value: 'hourly', child: Text('Hourly Rate')),
@@ -141,29 +299,127 @@ class _CreateJobScreenState extends ConsumerState<CreateJobScreen> {
                 ),
               ],
             ),
-            const SizedBox(height: 16),
-            SwitchListTile(
-              title: const Text('Remote Work?'),
-              value: _isRemote,
-              onChanged: (v) => setState(() => _isRemote = v),
+            const SizedBox(height: 20),
+
+            // Location
+            Text(
+              'Location',
+              style: TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 8),
+            GestureDetector(
+              onTap: _isRemote ? null : _pickLocation,
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppColors.slate,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.divider),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      _locationName != null ? Icons.location_on : Icons.add_location_alt,
+                      color: _isRemote ? AppColors.textSecondary : AppColors.primary,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        _isRemote
+                            ? 'Remote - No location needed'
+                            : _locationName ?? 'Tap to select location',
+                        style: TextStyle(
+                          color: _isRemote
+                              ? AppColors.textSecondary
+                              : (_locationName != null ? AppColors.white : AppColors.textSecondary),
+                        ),
+                      ),
+                    ),
+                    if (!_isRemote)
+                      Icon(
+                        Icons.chevron_right,
+                        color: AppColors.textSecondary,
+                      ),
+                  ],
+                ),
+              ),
             ),
             const SizedBox(height: 16),
+
+            // Remote Toggle
+            Container(
+              decoration: BoxDecoration(
+                color: AppColors.slate,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.divider),
+              ),
+              child: SwitchListTile(
+                title: const Text(
+                  'Remote Work',
+                  style: TextStyle(color: AppColors.white),
+                ),
+                subtitle: Text(
+                  'Can be done from anywhere',
+                  style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                ),
+                value: _isRemote,
+                onChanged: (v) => setState(() => _isRemote = v),
+                activeTrackColor: AppColors.primary.withValues(alpha: 0.5),
+                thumbColor: WidgetStatePropertyAll(AppColors.primary),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // Description
             TextFormField(
               controller: _descriptionController,
-              decoration: const InputDecoration(labelText: 'Description', alignLabelWithHint: true),
+              style: const TextStyle(color: AppColors.white),
+              decoration: _buildInputDecoration(
+                label: 'Description',
+                hint: 'Describe what you need help with...',
+                alignLabelWithHint: true,
+              ),
               maxLines: 5,
-              validator: (v) => v == null || v.length < 20 ? 'Min 20 chars' : null,
+              validator: (v) => v == null || v.length < 20 ? 'Min 20 characters' : null,
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 32),
+
+            // Submit Button
             ElevatedButton(
-              onPressed: _submit,
+              onPressed: _isLoading ? null : _submit,
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
+                foregroundColor: AppColors.obsidian,
+                disabledBackgroundColor: AppColors.slate,
                 padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                elevation: 0,
               ),
-              child: const Text('Post Job'),
+              child: _isLoading
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(AppColors.obsidian),
+                      ),
+                    )
+                  : const Text(
+                      'Post Job',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
             ),
+            const SizedBox(height: 16),
           ],
         ),
       ),
