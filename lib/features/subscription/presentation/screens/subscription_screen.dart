@@ -226,10 +226,12 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
                       price: 'Active',
                       period: '',
                       features: const [
+                        'Nomi AI — Unlimited smart queries',
+                        'AI-powered travel recommendations',
                         'Unlimited job posts',
+                        'Unlimited invite codes',
                         'Priority in search results',
                         'Verified Pro badge',
-                        'Advanced analytics',
                       ],
                       isCurrentPlan: true,
                       isPro: true,
