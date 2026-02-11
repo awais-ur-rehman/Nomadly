@@ -141,7 +141,7 @@ class AiNotifier extends StateNotifier<AiState> {
             cleanText = responseText.replaceAll(match.group(0)!, '').trim();
           }
         } catch (e) {
-          print('JSON Parse Error: $e');
+          // JSON parse failed silently — show raw text instead
         }
       }
 
