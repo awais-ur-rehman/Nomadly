@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
+import 'package:dio/dio.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/config/app_config.dart';
 import '../../providers/auth_provider.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
@@ -14,6 +16,26 @@ class SplashScreen extends ConsumerStatefulWidget {
 }
 
 class _SplashScreenState extends ConsumerState<SplashScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Fire-and-forget: wake the Render server while splash animates
+    _pingServer();
+  }
+
+  Future<void> _pingServer() async {
+    try {
+      await Dio().get(
+        '${AppConfig.baseUrl}/health',
+        options: Options(
+          sendTimeout: const Duration(seconds: 10),
+          receiveTimeout: const Duration(seconds: 10),
+        ),
+      );
+    } catch (_) {
+      // Silently ignore — this is just a wake-up ping
+    }
+  }
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
